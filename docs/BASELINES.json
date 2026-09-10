@@ -1,0 +1,860 @@
+{
+  "schemaVersion": 1,
+  "recordType": "CG00_BOUNDARY_AND_BASELINE",
+  "task": "CG-00",
+  "captured_date_utc": "2026-09-10",
+  "document_generated_at_utc": "2026-09-10T11:34:57+00:00",
+  "status": "BLOCKED",
+  "documentation_state": "PUBLICATION_AUTHORIZED_CONSUMER_EXECUTION_BLOCKED",
+  "execution_acceptance": "BLOCKED",
+  "next_task": "CG-01",
+  "next_task_authorized_to_start": false,
+  "basis": {
+    "file": "CG-EXTERNAL-GOVERNANCE-ROADMAP.md",
+    "sha256": "9cb24b0b811d71eae1658f338f8781e76fdc0a4ecdb2ff425d1f89ef5e971084",
+    "section": "CG-00 — 冻结执行边界、基线与交付位置",
+    "historical_attachments": "只保留已批准原则，不把旧材料中的历史进度当作当前状态。"
+  },
+  "governance_asset_location": {
+    "local_directory": "/mnt/data/cg00-r3/engineering-governance",
+    "write_allowlist": [
+      "docs/CG-CHARTER.md",
+      "docs/BASELINES.json",
+      "docs/PATH-OWNERSHIP.md",
+      "docs/COMMAND-CATALOG.md"
+    ],
+    "source_receipts_directory": "/mnt/data/cg00-r3/evidence",
+    "publication": "public_authorized_snapshot_pending_readback",
+    "remote_candidate": "hvritual/engineering-governance",
+    "remote_selected": "hvritual/engineering-governance",
+    "remote_lookup_http_status": 200,
+    "remote_exists": true,
+    "remote_visibility": "public",
+    "remote_created": false,
+    "remote_pushed": false,
+    "github_main_readback": null,
+    "previous_receipts_preserved_in": "/mnt/data/cg00-r3/r2-input",
+    "restored_from_bundle": {
+      "commit_sha": "25c8721f99dacae5f7f6ae4f320695fae3198720",
+      "tree_sha": "18cf52c52994569931058b79d94163b0db26d23a",
+      "branch": "cg-00/resume-r3",
+      "manifest_entries_verified": 46
+    },
+    "remote_lookup_rechecked_round": "R3",
+    "remote_repository_id": 1364383040,
+    "remote_created_by_this_round": false,
+    "remote_permissions_reported": {
+      "admin": true,
+      "maintain": true,
+      "push": true,
+      "triage": true,
+      "pull": true
+    },
+    "remote_write_tested": false,
+    "remote_configured_locally": false,
+    "remote_default_branch_name": "main",
+    "remote_main_ref_lookup_http_status": 409,
+    "remote_main_ref_exists": false,
+    "remote_main_observed_sha": null
+  },
+  "repositories": [
+    {
+      "role": "framework_reference",
+      "full_name": "hvritual/yunka.io",
+      "selected_ref": "refs/heads/main",
+      "commit_sha": "cc546c7d25ee316442eafacd3c93599f7691f22a",
+      "tree_sha": "84ef1130c3aead3fef83b990951790b6d996d2a0",
+      "commit_time_utc": "2026-09-10T08:12:28Z",
+      "evidence_kind": "GitHub_connector_branch_and_git_object_read",
+      "branch_url": "https://api.github.com/repos/hvritual/yunka.io/branches/main",
+      "immutable_commit_url": "https://github.com/hvritual/yunka.io/commit/cc546c7d25ee316442eafacd3c93599f7691f22a",
+      "main_protected_response": false,
+      "local_materialization": false,
+      "git_head_verified_in_worktree": false,
+      "worktree_clean": null,
+      "runtime_qualification": "NOT_RUN",
+      "mutation_allowed_in_CG00": false
+    },
+    {
+      "role": "biz",
+      "full_name": "hvritual/biz",
+      "selected_ref": "refs/heads/main",
+      "commit_sha": "fed9051bae618ab28df200038682f808c82e854b",
+      "tree_sha": "5883f6783dbab1336fa25b36adb1f7e938086540",
+      "commit_time_utc": "2026-09-10T10:54:16Z",
+      "evidence_kind": "GitHub_connector_branch_and_git_object_read",
+      "branch_url": "https://api.github.com/repos/hvritual/biz/branches/main",
+      "immutable_commit_url": "https://github.com/hvritual/biz/commit/fed9051bae618ab28df200038682f808c82e854b",
+      "main_protected_response": false,
+      "local_materialization": false,
+      "git_head_verified_in_worktree": false,
+      "worktree_clean": null,
+      "runtime_qualification": "NOT_RUN",
+      "mutation_allowed_in_CG00": false
+    },
+    {
+      "role": "iot_delivery",
+      "full_name": "hvritual/iot-delivery-system",
+      "selected_ref": "refs/heads/main",
+      "commit_sha": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "tree_sha": "0c0d1a2da23de4b7315245faba2103ec7a64377e",
+      "commit_time_utc": "2026-09-08T11:44:15Z",
+      "evidence_kind": "GitHub_connector_branch_and_git_object_read",
+      "branch_url": "https://api.github.com/repos/hvritual/iot-delivery-system/branches/main",
+      "immutable_commit_url": "https://github.com/hvritual/iot-delivery-system/commit/bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "main_protected_response": false,
+      "local_materialization": false,
+      "git_head_verified_in_worktree": false,
+      "worktree_clean": null,
+      "runtime_qualification": "NOT_RUN",
+      "mutation_allowed_in_CG00": false
+    }
+  ],
+  "consumer_pins": {
+    "biz": {
+      "consumer_commit": "fed9051bae618ab28df200038682f808c82e854b",
+      "framework_source_lock": {
+        "repository": "hvritual/yunka.io",
+        "commit_sha": "33b98ceba57494abda2299e4f0290a5651dab4bc",
+        "tree_sha": "fcc154390dc3a24ebb1819954fc883d0dd073c31",
+        "source": "B_LOCK",
+        "git_commit_object_verified": true,
+        "runtime_materialization_verified": false
+      },
+      "runtime": {
+        "module_identities": [
+          "yunka.io/framework",
+          "yunka.io/gateway",
+          "yunka.io/pkg"
+        ],
+        "declared_version": "v0.0.0-20260910080749-33b98ceba574",
+        "replacements": {
+          "yunka.io/framework": "../yunka.io/framework",
+          "yunka.io/gateway": "../yunka.io/gateway",
+          "yunka.io/pkg": "../yunka.io/pkg",
+          "github.com/go-kit/kit@v0.10.0": "../yunka.io/compat/go-kit-kit-log"
+        },
+        "actual_go_list_modules": null,
+        "actual_loaded_source_sha": null,
+        "evidence": [
+          "B_MOD",
+          "B_LOCK",
+          "B_SOURCE_CHECK"
+        ]
+      },
+      "generator": {
+        "configured_source_sha": "33b98ceba57494abda2299e4f0290a5651dab4bc",
+        "entry": "Makefile: generate -> cd $(YUNKA_APP) && go run ./cmd generate --root $(CURDIR) --protoc $(PROTOC)",
+        "root_default": "$(abspath ../yunka.io)/app",
+        "override_allowed_by_makefile": true,
+        "enforcement_prerequisite": "YUNKA_ROOT and replace resolution must pass scripts/verify-yunka-source.sh",
+        "binary_sha256": null,
+        "runtime_verified": false,
+        "evidence": [
+          "B_MAKE",
+          "B_LOCK",
+          "B_CLOUD"
+        ]
+      },
+      "audit_cli": {
+        "normal_source_build_entry": "$(YUNKA_ROOT)/app: go run ./cmd",
+        "configured_source_sha": "33b98ceba57494abda2299e4f0290a5651dab4bc",
+        "separately_pinned_audit_binary_found": false,
+        "installed_binary_identity": null,
+        "context_result": null,
+        "help_result": null,
+        "AG_command_availability": "UNVERIFIED; do not inherit main capabilities",
+        "source_scope_of_search": [
+          "B_MAKE",
+          "B_CLOUD",
+          "B_LOCK"
+        ]
+      },
+      "toolchain": {
+        "go_language": "1.25.0",
+        "go_toolchain": "1.25.13",
+        "protoc_release": "21.12",
+        "protoc_reported_version": "3.21.12",
+        "protoc_linux_x86_64_sha256": "3a4c1e5f2516c639d3079b1586e703fc7bcfa2136d58bda24d1d54f949c315e8",
+        "protoc_gen_go": "v1.36.11",
+        "protoc_gen_go_grpc": "v1.6.2",
+        "observed_source_only": true,
+        "sources": [
+          "B_WORK",
+          "B_TOOLCHAIN",
+          "B_CLOUD"
+        ]
+      },
+      "project": {
+        "root": ".",
+        "descriptor": ".yunka/project.json",
+        "contract_sources": "contracts/sources.json",
+        "generated_contracts": "contracts/generated",
+        "modules_root": "modules",
+        "generated_go_root": "internal",
+        "ownership_snapshot": null,
+        "source": "B_PROJECT"
+      },
+      "workspace": {
+        "go_work_use": [
+          "."
+        ],
+        "go_work_source": "B_WORK",
+        "sibling_yunka_required": true,
+        "ordinary_git_checkout_required_by_existing_source_check": true,
+        "observed_clean_worktree": null
+      },
+      "cloud_entry": {
+        "path": ".github/workflows/ce08-qualification.yml",
+        "source": "B_CLOUD",
+        "workflow_definition_read": true,
+        "invoked_in_CG00": false,
+        "fresh_run_id": null,
+        "mysql": "8.4",
+        "runner": "ubuntu-latest"
+      }
+    },
+    "iot_delivery": {
+      "consumer_commit": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "framework_source_lock": {
+        "kind": "gitlink",
+        "path": "third_party/yunka",
+        "mode": "160000",
+        "repository": "hvritual/yunka.io",
+        "commit_sha": "057ebcf88a87303eb633eb6e604d306f633dfac0",
+        "tree_sha": "b2d82c574f6db1950b4323db839feda2d6fbc898",
+        "gitlink_container_tree_sha": "189d8545c314e0b74e7eff9b48c27c25a717ebea",
+        "gitlink_api_verified": true,
+        "git_commit_object_verified": true,
+        "materialized_submodule_head": null,
+        "clean_submodule": null
+      },
+      "runtime": {
+        "backend_yunka": {
+          "module": "github.com/hvritual/iot-delivery-system/backend-yunka",
+          "declared_framework_versions": {
+            "github.com/hvritual/yunka.io/framework": "v0.1.0",
+            "github.com/hvritual/yunka.io/gateway": "v0.1.0",
+            "github.com/hvritual/yunka.io/pkg": "v0.1.0"
+          },
+          "replacements": {
+            "github.com/hvritual/yunka.io/framework": "../third_party/yunka/framework",
+            "github.com/hvritual/yunka.io/gateway": "../third_party/yunka/gateway",
+            "github.com/hvritual/yunka.io/pkg": "../third_party/yunka/pkg"
+          },
+          "source": "I_MOD_YUNKA"
+        },
+        "legacy_backend": {
+          "module": "github.com/hvritual/iot-delivery-system/backend",
+          "declared_yunka_framework_version": "v0.0.0-00010101000000-000000000000",
+          "replacements_observed": {
+            "yunka.io/framework": "../third_party/yunka/framework",
+            "yunka.io/pkg": "../third_party/yunka/pkg",
+            "github.com/go-kit/kit": "../third_party/yunka/compat/go-kit-kit-log"
+          },
+          "source": "I_MOD_LEGACY",
+          "read_scope": "first_32_lines_only"
+        },
+        "actual_go_list_modules": null,
+        "actual_loaded_source_sha": null,
+        "note": "不同模块身份按源码原样记录，不据此猜测兼容或声称已通过。"
+      },
+      "generator": {
+        "configured_source_sha": "057ebcf88a87303eb633eb6e604d306f633dfac0",
+        "entry": "backend-yunka/Makefile: yunka-generate",
+        "cli_entry": "GOWORK=$I/third_party/yunka/go.work go -C $I/third_party/yunka/app run ./cmd",
+        "project_root": ".",
+        "source": "I_MAKE",
+        "runtime_verified": false,
+        "binary_sha256": null
+      },
+      "audit_cli": {
+        "configured_source_sha": "057ebcf88a87303eb633eb6e604d306f633dfac0",
+        "normal_source_build_entry": "backend-yunka/Makefile: YUNKA_CLI",
+        "separately_pinned_audit_binary_found": false,
+        "installed_binary_identity": null,
+        "context_result": null,
+        "help_result": null,
+        "AG_command_availability": "UNVERIFIED; do not inherit main capabilities",
+        "source_scope_of_search": [
+          "I_MAKE",
+          "I_CLOUD",
+          "I_REGRESSION"
+        ]
+      },
+      "toolchain": {
+        "go_language": "1.25.0",
+        "go_toolchain": "1.25.13",
+        "protoc_release": "21.12",
+        "protoc_reported_version": "3.21.12",
+        "protoc_gen_go": "v1.36.11",
+        "protoc_gen_go_grpc": "1.6.2",
+        "observed_source_only": true,
+        "sources": [
+          "I_WORK",
+          "I_MAKE",
+          "I_CLOUD"
+        ]
+      },
+      "project": {
+        "root": ".",
+        "descriptor": ".yunka/project.json",
+        "contract_proto_root": "backend-yunka/contracts/proto",
+        "generated_contracts": "backend-yunka/contracts/generated",
+        "modules_root": "backend-yunka/modules",
+        "generated_go_root": "backend-yunka/internal",
+        "ownership_snapshot": null,
+        "source": "I_PROJECT"
+      },
+      "workspace": {
+        "root_go_module": "github.com/hvritual/iot-delivery-system",
+        "go_work_use": [
+          "./backend",
+          "./backend-yunka"
+        ],
+        "root_module_in_work_use": false,
+        "go_work_source": "I_WORK",
+        "canonical_yu30_go_work": "off",
+        "cli_go_work": "third_party/yunka/go.work",
+        "observed_clean_worktree": null
+      },
+      "cloud_entry": {
+        "path": ".github/workflows/yu30-regression.yml",
+        "source": "I_CLOUD",
+        "workflow_definition_read": true,
+        "invoked_in_CG00": false,
+        "fresh_run_id": null,
+        "runner": "ubuntu-24.04",
+        "suites": [
+          "canonical-full",
+          "go-diagnostics",
+          "web-diagnostics",
+          "browser-e2e"
+        ]
+      }
+    }
+  },
+  "execution_environment": {
+    "kind": "current_cloud_container",
+    "round": "R3",
+    "git_version": "2.47.3",
+    "go_version": "go1.23.2 linux/amd64",
+    "required_consumer_go": "go1.25.13",
+    "yunka_on_PATH": false,
+    "protoc_on_PATH": false,
+    "github_dns_for_git": "FAILED",
+    "dns_results": {
+      "github.com_getent_exit": 2,
+      "github.com_curl_exit": 6,
+      "go.dev_curl_exit": 6
+    },
+    "source_materialized": false,
+    "git_clone_retried_in_R3": false,
+    "consumer_commands_executed": false,
+    "fixed_go_found_in_checked_locations": null,
+    "fixed_go_search_scope_this_round": "PATH only; earlier wider searches preserved as history",
+    "source_archives_downloaded": false,
+    "source_workflow_runs_triggered": false,
+    "consumer_execution_acceptance": "BLOCKED",
+    "raw_probes": "/mnt/data/cg00-r3/evidence",
+    "note": "恢复的仅是G的真实R2 Git历史；没有将摘录或空仓库当消费者。既有IoT源码制品已过期且SHA不匹配，未下载，也未为获取制品修改CI。"
+  },
+  "authority": {
+    "framework_reference_is_not_consumer_pin": true,
+    "unknown_effective_version_is_not_assumed": true,
+    "task_only_writes_G_docs": true,
+    "main_protection_not_changed": true,
+    "runtime_or_business_changed": false,
+    "governance_tool_installed": false,
+    "credentials_disclosed": false
+  },
+  "blockers": [
+    {
+      "id": "CG00-ENV-01",
+      "class": "source_materialization",
+      "status": "BLOCKED",
+      "fact": "R3 github.com getent=2/curl=6；F/B/I仍未物化。IoT离线源码制品9970509351已过期，绑定旧head d6241a26...，不是冻结bcd20632...。",
+      "evidence": [
+        "github-dns.json",
+        "github-connect.json",
+        "connector-observations-r3.json"
+      ],
+      "effect": "无消费者Git身份、真实context或模块解析。",
+      "required_to_clear": "获得固定SHA的完整可核验Git源码及其对象；不靠历史成功记录或零散摘录替代。"
+    },
+    {
+      "id": "CG00-ENV-02",
+      "class": "toolchain_and_cli",
+      "status": "BLOCKED",
+      "fact": "R3实际Go1.23.2，PATH无Yunka/protoc；go.dev连接DNS失败，未取得Go1.25.13工具包。",
+      "evidence": [
+        "go-version.json",
+        "tool-paths.json",
+        "go-dl-connect.json"
+      ],
+      "effect": "消费者固定工具链命令没有执行。",
+      "required_to_clear": "精确源码及已核验Go1.25.13/依赖可用后执行文档内消费者命令，保持框架pin不变。"
+    },
+    {
+      "id": "CG00-DELIVERY-01",
+      "class": "remote_delivery",
+      "status": "PENDING_PUBLICATION_READBACK",
+      "fact": "R4用户明确授权向当前public治理仓库发布四文档；容器Git直连仍DNS失败，将通过连接器文件接口交付快照。",
+      "evidence": [
+        "user_authorization_R4",
+        "R4_connector_readback_receipt"
+      ],
+      "effect": "公开发布边界已解除，尚须实际上传与准确文件回读；不表示消费者验收通过。",
+      "required_to_clear": "核对四份文件blob/tree摘要与目标main；区别远端API提交与本地原始历史。不得上传其他资产。"
+    }
+  ],
+  "sources": [
+    {
+      "id": "B_MOD",
+      "repository": "hvritual/biz",
+      "ref": "fed9051bae618ab28df200038682f808c82e854b",
+      "path": "go.mod",
+      "git_blob_sha1": "860dcd13151cb1418c0c5983db99c03487326fd5",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/biz/blob/fed9051bae618ab28df200038682f808c82e854b/go.mod"
+    },
+    {
+      "id": "B_WORK",
+      "repository": "hvritual/biz",
+      "ref": "fed9051bae618ab28df200038682f808c82e854b",
+      "path": "go.work",
+      "git_blob_sha1": "caebba4cb67fee82498db4d53377b5127a30a14b",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/biz/blob/fed9051bae618ab28df200038682f808c82e854b/go.work",
+      "snapshot": "source-snapshots/B_WORK.txt",
+      "snapshot_sha256": "78f93b70101310f1ab5a524de6b6b350c9e92f74ffdd7e50a1d381016410fcad",
+      "snapshot_git_blob_verified": true,
+      "line_count": 5
+    },
+    {
+      "id": "B_LOCK",
+      "repository": "hvritual/biz",
+      "ref": "fed9051bae618ab28df200038682f808c82e854b",
+      "path": ".yunka/source.env",
+      "git_blob_sha1": "7f3d0872a402a63981011d63a5fb73109b5c306d",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/biz/blob/fed9051bae618ab28df200038682f808c82e854b/.yunka/source.env",
+      "snapshot": "source-snapshots/B_LOCK.txt",
+      "snapshot_sha256": "b55884e62b36b39f26aad083f524d4e7f64a07b3058c9cfea37e430dd2e2ed17",
+      "snapshot_git_blob_verified": true,
+      "line_count": 7
+    },
+    {
+      "id": "B_MAKE",
+      "repository": "hvritual/biz",
+      "ref": "fed9051bae618ab28df200038682f808c82e854b",
+      "path": "Makefile",
+      "git_blob_sha1": "4ebe17199e274884b36e0394560b6d72afae3785",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/biz/blob/fed9051bae618ab28df200038682f808c82e854b/Makefile"
+    },
+    {
+      "id": "B_SOURCE_CHECK",
+      "repository": "hvritual/biz",
+      "ref": "fed9051bae618ab28df200038682f808c82e854b",
+      "path": "scripts/verify-yunka-source.sh",
+      "git_blob_sha1": "4a45a3312dfc6b5af0f68efdbcaff6fe1c0c38e1",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/biz/blob/fed9051bae618ab28df200038682f808c82e854b/scripts/verify-yunka-source.sh"
+    },
+    {
+      "id": "B_PROJECT",
+      "repository": "hvritual/biz",
+      "ref": "fed9051bae618ab28df200038682f808c82e854b",
+      "path": ".yunka/project.json",
+      "git_blob_sha1": "97172209d71172bcadfde7eedb6ebf4d4d70cb40",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/biz/blob/fed9051bae618ab28df200038682f808c82e854b/.yunka/project.json",
+      "snapshot": "source-snapshots/B_PROJECT.txt",
+      "snapshot_sha256": "fbe407ec35844064ed2230768e15bedce701d5468aaec3a3c1f437d61fc8b71b",
+      "snapshot_git_blob_verified": true,
+      "line_count": 21
+    },
+    {
+      "id": "B_CLOUD",
+      "repository": "hvritual/biz",
+      "ref": "fed9051bae618ab28df200038682f808c82e854b",
+      "path": ".github/workflows/ce08-qualification.yml",
+      "git_blob_sha1": "e2656bbd6b78717d1a9c66f396752bb27297abea",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/biz/blob/fed9051bae618ab28df200038682f808c82e854b/.github/workflows/ce08-qualification.yml"
+    },
+    {
+      "id": "B_TOOLCHAIN",
+      "repository": "hvritual/yunka.io",
+      "ref": "33b98ceba57494abda2299e4f0290a5651dab4bc",
+      "path": "tools/toolchain.env",
+      "git_blob_sha1": "c43f9bb190910ecd38cde931b4f0003fabfe4d8c",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/yunka.io/blob/33b98ceba57494abda2299e4f0290a5651dab4bc/tools/toolchain.env",
+      "snapshot": "source-snapshots/B_TOOLCHAIN.txt",
+      "snapshot_sha256": "2f3dd358b00195413560f9575a4470a5e621531d1b8f810407467ba99590d2d2",
+      "snapshot_git_blob_verified": true,
+      "line_count": 8
+    },
+    {
+      "id": "I_MOD",
+      "repository": "hvritual/iot-delivery-system",
+      "ref": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "path": "go.mod",
+      "git_blob_sha1": "9326e0ed3f6bf0c7c19182377a661c397e4d3a9e",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/iot-delivery-system/blob/bcd20632b666405c3f7a8fe8d53f591c78450087/go.mod",
+      "snapshot": "source-snapshots/I_MOD.txt",
+      "snapshot_sha256": "66fd0b3ebe6e15e542267d5c9e526f877320ceafa2429a1536f6f0b9c0ab498b",
+      "snapshot_git_blob_verified": true,
+      "line_count": 5
+    },
+    {
+      "id": "I_WORK",
+      "repository": "hvritual/iot-delivery-system",
+      "ref": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "path": "go.work",
+      "git_blob_sha1": "37201136f48383495622532c4ed29d317f9d415c",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/iot-delivery-system/blob/bcd20632b666405c3f7a8fe8d53f591c78450087/go.work",
+      "snapshot": "source-snapshots/I_WORK.txt",
+      "snapshot_sha256": "88aa0c53ff684bad68015a3944a8a063625fa41dc9dd2157e15583d785efa13b",
+      "snapshot_git_blob_verified": true,
+      "line_count": 8
+    },
+    {
+      "id": "I_SUBMODULE",
+      "repository": "hvritual/iot-delivery-system",
+      "ref": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "path": ".gitmodules",
+      "git_blob_sha1": "27cb157e010cee8eb27c5760494f2939cd7d2cd7",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/iot-delivery-system/blob/bcd20632b666405c3f7a8fe8d53f591c78450087/.gitmodules",
+      "snapshot": "source-snapshots/I_SUBMODULE.txt",
+      "snapshot_sha256": "38c4abf0d81974ac21615dab23f9419f0f79ce952a93a4b799c1d5097b86c5f4",
+      "snapshot_git_blob_verified": true,
+      "line_count": 3
+    },
+    {
+      "id": "I_MOD_YUNKA",
+      "repository": "hvritual/iot-delivery-system",
+      "ref": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "path": "backend-yunka/go.mod",
+      "git_blob_sha1": "aa6b1a430e1237d520688cc14212dcc1cd0d33f6",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/iot-delivery-system/blob/bcd20632b666405c3f7a8fe8d53f591c78450087/backend-yunka/go.mod"
+    },
+    {
+      "id": "I_MOD_LEGACY",
+      "repository": "hvritual/iot-delivery-system",
+      "ref": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "path": "backend/go.mod",
+      "git_blob_sha1": "d95c6ea9b99f15c0e83e7b04ce6e66428c2c1f0c",
+      "read_scope": "lines_1_to_32_only",
+      "url": "https://github.com/hvritual/iot-delivery-system/blob/bcd20632b666405c3f7a8fe8d53f591c78450087/backend/go.mod",
+      "notes": "只读取前32行；不宣称完整依赖清点。"
+    },
+    {
+      "id": "I_MAKE",
+      "repository": "hvritual/iot-delivery-system",
+      "ref": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "path": "backend-yunka/Makefile",
+      "git_blob_sha1": "9b0d5574ec125d8293cc2da51ae89c396f0dee83",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/iot-delivery-system/blob/bcd20632b666405c3f7a8fe8d53f591c78450087/backend-yunka/Makefile"
+    },
+    {
+      "id": "I_PROJECT",
+      "repository": "hvritual/iot-delivery-system",
+      "ref": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "path": ".yunka/project.json",
+      "git_blob_sha1": "833ff7c7a2d9791f16b7135eaab302f6c06943fe",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/iot-delivery-system/blob/bcd20632b666405c3f7a8fe8d53f591c78450087/.yunka/project.json",
+      "snapshot": "source-snapshots/I_PROJECT.txt",
+      "snapshot_sha256": "032c0a43027c8cee5298115655f0c63840a7512efed5deca490adfe1ebbfd4ce",
+      "snapshot_git_blob_verified": true,
+      "line_count": 22
+    },
+    {
+      "id": "I_CLOUD",
+      "repository": "hvritual/iot-delivery-system",
+      "ref": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "path": ".github/workflows/yu30-regression.yml",
+      "git_blob_sha1": "f8a8201c34fb607c2d2bfce95907f149c5e4826c",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/iot-delivery-system/blob/bcd20632b666405c3f7a8fe8d53f591c78450087/.github/workflows/yu30-regression.yml"
+    },
+    {
+      "id": "I_REGRESSION",
+      "repository": "hvritual/iot-delivery-system",
+      "ref": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "path": "backend-yunka/scripts/run-yu30-regression.sh",
+      "git_blob_sha1": "f0480fdb3d16cf865604919352268d29ffedf981",
+      "read_scope": "full_file",
+      "url": "https://github.com/hvritual/iot-delivery-system/blob/bcd20632b666405c3f7a8fe8d53f591c78450087/backend-yunka/scripts/run-yu30-regression.sh"
+    }
+  ],
+  "acceptance": {
+    "remote_refs_and_pin_documents": "VERIFIED_FROM_CONNECTED_SOURCE",
+    "snapshot_integrity": "8_SMALL_SOURCE_FILES_GIT_BLOB_VERIFIED",
+    "source_worktree_git_checks": "BLOCKED",
+    "consumer_context_and_help": "BLOCKED",
+    "consumer_loaded_modules": "BLOCKED",
+    "remote_governance_delivery": "PENDING_READBACK",
+    "overall": "BLOCKED",
+    "governance_prior_commit_recovery": "PASS_R2_BUNDLE_COMMIT_TREE_AND_46_HASHES",
+    "command_catalog_git_expression": "FIXED_GOVERNANCE_ONLY_REPLAY",
+    "remote_ref_drift": "R2_OBSERVATION_PRESERVED_NO_NEW_CONSUMER_REF_QUERY",
+    "remote_governance_discovery": "PASS_EXISTS_AND_READABLE",
+    "remote_governance_visibility": "PASS_EXPLICIT_PUBLICATION_AUTHORIZATION"
+  },
+  "last_updated_at_utc": "2026-09-10T15:13:25.561323+00:00",
+  "continuation_round": "R3",
+  "execution_history": [
+    {
+      "round": "R1",
+      "generated_at_utc": "2026-09-10T11:34:57+00:00",
+      "execution_environment": {
+        "kind": "current_cloud_container",
+        "git_version": "2.47.3",
+        "go_version": "go1.23.2 linux/amd64",
+        "required_consumer_go": "go1.25.13",
+        "yunka_on_PATH": false,
+        "protoc_on_PATH": false,
+        "github_dns_for_git": "FAILED",
+        "git_clone_exit_codes": {
+          "yunka.io": 128,
+          "biz": 128,
+          "iot-delivery-system": 128
+        },
+        "yunka_prerequisite_exit_codes": {
+          "--help": 127,
+          "context --json": 127
+        },
+        "prerequisite_cwd": "/tmp/cg00",
+        "consumer_commands_executed": false,
+        "note": "PATH探测不是固定消费者CLI验收，不能把退出127算作有效context响应。",
+        "raw_probes": "../cg00-evidence/environment-probes.json"
+      }
+    },
+    {
+      "round": "R2",
+      "execution_environment": {
+        "kind": "current_cloud_container",
+        "round": "R2",
+        "git_version": "2.47.3",
+        "go_version": "go1.23.2 linux/amd64",
+        "required_consumer_go": "go1.25.13",
+        "yunka_on_PATH": false,
+        "protoc_on_PATH": false,
+        "github_dns_for_git": "FAILED",
+        "dns_results": {
+          "github.com_getent_exit": 2,
+          "github.com_curl_exit": 6,
+          "api.github.com_curl_exit": 6
+        },
+        "source_materialized": false,
+        "git_clone_retried_in_R2": false,
+        "consumer_commands_executed": false,
+        "fixed_go_found_in_checked_locations": false,
+        "source_archives_downloaded": false,
+        "source_workflow_runs_triggered": false,
+        "note": "R2先复验DNS、工具与可用交付路径，未重复无前提的consumer命令；R1的clone=128/CLI=127仅作为历史保留。G从真实旧bundle恢复不是F/B/I源码物化。",
+        "raw_probes": "../cg00-r2-evidence/",
+        "consumer_execution_acceptance": "BLOCKED"
+      },
+      "governance_asset_location": {
+        "local_directory": "/mnt/data/engineering-governance",
+        "write_allowlist": [
+          "docs/CG-CHARTER.md",
+          "docs/BASELINES.json",
+          "docs/PATH-OWNERSHIP.md",
+          "docs/COMMAND-CATALOG.md"
+        ],
+        "source_receipts_directory": "/mnt/data/cg00-r2-evidence",
+        "publication": "unpublished_local_cloud_workspace",
+        "remote_candidate": "hvritual/engineering-governance",
+        "remote_selected": null,
+        "remote_lookup_http_status": 404,
+        "remote_exists": null,
+        "remote_visibility": null,
+        "remote_created": false,
+        "remote_pushed": false,
+        "github_main_readback": null,
+        "previous_receipts_preserved_in": "/mnt/data/cg00-r1-preserved/evidence",
+        "restored_from_bundle": {
+          "commit_sha": "209eba25fa8c576b43f102099c9fc07cf7d83a12",
+          "tree_sha": "37494e8dcc0328f9905af4fe870a19d8d5120716",
+          "branch": "cg-00/resume-r2",
+          "manifest_entries_verified": 29
+        },
+        "remote_lookup_rechecked_round": "R2"
+      },
+      "acceptance": {
+        "remote_refs_and_pin_documents": "VERIFIED_FROM_CONNECTED_SOURCE",
+        "snapshot_integrity": "8_SMALL_SOURCE_FILES_GIT_BLOB_VERIFIED",
+        "source_worktree_git_checks": "BLOCKED",
+        "consumer_context_and_help": "BLOCKED",
+        "consumer_loaded_modules": "BLOCKED",
+        "remote_governance_delivery": "UNRESOLVED",
+        "overall": "BLOCKED",
+        "governance_prior_commit_recovery": "PASS_ORIGINAL_BUNDLE_COMMIT_TREE_AND_29_HASHES",
+        "command_catalog_git_expression": "FIXED_GOVERNANCE_ONLY_REPLAY",
+        "remote_ref_drift": "BIZ_HEAD_CHANGE_RECORDED_FROZEN_BASELINE_UNCHANGED"
+      },
+      "blockers": [
+        {
+          "id": "CG00-ENV-01",
+          "class": "source_materialization",
+          "status": "BLOCKED",
+          "fact": "R2复验github.com DNS失败(getent=2,curl=6)，api.github.com curl=6；源码下载替代入口亦未取得文件。未物化F/B/I。",
+          "evidence": [
+            "github-dns.json",
+            "github-connect.json",
+            "api-connect.json",
+            "connector-observations-r2.json"
+          ],
+          "effect": "无法在真实源码 checkout 上执行 git HEAD/tree/status，也无法解析消费者实际依赖。",
+          "required_to_clear": "可访问或已物化精确SHA的真实云端Git仓库；核对commit/tree及worktree，不以文件摘录替代。"
+        },
+        {
+          "id": "CG00-ENV-02",
+          "class": "toolchain_and_cli",
+          "status": "BLOCKED",
+          "fact": "R2实际Go仍为1.23.2；PATH无Yunka/protoc；常见安装与工具链缓存位置未找到Go1.25.13。未执行消费者context/help或go list。",
+          "evidence": [
+            "go-version.json",
+            "tools.json",
+            "fixed-toolchain-locations.json"
+          ],
+          "effect": "未获得消费者级 context/--help 实测结果；缺少已验证工具二进制身份。",
+          "required_to_clear": "在可用云端执行入口使用已锁定消费者源码和Go1.25.13，真实运行context与相关help；记录go version -m或源码构建身份，不升级消费者。"
+        },
+        {
+          "id": "CG00-DELIVERY-01",
+          "class": "remote_delivery",
+          "status": "UNRESOLVED",
+          "fact": "R2再次读取私有治理远端候选返回404；无法区分不存在和未授权。未发现可用建仓/通用云端命令入口。未创建、写入或推送远端。",
+          "evidence": [
+            "connector-observations-r2.json"
+          ],
+          "effect": "仅形成未发布的云端本地Git文档交付；没有GitHub main回读。",
+          "required_to_clear": "取得获准私有治理远端和可用交付动作，核对可见性再同步并回读。不要向既有公开仓库替代发布。"
+        }
+      ]
+    }
+  ],
+  "remote_ref_observations": {
+    "round": "R2",
+    "recorded_at_utc": "2026-09-10T13:54:35.855213+00:00",
+    "heads": [
+      {
+        "repository": "hvritual/yunka.io",
+        "ref": "refs/heads/main",
+        "observed_commit_sha": "cc546c7d25ee316442eafacd3c93599f7691f22a",
+        "frozen_commit_sha": "cc546c7d25ee316442eafacd3c93599f7691f22a",
+        "differs_from_frozen": false,
+        "source_url": "https://api.github.com/repos/hvritual/yunka.io/git/ref/heads/main",
+        "connector_resource": "/response/turn44"
+      },
+      {
+        "repository": "hvritual/biz",
+        "ref": "refs/heads/main",
+        "observed_commit_sha": "12f33db5632a81c04b9de7634b5d37baf5a2bb1a",
+        "observed_tree_sha": "717b9d562cc5e477f46155706778cd10b9fd5a52",
+        "frozen_commit_sha": "fed9051bae618ab28df200038682f808c82e854b",
+        "differs_from_frozen": true,
+        "source_url": "https://api.github.com/repos/hvritual/biz/git/ref/heads/main",
+        "commit_object_url": "https://api.github.com/repos/hvritual/biz/git/commits/12f33db5632a81c04b9de7634b5d37baf5a2bb1a",
+        "connector_resource": "/response/turn45",
+        "commit_resource": "/response/turn47"
+      },
+      {
+        "repository": "hvritual/iot-delivery-system",
+        "ref": "refs/heads/main",
+        "observed_commit_sha": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+        "frozen_commit_sha": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+        "differs_from_frozen": false,
+        "source_url": "https://api.github.com/repos/hvritual/iot-delivery-system/git/ref/heads/main",
+        "connector_resource": "/response/turn46"
+      }
+    ],
+    "policy": "Keep the same CG-00 immutable baseline; remote head observations do not auto-rebase consumer pins. Rebaselining requires a separately recorded decision and complete recollection.",
+    "new_biz_head_qualified_by_CG00": false
+  },
+  "documentation_defects": [
+    {
+      "id": "CG00-DOC-01",
+      "class": "command_catalog_defect",
+      "status": "FIXED_WITH_GOVERNANCE_ONLY_REPLAY",
+      "source": "docs/COMMAND-CATALOG.md section 3",
+      "invalid_expression": "HEAD^0c0d1a2da23de4b7315245faba2103ec7a64377e",
+      "correct_expression": "HEAD^{tree}",
+      "invalid_command_exit_code": 128,
+      "correct_command_exit_code": 0,
+      "verified_tree_sha": "37494e8dcc0328f9905af4fe870a19d8d5120716",
+      "why_not_previously_detected": "Previous 31-check report validated metadata, references, snapshots and fences; it did not execute the catalog Git commands. Exact cause of text corruption is not established.",
+      "regression": "evidence/validate_cg00_r2.py: extract the actual marked command block, execute in Git copies, reject malformed/wrong-object/missing commands and dirty trees",
+      "scope": "documentation and governance Git repository only; not a consumer/framework defect",
+      "CG01_asset_created": false
+    }
+  ],
+  "remote_publication_boundary": {
+    "selected_repository": "hvritual/engineering-governance",
+    "required_visibility": "public",
+    "observed_visibility": "public",
+    "explicit_public_release_approval": "用户明确授权：授权将治理文档发布到仓库，然后开启下一轮",
+    "status": "AUTHORIZED_PENDING_READBACK",
+    "all_remote_writes_performed": false,
+    "permission_metadata_is_publication_authority": false,
+    "readability_is_successful_delivery": false,
+    "governance_only_commit_can_be_prepared": true,
+    "resolution": "仅发布四份治理文档。使用连接器文件接口交付快照，保留本地Git历史bundle；远端提交与本地提交分别记录。消费者资格独立。"
+  },
+  "source_recovery_observation": {
+    "repo_full_name": "hvritual/iot-delivery-system",
+    "run_id": 33969592332,
+    "artifact_id": 9970509351,
+    "name": "yu30-offline-source-d6241a26dcdb268f002a38376689d893600f1877",
+    "head_sha": "d6241a26dcdb268f002a38376689d893600f1877",
+    "expired": true,
+    "expires_at": "2026-09-06T13:40:49Z",
+    "size_in_bytes": 3630611,
+    "reported_digest": "sha256:2fa45073d1ef350ff634589e366b25a02a41e694ee3ee773bec7326d8182296d",
+    "tool": "GitHub.fetch_workflow_run_artifacts",
+    "source_url": "https://api.github.com/repos/hvritual/iot-delivery-system/actions/runs/33969592332/artifacts",
+    "download_attempted": false,
+    "bytes_acquired": false,
+    "reason_not_accepted": [
+      "artifact_expired",
+      "head_does_not_match_frozen_consumer"
+    ],
+    "not_a_current_run": true
+  },
+  "publication_round": "R4",
+  "snapshot_scope_note": "Consumer/source facts and R1-R3 execution observations remain frozen; only publication authority and destination are updated in R4. R4 final upload/readback results are external receipts.",
+  "publication_authorization": {
+    "approved": true,
+    "user_statement": "授权将治理文档发布到仓库，然后开启下一轮",
+    "repository": "hvritual/engineering-governance",
+    "visibility": "public",
+    "paths": [
+      "docs/CG-CHARTER.md",
+      "docs/BASELINES.json",
+      "docs/PATH-OWNERSHIP.md",
+      "docs/COMMAND-CATALOG.md"
+    ],
+    "source_local_commit": "9033351e412c97fc10458e25fce7ce33a190f490",
+    "method": "github_contents_api_snapshot",
+    "local_history_preserved_in_bundle": true,
+    "remote_original_commit_identity_claimed": false,
+    "does_not_authorize": [
+      "consumer_source_publication",
+      "raw_logs_or_credentials",
+      "CI_or_permission_changes"
+    ],
+    "readback_status": "PENDING_AT_SNAPSHOT_CREATION"
+  }
+}
