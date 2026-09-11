@@ -34,13 +34,23 @@ def verify_document(protocol, subjects, authorizations, observed, actual, reconc
     expected = reconciler.reconcile_document(protocol, subjects, authorizations, observed)
     require(actual == expected, "RECONCILIATION_OUTPUT_MISMATCH")
 
+    subject_items = subjects.get("subjects", [])
     receipts = actual.get("receipts", [])
-    require(len(receipts) == len(subjects.get("subjects", [])), "RECEIPT_COUNT_MISMATCH")
+    require(len(receipts) == len(subject_items), "RECEIPT_COUNT_MISMATCH")
     by_case = {receipt["caseId"]: receipt for receipt in receipts}
     require(len(by_case) == len(receipts), "DUPLICATE_RECEIPT_CASE")
 
-    real_subjects = [subject for subject in subjects["subjects"] if subject.get("target") is not None]
-    fallback_subjects = [subject for subject in subjects["subjects"] if subject.get("target") is None]
+    for subject in subject_items:
+        case_id = subject.get("caseId")
+        require(case_id in by_case, "SUBJECT_RECEIPT_MISSING", {"caseId": case_id})
+        require(by_case[case_id].get("disposition") == subject.get("expectedDisposition"), "SUBJECT_DISPOSITION_MISMATCH", {
+            "caseId": case_id,
+            "expected": subject.get("expectedDisposition"),
+            "actual": by_case[case_id].get("disposition"),
+        })
+
+    real_subjects = [subject for subject in subject_items if subject.get("target") is not None]
+    fallback_subjects = [subject for subject in subject_items if subject.get("target") is None]
     qualification = protocol["qualification"]
     require(len(real_subjects) >= qualification["minimumRealSubjects"], "INSUFFICIENT_REAL_SUBJECTS")
 
