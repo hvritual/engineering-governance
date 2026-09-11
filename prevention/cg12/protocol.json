@@ -12,6 +12,7 @@
   "dispositions": {
     "alreadySatisfied": "NO_CHANGE_REQUIRED",
     "patchRequired": "PATCH_REQUIRED_ON_AUTHORIZED_BRANCH_ONLY",
+    "investigationRequired": "STOP_AND_INVESTIGATE",
     "notAuthorized": "NO_ACTION"
   },
   "reconciliation": {
@@ -22,6 +23,7 @@
     "requireLiveEvidenceForSatisfiedDisposition": true,
     "forbidGratuitousPatchWhenSatisfied": true,
     "forbidConsumerMutationDuringReconciliation": true,
+    "verificationFailureDoesNotImplyPatch": true,
     "fallbackMayNotBecomeExecutable": true,
     "patchDispositionDoesNotAuthorizeMerge": true
   },
