@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG12-AUTHORIZED-IMPLEMENTATION-RECONCILIATION",
+  "subjects": [
+    {
+      "caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER",
+      "expectedAuthorizationId": "57050154f46324ff6d399b4ec58313b64adf1975d80bb2b43c372207bd730700",
+      "target": {
+        "repository": "hvritual/iot-delivery-system",
+        "baseBranch": "main",
+        "baseSha": "c38ce0efcbe11d8ef9201381f895c7e9a85ddbc0",
+        "workBranch": "cg11/iot-sqlite-prevention-control"
+      },
+      "authorizedPaths": [
+        "backend-yunka/internal/delivery/ag03_sqlite_startup_test.go"
+      ],
+      "observedReadOnlyPaths": [
+        "backend-yunka/internal/delivery/sqlite_repository.go"
+      ],
+      "expectedBlobs": {
+        "backend-yunka/internal/delivery/sqlite_repository.go": "6ccf2a6f39bd5f3695533584fb2c710de3f56054",
+        "backend-yunka/internal/delivery/ag03_sqlite_startup_test.go": "9f025a225a030abe35ba31c831fcc4804ad72d20"
+      },
+      "requiredVerificationClasses": [
+        "AUTHORITATIVE_BEHAVIOR_REGRESSION",
+        "KNOWN_RECURRENCE_MUTATION",
+        "STATIC_DETECTOR_MATRIX"
+      ],
+      "freshVerificationRequired": [
+        "AUTHORITATIVE_BEHAVIOR_REGRESSION",
+        "KNOWN_RECURRENCE_MUTATION"
+      ],
+      "identityCarriedVerification": {
+        "STATIC_DETECTOR_MATRIX": {
+          "requiresExactBlobPaths": [
+            "backend-yunka/internal/delivery/sqlite_repository.go",
+            "backend-yunka/internal/delivery/ag03_sqlite_startup_test.go"
+          ],
+          "governanceRule": {
+            "path": "prevention/cg03/iot-sqlite-startup/rule.yml",
+            "blob": "0a5d293d8d3571d9cbf9e7dee2f4dbc20eed1d05"
+          }
+        }
+      },
+      "knownVerificationBlocker": {
+        "class": "LEGACY_MISSING_REPLACE_TARGET",
+        "module": "github.com/go-kit/kit@v0.10.0",
+        "replacePath": "third_party/yunka/compat/go-kit-kit-log",
+        "expectedLogContains": "third_party/yunka/compat/go-kit-kit-log/go.mod: no such file or directory"
+      },
+      "expectedDisposition": "STOP_AND_INVESTIGATE"
+    },
+    {
+      "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+      "expectedAuthorizationId": "ed545da349372de863006f96e91b70e36cf33c4513bdc41915133aaed0cc58c5",
+      "target": {
+        "repository": "hvritual/biz",
+        "baseBranch": "main",
+        "baseSha": "a08602975266668d4a1c5e784f0b3cf43ff92185",
+        "workBranch": "cg11/biz-runtime-gate-control"
+      },
+      "authorizedPaths": [
+        ".github/workflows/b12-7-runtime-qualification.yml",
+        "scripts/ce04_runtime_closure.py",
+        "scripts/test_ce04_runtime_closure.py"
+      ],
+      "observedReadOnlyPaths": [
+        "contracts/generated/manifest.json",
+        ".yunka/dev.json"
+      ],
+      "expectedBlobs": {
+        ".github/workflows/b12-7-runtime-qualification.yml": "60ccee5ad9deefe04869d3ebfb6177a0632fe582",
+        "scripts/ce04_runtime_closure.py": "2b75316b4341e8abc8c7e8ba067d7404a88f365d",
+        "scripts/test_ce04_runtime_closure.py": "f2b7d4ce12683bb63372d4976a882c0723379cd0",
+        "contracts/generated/manifest.json": "69c592f63e7319aaf986e5f246ccb7019efc991c",
+        ".yunka/dev.json": "41460e3dc6cde44f64a326efc5c14f301d1dc0c8"
+      },
+      "requiredVerificationClasses": [
+        "AUTHORITATIVE_INVENTORY_BINDING",
+        "SEMANTIC_RECONCILIATION",
+        "NEGATIVE_INTEGRITY_MATRIX",
+        "VALID_GROWTH_CONTROL"
+      ],
+      "freshVerificationRequired": [
+        "AUTHORITATIVE_INVENTORY_BINDING",
+        "SEMANTIC_RECONCILIATION",
+        "NEGATIVE_INTEGRITY_MATRIX",
+        "VALID_GROWTH_CONTROL"
+      ],
+      "identityCarriedVerification": {},
+      "expectedDisposition": "NO_CHANGE_REQUIRED"
+    },
+    {
+      "caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL",
+      "expectedAuthorizationId": null,
+      "target": null,
+      "authorizedPaths": [],
+      "observedReadOnlyPaths": [],
+      "expectedBlobs": {},
+      "requiredVerificationClasses": [],
+      "freshVerificationRequired": [],
+      "identityCarriedVerification": {},
+      "expectedDisposition": "NO_ACTION"
+    }
+  ]
+}

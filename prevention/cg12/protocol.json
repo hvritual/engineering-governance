@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "CG12-AUTHORIZED-IMPLEMENTATION-RECONCILIATION",
+  "status": "QUALIFIED",
+  "sourceAuthorities": [
+    {"path": "prevention/cg11/protocol.json", "blob": "d73c764bb1a6748971ea2df97c45cb6596e8b458"},
+    {"path": "prevention/cg11/requests.json", "blob": "23d0b8cb6750423e7f02da2de1ada85034f6a627"},
+    {"path": "prevention/cg11/build_authorization.py", "blob": "7810d34e440ca8252cbe5265a6d7f01566f09936"},
+    {"path": "prevention/cg11/verify_authorization.py", "blob": "c8ec6b875503bf4e267489659ce2d6ec930e19f4"}
+  ],
+  "principle": "Authorization is permission to change, not evidence that change is necessary.",
+  "dispositions": {
+    "alreadySatisfied": "NO_CHANGE_REQUIRED",
+    "patchRequired": "PATCH_REQUIRED_ON_AUTHORIZED_BRANCH_ONLY",
+    "investigationRequired": "STOP_AND_INVESTIGATE",
+    "notAuthorized": "NO_ACTION"
+  },
+  "reconciliation": {
+    "requireExactCg11Authorization": true,
+    "requireExactLiveBase": true,
+    "requireExactAllowedPaths": true,
+    "requirePreservedVerificationClasses": true,
+    "requireLiveEvidenceForSatisfiedDisposition": true,
+    "forbidGratuitousPatchWhenSatisfied": true,
+    "forbidConsumerMutationDuringReconciliation": true,
+    "verificationFailureDoesNotImplyPatch": true,
+    "fallbackMayNotBecomeExecutable": true,
+    "patchDispositionDoesNotAuthorizeMerge": true
+  },
+  "forbiddenOutcomes": [
+    "PATCH_WHEN_ALREADY_SATISFIED",
+    "DIRECT_MAIN_UPDATE",
+    "MERGE_AUTHORIZATION",
+    "REPOSITORY_ADMINISTRATION",
+    "IMPLICIT_CONSUMER_ADOPTION",
+    "MUTATE_FORBIDDEN_PATH",
+    "WEAKEN_REQUIRED_VERIFICATION",
+    "ACCEPT_STALE_BASE"
+  ],
+  "authorityCeiling": {
+    "modifiesConsumerFiles": false,
+    "createsConsumerBranch": false,
+    "opensConsumerPullRequest": false,
+    "authorizesMerge": false,
+    "directMainUpdate": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "minimumRealSubjects": 2,
+    "requireAtLeastOneAlreadySatisfiedRealSubject": true,
+    "requireAtLeastOneInvestigationRealSubject": true,
+    "requireNoPatchRequiredInQualification": true,
+    "requireNegativeMatrix": true,
+    "requireConsumerWorktreesClean": true,
+    "requireExactCg11SourceBlobs": true,
+    "discovery": {
+      "head": "404316034abd84a3632466e8da18d89ab49cca5c",
+      "run": 34608469679,
+      "result": "EXPECTED_DISCOVERY_FAILURE",
+      "finding": "IoT fresh behavior replay is blocked by the pre-existing missing github.com/go-kit/kit replacement target under third_party/yunka/compat/go-kit-kit-log; CG-12 therefore must not infer a patch from missing behavioral evidence."
+    },
+    "primary": {
+      "head": "0408ad2b30865fa2a3e153f5e379ffcb5b9e7e30",
+      "run": 34609088704,
+      "job": 103294736589,
+      "result": "SUCCESS",
+      "decision": "AUTHORIZED_IMPLEMENTATION_RECONCILIATION_VERIFIED",
+      "realSubjectCount": 2,
+      "noChangeRequiredCount": 1,
+      "investigationRequiredCount": 1,
+      "patchRequiredCount": 0,
+      "fallbackNoActionCount": 1,
+      "consumerMutation": false,
+      "negativeMatrix": "PASS"
+    },
+    "finalReplay": {
+      "head": "33e1630c6afee80d1aed21e899435ab1010a2742",
+      "run": 34609219798,
+      "job": 103295181355,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED"
+    },
+    "subjects": {
+      "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER": {
+        "disposition": "STOP_AND_INVESTIGATE",
+        "identityDrift": false,
+        "verificationBlocker": "LEGACY_MISSING_REPLACE_TARGET",
+        "freshBehavior": "BLOCKED_KNOWN_MODULE_REPLACE",
+        "freshMutation": "BLOCKED_KNOWN_MODULE_REPLACE",
+        "staticDetectorMatrixIdentity": "PASS"
+      },
+      "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT": {
+        "disposition": "NO_CHANGE_REQUIRED",
+        "identityDrift": false,
+        "checkerTestCount": 25,
+        "semanticReconciliation": "PASS",
+        "negativeIntegrityMatrix": "PASS",
+        "validGrowthControl": "PASS"
+      },
+      "CG10-INCOMPLETE-EVIDENCE-CONTROL": {
+        "disposition": "NO_ACTION",
+        "authorization": "NOT_AUTHORIZED"
+      }
+    }
+  }
+}
