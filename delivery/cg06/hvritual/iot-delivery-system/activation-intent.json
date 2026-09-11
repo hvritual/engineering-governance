@@ -1,20 +1,44 @@
 {
   "schemaVersion": 1,
   "id": "CG06-IOT-DELIVERY-ACTIVATION-INTENT",
-  "status": "READY_EXCEPT_EXTERNAL_ADMIN_ACTIVATION",
+  "status": "READY_FOR_EXTERNAL_ADMIN_RULESET_ACTIVATION",
   "repository": "hvritual/iot-delivery-system",
   "branch": "main",
+  "qualifiedPublisher": {
+    "principalType": "GitHubActionsApp",
+    "login": "github-actions[bot]",
+    "integrationId": 15368,
+    "statusContext": "engineering-governance/trusted-delivery",
+    "workflowPath": ".github/workflows/cg06-trusted-delivery.yml",
+    "workflowMainCommit": "2d022a3ee2d83e1cf261e57e8f04f0228d9b7334",
+    "workflowBlob": "3247b10de936bd847fd4f94a4e475a647a557242",
+    "repositoryPermissions": {
+      "metadata": "read",
+      "contents": "read",
+      "statuses": "write"
+    },
+    "qualification": {
+      "probePullRequest": 9,
+      "candidateSha": "fd72b4c0394f96909bf6478bbd08498f84bd6762",
+      "run": 34579085328,
+      "job": 103198217790,
+      "statusId": 53972508441,
+      "state": "success",
+      "creator": "github-actions[bot]",
+      "verifiedIntegrationId": 15368
+    }
+  },
   "rulesetRequest": {
     "endpoint": "POST /repos/hvritual/iot-delivery-system/rulesets",
     "requiredPermission": "Administration:write",
     "apiVersion": "2026-03-10",
-    "payloadTemplate": {
+    "payload": {
       "name": "cg06-trusted-delivery-main",
       "target": "branch",
       "enforcement": "active",
       "bypass_actors": [
         {
-          "actor_id": "${TRUSTED_GITHUB_APP_INTEGRATION_ID}",
+          "actor_id": 15368,
           "actor_type": "Integration",
           "bypass_mode": "always"
         }
@@ -48,34 +72,33 @@
             "required_status_checks": [
               {
                 "context": "engineering-governance/trusted-delivery",
-                "integration_id": "${TRUSTED_GITHUB_APP_INTEGRATION_ID}"
+                "integration_id": 15368
               }
+            ]
+          }
+        },
+        {
+          "type": "file_path_restriction",
+          "parameters": {
+            "restricted_file_paths": [
+              ".github/workflows/**"
             ]
           }
         }
       ]
     }
   },
-  "trustedPublisherRequest": {
-    "principalType": "GitHubApp",
-    "repositoryPermissions": {
-      "metadata": "read",
-      "statuses": "write"
-    },
-    "mustBeInstalledOnConsumer": true,
-    "mustPublishStatusBeforeRulesetSourcePinning": true,
-    "mustNotBeControlledByCandidateRepositoryContents": true,
-    "integrationId": null,
-    "state": "UNRESOLVED"
-  },
   "trustedIntegratorRequest": {
-    "principal": "SAME_AS_TRUSTED_PUBLISHER",
+    "principal": "GITHUB_ACTIONS_APP_15368",
+    "state": "NOT_LIVE_QUALIFIED_BECAUSE_RULESET_INACTIVE",
     "operation": "NON_FORCE_FAST_FORWARD_MAIN_TO_EXACT_QUALIFIED_SHA",
     "preconditions": [
       "candidate is descendant of current main",
       "CG-05 aggregate for the exact candidate is PASS",
-      "trusted status on exact candidate is success and source-pinned to the trusted app",
-      "ruleset is active and trusted app is the only update bypass actor"
+      "trusted status on exact candidate is success and source-pinned to GitHub Actions App 15368",
+      "ruleset is active",
+      "GitHub Actions App 15368 is the only update bypass actor",
+      ".github/workflows/** is restricted from normal candidate updates"
     ],
     "postconditions": [
       "main SHA equals qualified candidate SHA",
@@ -88,9 +111,17 @@
     "writeActorsMayBypass": false,
     "directMainUpdateAllowed": false
   },
+  "liveStateBeforeActivation": {
+    "mainSha": "2d022a3ee2d83e1cf261e57e8f04f0228d9b7334",
+    "protected": false,
+    "requiredStatusChecksEnforcement": "off",
+    "rulesets": []
+  },
   "notes": [
-    "This file is an activation intent, not evidence that activation has occurred.",
-    "Placeholders must be resolved to a real installed GitHub App integration ID before any ruleset is activated.",
-    "A required status check should be pinned to that app; GitHub supports selecting an app as the expected source when the app has statuses:write and has recently submitted the check."
+    "This file is an activation intent, not evidence that repository blocking is active.",
+    "The trusted publisher is no longer a placeholder: exact-SHA success publication from GitHub Actions App 15368 has been verified.",
+    "The ruleset must pin the required status context to integration_id 15368.",
+    "The ruleset must restrict .github/workflows/** so candidate changes cannot create or alter workflows that could spoof the trusted status.",
+    "CG-06 remains incomplete until live ruleset activation, negative bypass proof, exact-SHA integration proof, and post-integration readback are completed."
   ]
 }

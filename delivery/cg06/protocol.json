@@ -5,7 +5,8 @@
   "consumer": {
     "repository": "hvritual/iot-delivery-system",
     "targetBranch": "main",
-    "baselineCommit": "bcd20632b666405c3f7a8fe8d53f591c78450087"
+    "baselineCommit": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+    "currentMainCommit": "2d022a3ee2d83e1cf261e57e8f04f0228d9b7334"
   },
   "upstreamAuthority": {
     "cg05Protocol": {
@@ -25,23 +26,42 @@
   },
   "trustedDelivery": {
     "statusContext": "engineering-governance/trusted-delivery",
-    "publisherModel": "EXTERNAL_GITHUB_APP",
+    "publisherModel": "DEFAULT_BRANCH_PULL_REQUEST_TARGET_GITHUB_ACTIONS_APP",
     "publisherMustBeOutsideCandidateControlledSource": true,
     "publisherRequiredRepositoryPermissions": [
       "metadata:read",
+      "contents:read",
       "statuses:write"
     ],
-    "publisherIntegrationId": null,
-    "publisherState": "UNRESOLVED",
-    "aggregateAuthority": "CG05_VALID_AGGREGATE_FOR_EXACT_CANDIDATE_SHA"
+    "publisherIntegrationId": 15368,
+    "publisherLogin": "github-actions[bot]",
+    "publisherState": "QUALIFIED_EXACT_SHA_SUCCESS",
+    "publisherWorkflowPath": ".github/workflows/cg06-trusted-delivery.yml",
+    "publisherWorkflowMainCommit": "2d022a3ee2d83e1cf261e57e8f04f0228d9b7334",
+    "publisherWorkflowBlob": "3247b10de936bd847fd4f94a4e475a647a557242",
+    "aggregateAuthority": "CG05_VALID_AGGREGATE_FOR_EXACT_CANDIDATE_SHA",
+    "qualification": {
+      "probePullRequest": 9,
+      "candidateSha": "fd72b4c0394f96909bf6478bbd08498f84bd6762",
+      "run": 34579085328,
+      "job": 103198217790,
+      "statusId": 53972508441,
+      "status": "success",
+      "statusDescription": "CG-05 exact required-check set reconciled for this candidate SHA",
+      "creator": "github-actions[bot]",
+      "integrationId": 15368,
+      "verifiedAt": "2026-09-11T08:26:29Z"
+    }
   },
   "integration": {
     "mode": "TRUSTED_FAST_FORWARD_TO_QUALIFIED_SHA",
     "normalHumanDirectUpdateAllowed": false,
-    "trustedIntegrator": "SAME_TRUSTED_GITHUB_APP_AS_STATUS_PUBLISHER",
+    "trustedIntegrator": "GITHUB_ACTIONS_APP_15368",
+    "trustedIntegratorState": "NOT_LIVE_QUALIFIED_BECAUSE_RULESET_INACTIVE",
     "candidateMustBeDescendantOfCurrentMain": true,
     "forceUpdateAllowed": false,
-    "postUpdateMainMustEqualQualifiedCandidateSha": true
+    "postUpdateMainMustEqualQualifiedCandidateSha": true,
+    "liveQualificationRequiresActiveRuleset": true
   },
   "repositoryRuleset": {
     "name": "cg06-trusted-delivery-main",
@@ -54,14 +74,18 @@
       "update",
       "deletion",
       "non_fast_forward",
-      "required_status_checks"
+      "required_status_checks",
+      "file_path_restriction"
     ],
     "requiredStatusChecks": [
       {
         "context": "engineering-governance/trusted-delivery",
-        "integrationId": null,
+        "integrationId": 15368,
         "sourceMustBePinned": true
       }
+    ],
+    "restrictedFilePaths": [
+      ".github/workflows/**"
     ],
     "strictRequiredStatusChecksPolicy": true,
     "doNotEnforceOnCreate": false,
@@ -69,7 +93,7 @@
       "normalRepositoryAdmins": false,
       "normalWriteActors": false,
       "trustedIntegrationOnly": true,
-      "trustedIntegrationId": null,
+      "trustedIntegrationId": 15368,
       "mode": "always"
     }
   },
@@ -89,8 +113,8 @@
     "assertions": [
       "main ref resolves to the exact qualified candidate SHA",
       "active ruleset remains active",
-      "required trusted status check remains source-pinned",
-      "trusted integration remains the only update bypass actor"
+      "required trusted status check remains source-pinned to GitHub Actions App 15368",
+      "GitHub Actions App 15368 remains the only update bypass actor"
     ]
   },
   "readinessQualification": {
@@ -109,24 +133,39 @@
       "wrongStatusApp": "LIVE_STATUS_SOURCE_NOT_PINNED_TO_BYPASS_APP",
       "candidateControlledPublisher": "TRUSTED_PUBLISHER_CANDIDATE_CONTROLLED",
       "wrongMainReadback": "POST_INTEGRATION_MAIN_SHA_MISMATCH"
+    },
+    "publisherQualification": {
+      "state": "PASS",
+      "exactCandidateSha": "fd72b4c0394f96909bf6478bbd08498f84bd6762",
+      "run": 34579085328,
+      "job": 103198217790,
+      "integrationId": 15368,
+      "creator": "github-actions[bot]"
     }
   },
   "currentBlockers": [
     {
       "id": "B1_ADMIN_MUTATION_SURFACE",
       "status": "BLOCKING",
-      "detail": "The connected GitHub integration exposes repository/ruleset reads but no Administration:write mutation action; direct branch-protection read returned 403 Resource not accessible by integration."
-    },
-    {
-      "id": "B2_TRUSTED_STATUS_PUBLISHER",
-      "status": "BLOCKING",
-      "detail": "No source-pinned GitHub App principal with statuses:write has been resolved for the trusted status context."
+      "detail": "The connected GitHub integration exposes repository/ruleset reads but no Administration:write mutation action, so this task cannot activate the repository ruleset."
     },
     {
       "id": "B3_RULESET_NOT_ACTIVE",
       "status": "BLOCKING",
       "detail": "Consumer main is currently unprotected and repository rulesets are empty."
+    },
+    {
+      "id": "B4_TRUSTED_INTEGRATION_LIVE_PROOF",
+      "status": "BLOCKED_BY_B3",
+      "detail": "Exact-SHA trusted integration and post-update readback cannot be live-qualified until the ruleset is active; the selected bypass principal is GitHub Actions App 15368."
     }
   ],
-  "completionState": "REPOSITORY_BLOCKING may be claimed only after live activation, negative bypass proof, positive integration proof, and post-integration main readback."
+  "resolvedBlockers": [
+    {
+      "id": "B2_TRUSTED_STATUS_PUBLISHER",
+      "status": "RESOLVED",
+      "detail": "Default-branch pull_request_target workflow published an exact-SHA success status from github-actions[bot], GitHub Actions App 15368, after CG-05 exact required-check reconciliation."
+    }
+  ],
+  "completionState": "REPOSITORY_BLOCKING may be claimed only after live ruleset activation, negative bypass proof, positive exact-SHA integration proof, and post-integration main readback."
 }
