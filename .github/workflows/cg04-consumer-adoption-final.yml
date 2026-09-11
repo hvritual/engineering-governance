@@ -1,0 +1,231 @@
+name: CG-04 Final Consumer Adoption Replay
+
+on:
+  push:
+    branches: [cg-04/consumer-adoption-upgrade]
+    paths:
+      - .github/workflows/cg04-consumer-adoption-final.yml
+      - adoption/cg04/**
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CONSUMER_SHA: bcd20632b666405c3f7a8fe8d53f591c78450087
+      YUNKA_SHA: 057ebcf88a87303eb633eb6e604d306f633dfac0
+      PROFILE: adoption/cg04/hvritual/iot-delivery-system/profile.json
+      LOCK: adoption/cg04/hvritual/iot-delivery-system/lock.json
+      PROTOCOL: adoption/cg04/protocol.json
+      AST_GREP_VERSION: 0.45.3
+      AST_GREP_ASSET_SHA256: f8ac830881339d1edee6b2652f54798c0f4da5a827f2db38a08ee31117783ce8
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          path: governance
+          persist-credentials: false
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: hvritual/iot-delivery-system
+          ref: ${{ env.CONSUMER_SHA }}
+          path: consumer
+          submodules: recursive
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+        with:
+          go-version: '1.25.13'
+          check-latest: false
+          cache: false
+
+      - name: Validate final profile, lock and protocol identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg04-final"
+          mkdir -p "$out/logs" "$out/tools" "$out/snapshots"
+          test "$(git -C consumer rev-parse HEAD)" = "$CONSUMER_SHA"
+          test "$(git -C consumer rev-parse HEAD:third_party/yunka)" = "$YUNKA_SHA"
+          cp "governance/$PROFILE" "$out/snapshots/profile.json"
+          cp "governance/$LOCK" "$out/snapshots/lock.json"
+          cp "governance/$PROTOCOL" "$out/snapshots/protocol.json"
+
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          root=pathlib.Path('governance')
+          profile=json.loads((root/os.environ['PROFILE']).read_text())
+          lock=json.loads((root/os.environ['LOCK']).read_text())
+          protocol=json.loads((root/os.environ['PROTOCOL']).read_text())
+          assert profile['status']=='ADOPTED_EXTERNAL_SHADOW'
+          assert lock['status']=='ACTIVE'
+          assert lock['activation']['state']=='ACTIVE_EXTERNAL_SHADOW'
+          assert protocol['status']=='QUALIFIED'
+          assert profile['selection']['assetId']==lock['asset']['id']
+          assert profile['selection']['requestedVersion']==lock['asset']['version']=='1.0.0'
+          assert profile['consumer']['requiresConsumerRepositoryChange'] is False
+          assert profile['consumer']['requiresConsumerScaffoldUpgrade'] is False
+          assert profile['consumer']['requiresYunkaUpgrade'] is False
+          assert lock['activation']['consumerRepositoryMutationRequired'] is False
+          assert lock['activation']['yunkaUpgradeRequired'] is False
+          assert lock['activation']['qualifiedAgainstConsumerCommit']==os.environ['CONSUMER_SHA']
+          assert profile['qualificationEvidence']['run']==34561483769
+          assert lock['qualificationEvidence']['run']==34561483769
+          assert protocol['qualificationEvidence']['primaryRun']==34561483769
+          assert profile['qualificationEvidence']['artifactManifestReplay']=='PASS'
+          assert lock['qualificationEvidence']['artifactManifestReplay']=='PASS'
+          assert protocol['qualificationEvidence']['artifactManifestReplay']=='PASS'
+
+          def blob(path):
+            return subprocess.check_output(['git','-C','governance','rev-parse',f'HEAD:{path}'],text=True).strip()
+          a=lock['asset']; t=lock['tool']
+          assert blob(a['preventionPath'])==a['preventionBlob']
+          assert blob(a['problemPath'])==a['problemBlob']
+          assert blob(a['rulePath'])==a['ruleBlob']
+          assert blob('corpus/cg01/iot-sqlite-startup/case.json')==a['qualificationCorpusBlob']
+          assert blob('admission/cg02/decision.json')==t['admissionDecisionBlob']
+          prevention=json.loads((root/a['preventionPath']).read_text())
+          assert prevention['status']=='QUALIFIED'
+          assert prevention['id']==a['id'] and prevention['version']==a['version']
+          assert prevention['rule']['engine']==t['name']=='ast-grep'
+          assert prevention['rule']['engineVersion']==t['version']==os.environ['AST_GREP_VERSION']
+          assert prevention['rule']['linuxAmd64AssetSha256']==t['linuxAmd64AssetSha256']==os.environ['AST_GREP_ASSET_SHA256']
+          PY
+
+          find consumer -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-before.sha256"
+          test -z "$(git -C consumer status --porcelain --untracked-files=all)"
+
+      - name: Verify consumer with locked governance identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg04-final"
+          curl -fsSL "https://github.com/ast-grep/ast-grep/releases/download/${AST_GREP_VERSION}/app-x86_64-unknown-linux-gnu.zip" -o "$out/tools/ast-grep.zip"
+          echo "$AST_GREP_ASSET_SHA256  $out/tools/ast-grep.zip" | sha256sum -c -
+          unzip -q "$out/tools/ast-grep.zip" -d "$out/tools/bin"
+          sg="$out/tools/bin/ast-grep"
+          "$sg" --version | tee "$out/logs/ast-grep.version.txt"
+          sha256sum "$sg" > "$out/logs/ast-grep.binary.sha256"
+
+          rule="$GITHUB_WORKSPACE/governance/prevention/cg03/iot-sqlite-startup/rule.yml"
+          target="$GITHUB_WORKSPACE/consumer/backend-yunka/internal/delivery/sqlite_repository.go"
+          set +e
+          "$sg" scan -r "$rule" --json=compact "$target" > "$out/logs/static.stdout" 2> "$out/logs/static.stderr"
+          code=$?
+          set -e
+          printf '%s\n' "$code" > "$out/logs/static.exit"
+
+          python3 - <<'PY'
+          import json, os, pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'],'cg04-final','logs','static.stdout')
+          text=p.read_text().strip(); data=json.loads(text) if text else []
+          rid='cg03-sqlite-busy-timeout-before-wal'
+          def count(v):
+            if isinstance(v,dict): return (1 if v.get('ruleId')==rid else 0)+sum(count(x) for x in v.values())
+            if isinstance(v,list): return sum(count(x) for x in v)
+            return 0
+          findings=count(data); assert findings==0, findings
+          pathlib.Path(os.environ['RUNNER_TEMP'],'cg04-final','static-result.json').write_text(json.dumps({'status':'PASS','findings':0},indent=2)+'\n')
+          PY
+
+          (
+            cd consumer/backend-yunka
+            GOWORK=off GOFLAGS=-mod=readonly go test -json -count=1 -run '^TestAG03SQLiteStartupWaitsForExternalLock$' ./internal/delivery
+          ) > "$out/logs/behavior.jsonl"
+
+          python3 - <<'PY'
+          import json, os, pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'],'cg04-final','logs','behavior.jsonl')
+          test='TestAG03SQLiteStartupWaitsForExternalLock'; seen=False; passed=False; pkg=False
+          for line in p.read_text().splitlines():
+            try: e=json.loads(line)
+            except json.JSONDecodeError: continue
+            if e.get('Test')==test:
+              seen=True
+              if e.get('Action')=='pass': passed=True
+            if e.get('Action')=='pass' and not e.get('Test'): pkg=True
+          assert seen and passed and pkg, (seen,passed,pkg)
+          pathlib.Path(os.environ['RUNNER_TEMP'],'cg04-final','behavior-result.json').write_text(json.dumps({'status':'PASS','test':test,'executed':seen,'passed':passed},indent=2)+'\n')
+          PY
+
+      - name: Replay upgrade preview and rollback contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg04-final"
+          python3 - <<'PY'
+          import copy, json, os, pathlib, subprocess
+          root=pathlib.Path('governance')
+          lock=json.loads((root/os.environ['LOCK']).read_text())
+          prevention=json.loads((root/lock['asset']['preventionPath']).read_text())
+          def blob(path): return subprocess.check_output(['git','-C','governance','rev-parse',f'HEAD:{path}'],text=True).strip()
+          def resolve(candidate):
+            a=candidate['asset']; t=candidate['tool']
+            if a['id']!=prevention['id'] or a['version']!=prevention['version']:
+              return {'status':'REJECTED','reason':'UNQUALIFIED_OR_NONEXISTENT_VERSION'}
+            for field,path in [('preventionBlob',a['preventionPath']),('problemBlob',a['problemPath']),('ruleBlob',a['rulePath'])]:
+              if a[field]!=blob(path): return {'status':'REJECTED','reason':'IMMUTABLE_IDENTITY_DRIFT','field':field}
+            if t['name']!=prevention['rule']['engine'] or t['version']!=prevention['rule']['engineVersion']:
+              return {'status':'REJECTED','reason':'UNADMITTED_TOOL_IDENTITY'}
+            if t['linuxAmd64AssetSha256']!=prevention['rule']['linuxAmd64AssetSha256']:
+              return {'status':'REJECTED','reason':'TOOL_DIGEST_DRIFT'}
+            return {'status':'RESOLVED'}
+          active=resolve(lock); assert active['status']=='RESOLVED'
+          no_op=copy.deepcopy(lock); assert resolve(no_op)['status']=='RESOLVED' and no_op==lock
+          fake=copy.deepcopy(lock); fake['asset']['version']='1.0.1'; fake_r=resolve(fake); assert fake_r['reason']=='UNQUALIFIED_OR_NONEXISTENT_VERSION'
+          bad=copy.deepcopy(lock); bad['asset']['ruleBlob']='0000000000000000000000000000000000000000'; bad_r=resolve(bad); assert bad_r['reason']=='IMMUTABLE_IDENTITY_DRIFT'
+          rollback=resolve(lock); assert rollback['status']=='RESOLVED'
+          result={
+            'status':'PASS','activeLock':active,
+            'noOpCandidate':{'classification':'NO_CHANGE','resolution':resolve(no_op)},
+            'fakeVersionCandidate':fake_r,'tamperedBlobCandidate':bad_r,
+            'rollbackToActiveLock':rollback,'activeLockMutated':False,
+            'policyDelta':{'noOp':[],'fakeVersion':['asset.version: 1.0.0 -> 1.0.1'],'tamperedBlob':['asset.ruleBlob: locked -> tampered']},
+            'codeDelta':{'source':os.environ['CONSUMER_SHA'],'changed':False},
+            'actualVersionChangingUpgrade':'NOT_APPLICABLE_NO_SECOND_QUALIFIED_VERSION'
+          }
+          pathlib.Path(os.environ['RUNNER_TEMP'],'cg04-final','upgrade-preview.json').write_text(json.dumps(result,indent=2)+'\n')
+          PY
+
+      - name: Reconcile final read-only state and emit receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg04-final"
+          find consumer -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-after.sha256"
+          diff -u "$out/dependency-before.sha256" "$out/dependency-after.sha256" > "$out/dependency-diff.txt"
+          test -z "$(git -C consumer status --porcelain --untracked-files=all)"
+          test -z "$(git -C governance status --porcelain --untracked-files=all)"
+          python3 - <<'PY'
+          import json, os, pathlib
+          out=pathlib.Path(os.environ['RUNNER_TEMP'],'cg04-final')
+          profile=json.loads((out/'snapshots/profile.json').read_text()); lock=json.loads((out/'snapshots/lock.json').read_text()); protocol=json.loads((out/'snapshots/protocol.json').read_text())
+          receipt={
+            'schemaVersion':1,'status':'PASS','task':'CG-04-FINAL',
+            'protocolStatus':protocol['status'],'profileStatus':profile['status'],'lockStatus':lock['status'],
+            'profileId':profile['id'],'lockId':lock['id'],
+            'consumer':{'repository':profile['consumer']['repository'],'sourceCommit':os.environ['CONSUMER_SHA'],'yunkaPin':os.environ['YUNKA_SHA']},
+            'asset':{'id':lock['asset']['id'],'version':lock['asset']['version'],'ruleBlob':lock['asset']['ruleBlob']},
+            'staticVerification':json.loads((out/'static-result.json').read_text()),
+            'behaviorVerification':json.loads((out/'behavior-result.json').read_text()),
+            'upgradePreview':json.loads((out/'upgrade-preview.json').read_text()),
+            'consumerTrackedSourceMutated':False,'consumerDependencyLocksMutated':False,
+            'consumerScaffoldUpgradeRequired':False,'yunkaUpgradeRequired':False
+          }
+          (out/'qualification.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          PY
+          rm -rf "$out/tools"
+          (cd "$out" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cg04-consumer-adoption-final-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/cg04-final
+          retention-days: 30
+          if-no-files-found: error
