@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "LOCK-CG04-HVRITUAL-IOT-DELIVERY-0001",
+  "profileId": "ADOPT-CG04-HVRITUAL-IOT-DELIVERY",
+  "status": "LOCKED_PENDING_QUALIFICATION",
+  "asset": {
+    "id": "PV-CG03-IOT-SQLITE-BUSY-TIMEOUT-BEFORE-WAL",
+    "version": "1.0.0",
+    "preventionPath": "prevention/cg03/iot-sqlite-startup/prevention.json",
+    "preventionBlob": "5604caf97f0d0c5b4fafe3bd071e8b41d0cf51a5",
+    "problemPath": "prevention/cg03/iot-sqlite-startup/problem.json",
+    "problemBlob": "88ef8167d17b0321dd47d97f0488f4e85f7f2b1d",
+    "rulePath": "prevention/cg03/iot-sqlite-startup/rule.yml",
+    "ruleBlob": "0a5d293d8d3571d9cbf9e7dee2f4dbc20eed1d05",
+    "ruleId": "cg03-sqlite-busy-timeout-before-wal",
+    "qualificationCorpusBlob": "5cba82314a027f4ee6284741518a45238b2b6fdc"
+  },
+  "tool": {
+    "name": "ast-grep",
+    "version": "0.45.3",
+    "tagCommit": "979c143639e3588c31f563091e69398683ed34f0",
+    "linuxAmd64Asset": "app-x86_64-unknown-linux-gnu.zip",
+    "linuxAmd64AssetSha256": "f8ac830881339d1edee6b2652f54798c0f4da5a827f2db38a08ee31117783ce8",
+    "admissionDecisionBlob": "7b8993ed74f0e185dcfc8a07c3da4374e1879fbd"
+  },
+  "provenance": {
+    "governanceCommitAtSelection": "aa7a3771186babbad75c6ff676cacdc072ea8fee",
+    "previousLock": null
+  },
+  "activation": {
+    "mode": "EXTERNAL_SHADOW",
+    "consumerRepositoryMutationRequired": false,
+    "yunkaUpgradeRequired": false
+  }
+}
