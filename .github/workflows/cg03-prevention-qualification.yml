@@ -1,0 +1,221 @@
+name: CG-03 Prevention Asset Qualification
+
+on:
+  push:
+    branches: [cg-03/problem-regression-prevention]
+    paths:
+      - prevention/cg03/**
+      - .github/workflows/cg03-prevention-qualification.yml
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CG01_BLOB: 5cba82314a027f4ee6284741518a45238b2b6fdc
+      CG02_BLOB: 7b8993ed74f0e185dcfc8a07c3da4374e1879fbd
+      BUGGY_SHA: f190fe237fa1efb738b4866275804093a209de5b
+      FIXED_SHA: bcd20632b666405c3f7a8fe8d53f591c78450087
+      YUNKA_SHA: 057ebcf88a87303eb633eb6e604d306f633dfac0
+      AST_GREP_VERSION: 0.45.3
+      AST_GREP_ASSET_SHA256: f8ac830881339d1edee6b2652f54798c0f4da5a827f2db38a08ee31117783ce8
+      RULE_ID: cg03-sqlite-busy-timeout-before-wal
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          path: governance
+          persist-credentials: false
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: hvritual/iot-delivery-system
+          ref: ${{ env.BUGGY_SHA }}
+          path: buggy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: hvritual/iot-delivery-system
+          ref: ${{ env.FIXED_SHA }}
+          path: fixed
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Freeze qualified inputs and tool identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg03"
+          mkdir -p "$out/logs" "$out/tools" "$out/snapshots"
+          test "$(git -C buggy rev-parse HEAD)" = "$BUGGY_SHA"
+          test "$(git -C fixed rev-parse HEAD)" = "$FIXED_SHA"
+          test "$(git -C buggy rev-parse HEAD:third_party/yunka)" = "$YUNKA_SHA"
+          test "$(git -C fixed rev-parse HEAD:third_party/yunka)" = "$YUNKA_SHA"
+          test "$(git -C governance rev-parse HEAD:corpus/cg01/iot-sqlite-startup/case.json)" = "$CG01_BLOB"
+          test "$(git -C governance rev-parse HEAD:admission/cg02/decision.json)" = "$CG02_BLOB"
+
+          find buggy fixed -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-before.sha256"
+          cp buggy/backend-yunka/internal/delivery/sqlite_repository.go "$out/snapshots/buggy.go"
+          cp fixed/backend-yunka/internal/delivery/sqlite_repository.go "$out/snapshots/fixed.go"
+          cp governance/prevention/cg03/iot-sqlite-startup/rule.yml "$out/snapshots/rule.yml"
+          cp governance/prevention/cg03/iot-sqlite-startup/problem.json "$out/snapshots/problem.json"
+          cp governance/prevention/cg03/iot-sqlite-startup/prevention.json "$out/snapshots/prevention.json"
+
+          curl -fsSL "https://github.com/ast-grep/ast-grep/releases/download/${AST_GREP_VERSION}/app-x86_64-unknown-linux-gnu.zip" -o "$out/tools/ast-grep.zip"
+          echo "$AST_GREP_ASSET_SHA256  $out/tools/ast-grep.zip" | sha256sum -c -
+          unzip -q "$out/tools/ast-grep.zip" -d "$out/tools/bin"
+          sg="$out/tools/bin/ast-grep"
+          test -x "$sg"
+          "$sg" --version | tee "$out/logs/ast-grep.version.txt"
+          sha256sum "$sg" > "$out/logs/ast-grep.binary.sha256"
+
+          {
+            printf 'governance\t%s\n' "$(git -C governance rev-parse HEAD)"
+            printf 'cg01-blob\t%s\n' "$CG01_BLOB"
+            printf 'cg02-blob\t%s\n' "$CG02_BLOB"
+            printf 'buggy\t%s\n' "$BUGGY_SHA"
+            printf 'fixed\t%s\n' "$FIXED_SHA"
+            printf 'yunka\t%s\n' "$YUNKA_SHA"
+            printf 'ast-grep\t%s\t%s\n' "$AST_GREP_VERSION" "$AST_GREP_ASSET_SHA256"
+          } > "$out/identity.tsv"
+
+      - name: Build isolated M1 mutation and legal control
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg03"
+          mut="$RUNNER_TEMP/cg03-mutation.go"
+          cp fixed/backend-yunka/internal/delivery/sqlite_repository.go "$mut"
+          python3 - <<'PY'
+          import os,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'cg03-mutation.go'
+          text=p.read_text()
+          good='\t\t"PRAGMA busy_timeout = 5000",\n\t\t"PRAGMA journal_mode = WAL",'
+          bad='\t\t"PRAGMA journal_mode = WAL",\n\t\t"PRAGMA busy_timeout = 5000",'
+          assert text.count(good)==1
+          p.write_text(text.replace(good,bad,1))
+          PY
+          cp "$mut" "$out/snapshots/mutation.go"
+
+          ctrl="$RUNNER_TEMP/cg03-unrelated.go"
+          cat > "$ctrl" <<'EOF'
+          package cg03control
+          func unrelated() {
+            for _, statement := range []string{
+              "PRAGMA journal_mode = WAL",
+              "PRAGMA busy_timeout = 5000",
+              "PRAGMA foreign_keys = ON",
+            } {
+              _ = statement
+            }
+          }
+          EOF
+          cp "$ctrl" "$out/snapshots/unrelated.go"
+
+      - name: Execute published rule twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg03"
+          sg="$out/tools/bin/ast-grep"
+          rule="$GITHUB_WORKSPACE/governance/prevention/cg03/iot-sqlite-startup/rule.yml"
+          mut="$RUNNER_TEMP/cg03-mutation.go"
+          ctrl="$RUNNER_TEMP/cg03-unrelated.go"
+
+          capture() {
+            name="$1"; target="$2"
+            set +e
+            "$sg" scan -r "$rule" --json=compact "$target" >"$out/logs/$name.stdout" 2>"$out/logs/$name.stderr"
+            code=$?
+            set -e
+            printf '%s\t%s\n' "$name" "$code" >> "$out/exit-codes.tsv"
+          }
+
+          for n in 1 2; do
+            capture "buggy-$n" "$GITHUB_WORKSPACE/buggy/backend-yunka/internal/delivery/sqlite_repository.go"
+            capture "fixed-$n" "$GITHUB_WORKSPACE/fixed/backend-yunka/internal/delivery/sqlite_repository.go"
+            capture "mutation-$n" "$mut"
+            capture "unrelated-$n" "$ctrl"
+          done
+
+      - name: Qualify prevention semantics and read-only state
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg03"
+          python3 - <<'PY'
+          import json,os,pathlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])/'cg03'
+          logs=root/'logs'
+          rule_id=os.environ['RULE_ID']
+
+          def load(name):
+            text=(logs/f'{name}.stdout').read_text().strip()
+            return json.loads(text) if text else []
+
+          def canon(v):
+            return json.dumps(v,sort_keys=True,separators=(',',':'))
+
+          def rule_hits(v):
+            hits=[]
+            if isinstance(v,dict):
+              if v.get('ruleId')==rule_id:
+                hits.append((v.get('file',''),json.dumps(v.get('range',{}),sort_keys=True),v.get('text','')))
+              for x in v.values(): hits.extend(rule_hits(x))
+            elif isinstance(v,list):
+              for x in v: hits.extend(rule_hits(x))
+            return hits
+
+          for sample in ('buggy','fixed','mutation','unrelated'):
+            a=load(f'{sample}-1'); b=load(f'{sample}-2')
+            assert canon(a)==canon(b), f'nondeterministic semantic JSON: {sample}'
+
+          counts={s:len(rule_hits(load(f'{s}-1'))) for s in ('buggy','fixed','mutation','unrelated')}
+          expected={'buggy':1,'fixed':0,'mutation':1,'unrelated':0}
+          assert counts==expected, counts
+
+          prevention=json.loads((root/'snapshots/prevention.json').read_text())
+          problem=json.loads((root/'snapshots/problem.json').read_text())
+          assert prevention['status']=='CANDIDATE'
+          assert prevention['qualificationCorpus']['blob']==os.environ['CG01_BLOB']
+          assert prevention['rule']['admissionDecisionBlob']==os.environ['CG02_BLOB']
+          assert prevention['rule']['engineVersion']==os.environ['AST_GREP_VERSION']
+          assert prevention['rule']['linuxAmd64AssetSha256']==os.environ['AST_GREP_ASSET_SHA256']
+          assert problem['preventionTarget']==prevention['id']
+
+          result={
+            'schemaVersion':1,
+            'status':'PASS',
+            'task':'CG-03',
+            'preventionId':prevention['id'],
+            'preventionVersion':prevention['version'],
+            'problemRecord':problem['id'],
+            'matrix':{'expected':expected,'actual':counts},
+            'semanticDeterminism':True,
+            'authorityBoundary':prevention['authorityBoundary'],
+            'consumerTrackedSourceMutated':False,
+            'consumerDependencyLocksMutated':False
+          }
+          (root/'qualification.json').write_text(json.dumps(result,indent=2)+'\n')
+          PY
+
+          find buggy fixed -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-after.sha256"
+          diff -u "$out/dependency-before.sha256" "$out/dependency-after.sha256" > "$out/dependency-diff.txt"
+          test -z "$(git -C buggy status --porcelain --untracked-files=all)"
+          test -z "$(git -C fixed status --porcelain --untracked-files=all)"
+          test -z "$(git -C governance status --porcelain --untracked-files=all)"
+          rm -rf "$out/tools"
+          (cd "$out" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cg03-prevention-qualification-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/cg03
+          retention-days: 30
+          if-no-files-found: error
