@@ -91,9 +91,8 @@ jobs:
           old = '\t\t"PRAGMA busy_timeout = 5000",\n\t\t"PRAGMA journal_mode = WAL",'
           new = '\t\t"PRAGMA journal_mode = WAL",\n\t\t"PRAGMA busy_timeout = 5000",'
           assert text.count(old) == 1, text.count(old)
-          mutated = text.replace(old, new, 1)
           backing = out/'sqlite_repository_mutated.go'
-          backing.write_text(mutated)
+          backing.write_text(text.replace(old, new, 1))
           (out/'mutation.json').write_text(json.dumps({'Replace': {str(fixed_repo): str(backing)}}, indent=2)+'\n')
           PY
 
@@ -111,11 +110,10 @@ jobs:
             set -e
             printf '%s\t%s\n' "$name" "$code" | tee -a "$out/exit-codes.tsv"
           }
-
           capture original-red env GOWORK=off go -C "$GITHUB_WORKSPACE/buggy/backend-yunka" test -mod=readonly -overlay="$out/overlay/buggy.json" ./internal/delivery -run '^TestAG03SQLiteStartupWaitsForExternalLock$' -count=1 -timeout=30s -v
           capture fixed-green env GOWORK=off go -C "$GITHUB_WORKSPACE/fixed/backend-yunka" test -mod=readonly ./internal/delivery -run '^TestAG03SQLiteStartupWaitsForExternalLock$' -count=1 -timeout=30s -v
           capture mutation-red env GOWORK=off go -C "$GITHUB_WORKSPACE/fixed/backend-yunka" test -mod=readonly -overlay="$out/overlay/mutation.json" ./internal/delivery -run '^TestAG03SQLiteStartupWaitsForExternalLock$' -count=1 -timeout=30s -v
-          capture bootstrap-control env GOWORK=off go -C "$GITHUB_WORKSPACE/fixed/backend-yunka" test -mod=readonly . -run '^TestBootstrapSeedStagesCommittedOutboxEventsThenProjectsExactlyOnce$' -count=1 -timeout=2m -v
+          capture bootstrap-control env GOWORK=off go -C "$GITHUB_WORKSPACE/fixed/backend-yunka" test -mod=readonly ./internal/bootstrap -run '^TestBootstrapSeedStagesCommittedOutboxEventsThenProjectsExactlyOnce$' -count=1 -timeout=2m -v
 
       - name: Qualify exact outcomes and read-only state
         shell: bash
@@ -123,16 +121,14 @@ jobs:
           set -euo pipefail
           out="$RUNNER_TEMP/cg01-replay"
           python3 - <<'PY'
-          import json, os, pathlib, re
+          import json, os, pathlib
           root = pathlib.Path(os.environ['RUNNER_TEMP'])/'cg01-replay'
           rows = {}
           for line in (root/'exit-codes.tsv').read_text().splitlines():
               k, v = line.split('\t'); rows[k] = int(v)
           assert set(rows) == {'original-red','fixed-green','mutation-red','bootstrap-control'}, rows
-          assert rows['original-red'] != 0, rows
-          assert rows['mutation-red'] != 0, rows
-          assert rows['fixed-green'] == 0, rows
-          assert rows['bootstrap-control'] == 0, rows
+          assert rows['original-red'] != 0 and rows['mutation-red'] != 0, rows
+          assert rows['fixed-green'] == 0 and rows['bootstrap-control'] == 0, rows
           for name in ('original-red','mutation-red'):
               text = (root/'logs'/f'{name}.stdout').read_text() + (root/'logs'/f'{name}.stderr').read_text()
               assert 'AG03_STARTUP_BUSY_BEFORE_RELEASE' in text, name
@@ -142,6 +138,7 @@ jobs:
           control = (root/'logs'/'bootstrap-control.stdout').read_text() + (root/'logs'/'bootstrap-control.stderr').read_text()
           assert '--- PASS: TestAG03SQLiteStartupWaitsForExternalLock' in fixed
           assert '--- PASS: TestBootstrapSeedStagesCommittedOutboxEventsThenProjectsExactlyOnce' in control
+          assert 'no tests to run' not in control.lower()
           result = {
             'schemaVersion': 1,
             'status': 'PASS',
