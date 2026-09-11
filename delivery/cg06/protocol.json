@@ -93,11 +93,29 @@
       "trusted integration remains the only update bypass actor"
     ]
   },
+  "readinessQualification": {
+    "status": "PASS_WITH_EXTERNAL_ADMIN_ACTIVATION_BLOCKER",
+    "run": 34570239644,
+    "job": 103170598724,
+    "head": "af6f5877d419612521f0645a996827df9f1600dc",
+    "artifact": 10187483748,
+    "artifactSha256": "3eb5c9d3e258084c5fa86d04a920d048593a929a75cddfa9474986c59a14920d",
+    "artifactManifestReplay": "PASS",
+    "currentLiveDecision": "REJECTED / BRANCH_NOT_PROTECTED",
+    "syntheticContractOnly": "PASS",
+    "syntheticFixtureIsProductionProof": false,
+    "negativeContractCases": {
+      "extraBypass": "LIVE_BYPASS_SET_NOT_MINIMAL",
+      "wrongStatusApp": "LIVE_STATUS_SOURCE_NOT_PINNED_TO_BYPASS_APP",
+      "candidateControlledPublisher": "TRUSTED_PUBLISHER_CANDIDATE_CONTROLLED",
+      "wrongMainReadback": "POST_INTEGRATION_MAIN_SHA_MISMATCH"
+    }
+  },
   "currentBlockers": [
     {
       "id": "B1_ADMIN_MUTATION_SURFACE",
       "status": "BLOCKING",
-      "detail": "The connected GitHub integration exposes repository/ruleset reads but no administration write action; direct branch-protection read returned 403 Resource not accessible by integration."
+      "detail": "The connected GitHub integration exposes repository/ruleset reads but no Administration:write mutation action; direct branch-protection read returned 403 Resource not accessible by integration."
     },
     {
       "id": "B2_TRUSTED_STATUS_PUBLISHER",
