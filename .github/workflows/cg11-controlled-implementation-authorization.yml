@@ -1,0 +1,255 @@
+name: CG-11 controlled implementation authorization qualification
+
+on:
+  push:
+    branches:
+      - cg11/controlled-implementation-authorization
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  qualify:
+    name: qualify-plan-to-authorization-boundary
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact CG-10 source authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:prevention/cg10/protocol.json)" = "843b4d02f9ef0e286a16a894eeb5455a5d1ded59"
+          test "$(git rev-parse HEAD:prevention/cg10/inputs.json)" = "830731814b90205ab23303767507aaf63a7d8479"
+          test "$(git rev-parse HEAD:prevention/cg10/build_plan.py)" = "4f351f3c61c738ad53a67efa2a7c94dfcf4eed78"
+          test "$(git rev-parse HEAD:prevention/cg10/verify_plan.py)" = "f0a0f94f43f769fb42412c749be92ccc93110e3c"
+          echo 'CG11_CG10_SOURCE_AUTHORITIES=PASS'
+
+      - name: Rebuild and verify exact CG-10 plans
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 prevention/cg10/build_plan.py \
+            --protocol prevention/cg10/protocol.json \
+            --inputs prevention/cg10/inputs.json \
+            --cg09-protocol prevention/cg09/protocol.json \
+            --cg09-cases prevention/cg09/cases.json \
+            --cg09-verifier prevention/cg09/verify_strategy.py \
+            > "$RUNNER_TEMP/cg10-plans.json"
+          python3 prevention/cg10/verify_plan.py \
+            --protocol prevention/cg10/protocol.json \
+            --inputs prevention/cg10/inputs.json \
+            --cg09-cases prevention/cg09/cases.json \
+            --plans "$RUNNER_TEMP/cg10-plans.json" \
+            > "$RUNNER_TEMP/cg10-verified.json"
+          python3 - <<'PY'
+          import json, os
+          value=json.load(open(os.environ['RUNNER_TEMP'] + '/cg10-verified.json'))
+          assert value['status']=='PASS', value
+          assert value['decision']=='BOUNDED_PREVENTION_PLANS_VERIFIED', value
+          assert value['executionAuthorized'] is False, value
+          print('CG11_CG10_PLAN_REPLAY=PASS')
+          PY
+
+      - name: Read back exact live consumer bases and authorized paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/cg11-iot" "$RUNNER_TEMP/cg11-biz"
+          git clone --depth 1 https://github.com/hvritual/iot-delivery-system.git "$RUNNER_TEMP/cg11-iot"
+          git clone --depth 1 https://github.com/hvritual/biz.git "$RUNNER_TEMP/cg11-biz"
+          test "$(git -C "$RUNNER_TEMP/cg11-iot" rev-parse HEAD)" = "c38ce0efcbe11d8ef9201381f895c7e9a85ddbc0"
+          test "$(git -C "$RUNNER_TEMP/cg11-biz" rev-parse HEAD)" = "a08602975266668d4a1c5e784f0b3cf43ff92185"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          req=json.loads(Path('prevention/cg11/requests.json').read_text())
+          roots={
+              'hvritual/iot-delivery-system': Path(os.environ['RUNNER_TEMP'])/'cg11-iot',
+              'hvritual/biz': Path(os.environ['RUNNER_TEMP'])/'cg11-biz',
+          }
+          live={
+              'hvritual/iot-delivery-system': 'c38ce0efcbe11d8ef9201381f895c7e9a85ddbc0',
+              'hvritual/biz': 'a08602975266668d4a1c5e784f0b3cf43ff92185',
+          }
+          targets=[]
+          for item in req['authorizationRequests']:
+              target=item.get('target')
+              if not target:
+                  continue
+              repo=target['repository']
+              existing=[]
+              for path in item['allowedPaths']:
+                  if not (roots[repo]/path).is_file():
+                      raise SystemExit(f'missing authorized path at live base: {repo}:{path}')
+                  existing.append(path)
+              targets.append({
+                  'repository': repo,
+                  'baseBranch': target['baseBranch'],
+                  'liveSha': live[repo],
+                  'existingPaths': sorted(existing),
+              })
+          out={'schemaVersion':1,'targets':targets}
+          Path(os.environ['RUNNER_TEMP'] + '/cg11-observed.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,indent=2,sort_keys=True))
+          PY
+          test -z "$(git -C "$RUNNER_TEMP/cg11-iot" status --porcelain)"
+          test -z "$(git -C "$RUNNER_TEMP/cg11-biz" status --porcelain)"
+          echo 'CG11_LIVE_TARGET_READBACK=PASS'
+
+      - name: Build controlled implementation authorizations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 prevention/cg11/build_authorization.py \
+            --protocol prevention/cg11/protocol.json \
+            --plans "$RUNNER_TEMP/cg10-plans.json" \
+            --requests prevention/cg11/requests.json \
+            > "$RUNNER_TEMP/cg11-authorizations.json"
+          python3 -m json.tool "$RUNNER_TEMP/cg11-authorizations.json" >/dev/null
+          cat "$RUNNER_TEMP/cg11-authorizations.json"
+
+      - name: Positive authorization verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 prevention/cg11/verify_authorization.py \
+            --protocol prevention/cg11/protocol.json \
+            --plans "$RUNNER_TEMP/cg10-plans.json" \
+            --requests prevention/cg11/requests.json \
+            --observed "$RUNNER_TEMP/cg11-observed.json" \
+            --authorizations "$RUNNER_TEMP/cg11-authorizations.json" \
+            --builder prevention/cg11/build_authorization.py \
+            | tee "$RUNNER_TEMP/cg11-positive.json"
+          python3 - <<'PY'
+          import json, os
+          value=json.load(open(os.environ['RUNNER_TEMP'] + '/cg11-positive.json'))
+          assert value['status']=='PASS', value
+          assert value['decision']=='CONTROLLED_IMPLEMENTATION_AUTHORIZATIONS_VERIFIED', value
+          assert value['authorizedRealPlanCount']==2, value
+          assert value['fallbackNotAuthorizedCount']==1, value
+          assert value['grant']=='PATCH_BRANCH_ONLY', value
+          assert value['mergeAuthorization'] is False, value
+          assert value['directMainUpdate'] is False, value
+          assert value['consumerAdoption'] is False, value
+          print('CG11_POSITIVE_MATRIX=PASS')
+          PY
+
+      - name: Fail-closed authorization mutation matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import copy, importlib.util, json, os, sys
+          from pathlib import Path
+
+          sys.path.insert(0, 'prevention/cg11')
+          import build_authorization as builder
+          import verify_authorization as verifier
+
+          protocol=json.loads(Path('prevention/cg11/protocol.json').read_text())
+          requests=json.loads(Path('prevention/cg11/requests.json').read_text())
+          plans=json.load(open(os.environ['RUNNER_TEMP'] + '/cg10-plans.json'))
+          observed=json.load(open(os.environ['RUNNER_TEMP'] + '/cg11-observed.json'))
+          auths=json.load(open(os.environ['RUNNER_TEMP'] + '/cg11-authorizations.json'))
+          plans_by=builder.plan_by_case(plans)
+
+          def expect_build_reject(name, case_id, mutate, reason):
+              req=copy.deepcopy(next(r for r in requests['authorizationRequests'] if r['caseId']==case_id))
+              mutate(req)
+              try:
+                  builder.build_one(protocol, plans_by[case_id], req)
+              except builder.AuthorizationBuildError as exc:
+                  if exc.reason != reason:
+                      raise SystemExit(f'{name}: expected {reason}, got {exc.reason}: {exc.detail}')
+                  print(f'{name}: PASS ({reason})')
+                  return
+              raise SystemExit(f'{name}: expected rejection {reason}')
+
+          def expect_verify_reject(name, mutate_observed=None, mutate_auths=None, reason=None):
+              obs=copy.deepcopy(observed)
+              out=copy.deepcopy(auths)
+              if mutate_observed:
+                  mutate_observed(obs)
+              if mutate_auths:
+                  mutate_auths(out)
+              try:
+                  verifier.verify_document(protocol, plans, requests, obs, out, builder)
+              except verifier.VerificationError as exc:
+                  if exc.reason != reason:
+                      raise SystemExit(f'{name}: expected {reason}, got {exc.reason}: {exc.detail}')
+                  print(f'{name}: PASS ({reason})')
+                  return
+              raise SystemExit(f'{name}: expected rejection {reason}')
+
+          iot='CG03-IOT-SQLITE-STARTUP-LOCK-ORDER'
+          biz='CG08-BIZ-RUNTIME-GATE-SOT-DRIFT'
+          fallback='CG10-INCOMPLETE-EVIDENCE-CONTROL'
+
+          expect_build_reject('work-branch-main', iot, lambda r:r['target'].__setitem__('workBranch','main'), 'WORK_BRANCH_MUST_DIFFER_FROM_BASE')
+          expect_build_reject('unallowed-change-class', iot, lambda r:r['requestedChangeClasses'].append('CONSUMER_OWNED_ACCEPTANCE_GATE'), 'CHANGE_CLASS_NOT_ALLOWED_BY_PLAN')
+          expect_build_reject('generated-path', biz, lambda r:r['allowedPaths'].__setitem__(0,'contracts/generated/manifest.json'), 'FORBIDDEN_PATH')
+          expect_build_reject('yunka-path', biz, lambda r:r['allowedPaths'].__setitem__(0,'.yunka/dev.json'), 'FORBIDDEN_PATH')
+          expect_build_reject('server-path', biz, lambda r:r['allowedPaths'].__setitem__(0,'server/legacy.go'), 'FORBIDDEN_PATH')
+          expect_build_reject('wildcard-path', biz, lambda r:r['allowedPaths'].__setitem__(0,'scripts/**'), 'NON_EXACT_PATH_ALLOWLIST')
+          expect_build_reject('verification-dropped', biz, lambda r:r['requiredVerificationClasses'].pop(), 'VERIFICATION_CLASS_DROPPED')
+          expect_build_reject('fallback-executable-path', fallback, lambda r:r['allowedPaths'].append('scripts/x.py'), 'FALLBACK_EXECUTION_REQUEST_FORBIDDEN')
+
+          expect_verify_reject(
+              'stale-live-base',
+              mutate_observed=lambda o:o['targets'][0].__setitem__('liveSha','0'*40),
+              reason='LIVE_BASE_SHA_MISMATCH',
+          )
+          expect_verify_reject(
+              'plan-sha-tamper',
+              mutate_auths=lambda a:a['authorizations'][0].__setitem__('planSha256','0'*64),
+              reason='PLAN_SHA_MISMATCH',
+          )
+          expect_verify_reject(
+              'direct-main-grant',
+              mutate_auths=lambda a:a['authorizations'][0].__setitem__('directMainUpdate',True),
+              reason='DIRECT_MAIN_UPDATE_FORBIDDEN',
+          )
+          expect_verify_reject(
+              'merge-grant',
+              mutate_auths=lambda a:a['authorizations'][0].__setitem__('mergeAuthorization','GRANTED'),
+              reason='MERGE_AUTHORIZATION_FORBIDDEN',
+          )
+          expect_verify_reject(
+              'repository-admin-grant',
+              mutate_auths=lambda a:a['authorizations'][0].__setitem__('repositoryAdministration',True),
+              reason='REPOSITORY_ADMINISTRATION_FORBIDDEN',
+          )
+          expect_verify_reject(
+              'implicit-consumer-adoption',
+              mutate_auths=lambda a:a['authorizations'][0].__setitem__('consumerAdoption','AUTO_ADOPT'),
+              reason='CONSUMER_ADOPTION_FORBIDDEN',
+          )
+          print('CG11_NEGATIVE_MATRIX=PASS')
+          PY
+
+      - name: Stable asset syntax and clean governance worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool prevention/cg11/protocol.json >/dev/null
+          python3 -m json.tool prevention/cg11/requests.json >/dev/null
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          for path in ['prevention/cg11/build_authorization.py','prevention/cg11/verify_authorization.py']:
+              ast.parse(Path(path).read_text(), filename=path)
+          print('CG11_PYTHON_SYNTAX=PASS')
+          PY
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
+          echo 'CG11_STABLE_ASSETS=PASS'
