@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "CG13-CONTROLLED-PATCH-EXECUTION",
+  "status": "CANDIDATE",
+  "sourceAuthorities": [
+    {"path": "prevention/cg12/protocol.json", "blob": "42de586a1c4d78d36736b11292e5cabcfab515c2"},
+    {"path": "prevention/cg12/subjects.json", "blob": "45f87bc2bea33758079d8cc2dc9518b1e617b4a5"}
+  ],
+  "principle": "A patch may execute only when CG-12 explicitly requires a patch, and the actual diff must remain inside the exact authorization envelope.",
+  "execution": {
+    "requiredDisposition": "PATCH_REQUIRED_ON_AUTHORIZED_BRANCH_ONLY",
+    "requirePatchRequiredTrue": true,
+    "requireExactBaseSha": true,
+    "requireNonMainWorkBranch": true,
+    "requireCleanStart": true,
+    "requireNonEmptyDiff": true,
+    "changedPathsMustBeSubsetOfAllowedPaths": true,
+    "forbidPathTraversal": true,
+    "requirePostApplyDiffReadback": true,
+    "requireVerificationReceipt": true,
+    "requireExactVerificationClassSet": true,
+    "requireAllVerificationPass": true,
+    "commitAuthorization": "NOT_GRANTED",
+    "pullRequestAuthorization": "NOT_GRANTED",
+    "mergeAuthorization": "NOT_GRANTED"
+  },
+  "forbiddenPathPrefixes": [
+    "server/",
+    "third_party/yunka/",
+    "contracts/generated/",
+    ".yunka/"
+  ],
+  "nonExecutableDispositions": [
+    "NO_CHANGE_REQUIRED",
+    "STOP_AND_INVESTIGATE",
+    "NO_ACTION"
+  ],
+  "authorityCeiling": {
+    "createsConsumerBranch": false,
+    "commitsConsumerChanges": false,
+    "opensConsumerPullRequest": false,
+    "mergesConsumerChange": false,
+    "directMainUpdate": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "requireCurrentRealSubjectsRejected": true,
+    "requireIsolatedPatchApplyFixture": true,
+    "requireExactDiffAttestation": true,
+    "requireNegativeMatrix": true,
+    "requireNoConsumerMutation": true,
+    "requireExactCg12SourceBlobs": true
+  }
+}
