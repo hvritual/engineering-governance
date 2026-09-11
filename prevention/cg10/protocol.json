@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG10-PREVENTION-PLAN-CONTRACT",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "sourceAuthorities": [
     {
       "path": "prevention/cg09/protocol.json",
@@ -133,6 +133,38 @@
     "requireDistinctStrategies": true,
     "requireFallbackPlan": true,
     "requireNegativeMutationMatrix": true,
-    "requireExactCg09SourceBlobs": true
+    "requireExactCg09SourceBlobs": true,
+    "primaryHead": "1e5129284afbb9e9a26be2583dcee8f86cea602d",
+    "primaryRun": 34602428029,
+    "primaryJob": 103272721607,
+    "primaryResult": "SUCCESS",
+    "sourceAuthorities": "PASS",
+    "inputGrounding": "PASS",
+    "cg09SelectionReplay": "PASS",
+    "positiveDecision": "BOUNDED_PREVENTION_PLANS_VERIFIED",
+    "planCount": 3,
+    "qualifiedRealPlanCount": 2,
+    "fallbackPlanCount": 1,
+    "selectedStrategies": [
+      "AUTHORITY_RECONCILIATION",
+      "HYBRID_RECURRENCE_GUARD"
+    ],
+    "fallbackDisposition": "HUMAN_EVIDENCE_REQUIRED",
+    "executionAuthorized": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false,
+    "rejectedCases": {
+      "hybrid static detector promoted to authority": "STATIC_RULE_PROMOTED_TO_AUTHORITY",
+      "hybrid authoritative behavioral proof dropped": "AUTHORITATIVE_BEHAVIORAL_PROOF_DROPPED",
+      "authority reconciliation fixed replacement count": "FIXED_REPLACEMENT_CARDINALITY_FORBIDDEN",
+      "authority reconciliation copied inventory": "COPIED_LITERAL_INVENTORY_FORBIDDEN",
+      "authority reconciliation valid growth dropped": "VALID_GROWTH_CONTROL_REQUIRED",
+      "scope broadening": "APPLICABILITY_SCOPE_EXCEEDED",
+      "implicit consumer adoption": "CONSUMER_ADOPTION_IMPLICIT",
+      "Yunka mutation request": "CG10_FORBIDDEN_MUTATION_CLASS",
+      "fallback executable target": "CG10_AUTOMATIC_CHANGE_TARGET_FORBIDDEN",
+      "execution authorization": "CG10_EXECUTION_AUTHORIZATION_FORBIDDEN"
+    },
+    "negativeMatrix": "PASS"
   }
 }
