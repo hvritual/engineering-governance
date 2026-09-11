@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "PK-CG03-IOT-SQLITE-STARTUP-LOCK-ORDER",
+  "status": "QUALIFIED_INPUT",
+  "problemClass": "RUNTIME_INITIALIZATION_ORDER_DEFECT",
+  "problem": "SQLite startup executes PRAGMA journal_mode = WAL before installing a bounded busy_timeout, so an externally held lock can surface SQLITE_BUSY during repository initialization.",
+  "violatedInvariant": "A bounded SQLite busy wait must be installed before any startup pragma that can require a write lock.",
+  "rootCause": "The initialization statement order placed journal_mode=WAL before busy_timeout.",
+  "whyPriorControlsMissed": [
+    "The previous test suite did not exercise startup while another connection held the SQLite lock.",
+    "There was no reusable static recurrence guard for the known bad initialization shape.",
+    "A source-only check would not by itself prove the runtime impact; the missing behavioral scenario was the authoritative gap."
+  ],
+  "evidence": {
+    "cg01CorpusPath": "corpus/cg01/iot-sqlite-startup/case.json",
+    "cg01CorpusBlob": "5cba82314a027f4ee6284741518a45238b2b6fdc",
+    "buggyCommit": "f190fe237fa1efb738b4866275804093a209de5b",
+    "fixedCommit": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+    "yunkaPin": "057ebcf88a87303eb633eb6e604d306f633dfac0",
+    "authoritativeProof": "CG-01 held-lock runtime regression"
+  },
+  "knownVariants": [
+    "M1: reintroduce journal_mode=WAL before busy_timeout in the fixed source while retaining surrounding comments and otherwise-fixed code."
+  ],
+  "legalControls": [
+    "The same pragma strings may appear in the same order when they are not executed through the database Exec loop; that is not this defect class."
+  ],
+  "preventionTarget": "PV-CG03-IOT-SQLITE-BUSY-TIMEOUT-BEFORE-WAL"
+}
