@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
-  "status": "QUALIFICATION_PENDING",
+  "status": "QUALIFIED",
   "classification": "CONSUMER_ACCEPTANCE_GATE_SOURCE_OF_TRUTH_DRIFT",
   "origin": {
     "repository": "hvritual/biz",
@@ -20,32 +20,38 @@
     "buggyWorkflow": {
       "path": ".github/workflows/b12-7-runtime-qualification.yml",
       "commit": "a72119b7bd00e32abb840f3c93ed486fc8b004dd",
-      "gitBlobSha": "b04644dc5d674e4bb02ad35da2b6ffe3ac00ccb6"
+      "gitBlobSha": "b04644dc5d674e4bb02ad35da2b6ffe3ac00ccb6",
+      "sha256": "473d7866f4a97bb68c4c61ec08388c137bd1a8dbfcf5c94bd57809dc8706da98"
     },
     "fixedWorkflow": {
       "path": ".github/workflows/b12-7-runtime-qualification.yml",
       "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
-      "gitBlobSha": "dc3520b5962fc312063a34e0b016a86882e15e08"
+      "gitBlobSha": "dc3520b5962fc312063a34e0b016a86882e15e08",
+      "sha256": "75bf13aecba9cb0c119908cda9f2f4bfd05e5e456a4f8eb3c47038d9dfdfd51b"
     },
     "fixedChecker": {
       "path": "scripts/ce04_runtime_closure.py",
       "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
-      "gitBlobSha": "2b75316b4341e8abc8c7e8ba067d7404a88f365d"
+      "gitBlobSha": "2b75316b4341e8abc8c7e8ba067d7404a88f365d",
+      "sha256": "f09d123ba746318ffb3aa646f38daa32503486dcbf8ba3a7fc4f8a5f02814209"
     },
     "fixedCheckerTests": {
       "path": "scripts/test_ce04_runtime_closure.py",
       "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
-      "gitBlobSha": "f2b7d4ce12683bb63372d4976a882c0723379cd0"
+      "gitBlobSha": "f2b7d4ce12683bb63372d4976a882c0723379cd0",
+      "sha256": "87e28c52bcb477153376655c8bde7b1c4583fe009d6edfb9f2d92f1fde074338"
     },
     "fixedManifest": {
       "path": "contracts/generated/manifest.json",
       "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
-      "gitBlobSha": "998079e346be285d84b6d6421a453afd2f56b5c4"
+      "gitBlobSha": "998079e346be285d84b6d6421a453afd2f56b5c4",
+      "sha256": "bfd9af6613435edcd7d49dbbb38e4f72f324456226bde134d79488f98973ac07"
     },
     "fixedDevProfile": {
       "path": ".yunka/dev.json",
       "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
-      "gitBlobSha": "48cda1687594a97d1abf52412d9273aaee58dd20"
+      "gitBlobSha": "48cda1687594a97d1abf52412d9273aaee58dd20",
+      "sha256": "184997ef8ffac77e0ed2292bb0d51bbbbec78b30db9383df0a6c4ee27fe147d5"
     }
   },
   "bugShape": {
@@ -72,7 +78,7 @@
     "fixedCardinality": false,
     "validGrowthAllowed": true
   },
-  "violatedInvariantCandidate": "When an acceptance gate validates generated/runtime topology, expected topology identities and cardinality must be derived from the authoritative generated contract/source rather than duplicated as hand-maintained literals.",
+  "qualifiedInvariant": "When an acceptance gate validates generated/runtime topology, expected topology identities and cardinality must be derived from the authoritative generated contract/source rather than duplicated as hand-maintained literals.",
   "historicalEvidence": {
     "class": "CORROBORATIVE_ONLY",
     "run": 34324260641,
@@ -112,8 +118,38 @@
     "business-domain enumerations without an existing authoritative generated inventory",
     "generic uses of numeric literals or lists unrelated to duplicated source-of-truth facts"
   ],
-  "preventionDecision": "DEFER_UNIVERSAL_RULE_UNTIL_FRESH_SECOND_PROBLEM_QUALIFICATION",
+  "preventionDecision": "SECOND_REAL_PROBLEM_QUALIFIED__UNIVERSAL_RULE_STILL_DEFERRED_PENDING_CROSS_CASE_ABSTRACTION",
   "freshReplay": {
-    "status": "PENDING"
+    "status": "QUALIFIED",
+    "headSha": "b4d61aef9fde4b23f3e5eca4331637ea2bd56df2",
+    "run": 34587905394,
+    "job": 103226243105,
+    "result": "SUCCESS",
+    "exactSourceIdentity": "PASS",
+    "bugShape": "PROVEN",
+    "authoritativeApplications": [
+      "application:access/tenant_lifecycle",
+      "application:access/tenant_member_lifecycle",
+      "application:access/tenant_role_permission",
+      "application:commercial/entitlement_management",
+      "application:commercial/module_catalog",
+      "application:deviceops/device_management",
+      "application:deviceops/device_transfer",
+      "application:deviceops/site_management"
+    ],
+    "authoritativeApplicationCount": 8,
+    "legacyApplicationCount": 6,
+    "legacyStatusPredicate": "REJECTS_VALID_EXPANSION",
+    "legacyRunsPredicate": "REJECTS_VALID_EXPANSION",
+    "fixedCheckerTestCount": 25,
+    "fixedCheckerMatrix": "PASS",
+    "fixedGateAuthority": "GENERATED_MANIFEST",
+    "futureDeclaredApplicationGrowth": "PASS",
+    "consumerMutation": "NONE",
+    "harnessNotes": [
+      "run 34587557928 proved substantive replay but exposed Python bytecode in a read-only checkout",
+      "run 34587731580 proved substantive replay but root cleanliness incorrectly counted nested qualification checkouts as governance mutations",
+      "both harness issues were corrected without changing consumer evidence or the qualified problem invariant"
+    ]
   }
 }
