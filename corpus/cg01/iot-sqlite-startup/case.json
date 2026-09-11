@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "caseId": "CG01-IOT-SQLITE-STARTUP-LOCK-ORDER",
+  "status": "STARTED_EVIDENCE_FROZEN_REPLAY_PENDING",
+  "classification": "consumer_runtime_initialization_defect",
+  "origin": {
+    "repository": "hvritual/iot-delivery-system",
+    "issue": 6,
+    "pullRequest": 7
+  },
+  "source": {
+    "buggyBaseCommit": "f190fe237fa1efb738b4866275804093a209de5b",
+    "observedFailingCandidateCommit": "59b31eb8302972fce8cef9f95cf81d926794198d",
+    "fixedCommit": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+    "fixedTree": "0c0d1a2da23de4b7315245faba2103ec7a64377e",
+    "yunkaPin": "057ebcf88a87303eb633eb6e604d306f633dfac0"
+  },
+  "files": {
+    "buggyRepository": {
+      "path": "backend-yunka/internal/delivery/sqlite_repository.go",
+      "commit": "f190fe237fa1efb738b4866275804093a209de5b",
+      "gitBlobSha": "8e4784d76021e0b7eca8c61e6ef353eaa359fea7"
+    },
+    "fixedRepository": {
+      "path": "backend-yunka/internal/delivery/sqlite_repository.go",
+      "commit": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "gitBlobSha": "6ccf2a6f39bd5f3695533584fb2c710de3f56054"
+    },
+    "fixedRegression": {
+      "path": "backend-yunka/internal/delivery/ag03_sqlite_startup_test.go",
+      "commit": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "gitBlobSha": "9f025a225a030abe35ba31c831fcc4804ad72d20",
+      "test": "TestAG03SQLiteStartupWaitsForExternalLock"
+    }
+  },
+  "bugShape": {
+    "orderedPragmas": [
+      "PRAGMA journal_mode = WAL",
+      "PRAGMA busy_timeout = 5000",
+      "PRAGMA foreign_keys = ON"
+    ],
+    "problem": "lock-sensitive journal_mode executes before the intended busy handler is installed"
+  },
+  "fixedShape": {
+    "orderedPragmas": [
+      "PRAGMA busy_timeout = 5000",
+      "PRAGMA journal_mode = WAL",
+      "PRAGMA foreign_keys = ON"
+    ],
+    "semanticExpansion": false
+  },
+  "failure": {
+    "historicalRun": 34221473016,
+    "expectedClass": "SQLITE_BUSY",
+    "sqliteCode": 5,
+    "messageContains": "configure SQLite connection",
+    "regressionMarker": "AG03_STARTUP_BUSY_BEFORE_RELEASE"
+  },
+  "reproducer": {
+    "precondition": "another SQLite connection holds BEGIN EXCLUSIVE on the same file when NewSQLiteRepository starts",
+    "red": "buggy constructor returns SQLITE_BUSY before lock release",
+    "green": "fixed constructor waits within the existing 5000ms budget and succeeds after release"
+  },
+  "validControls": [
+    "normal constructor/bootstrap startup remains successful",
+    "fixed constructor reads back journal_mode=wal, busy_timeout=5000, foreign_keys=1 and preserved data"
+  ],
+  "mutationVariants": [
+    {
+      "id": "M1_REINTRODUCE_PRAGMA_ORDER",
+      "change": "move PRAGMA journal_mode = WAL before PRAGMA busy_timeout = 5000 in the fixed source",
+      "expected": "held-lock regression fails for AG03_STARTUP_BUSY_BEFORE_RELEASE / SQLITE_BUSY"
+    }
+  ],
+  "whyPreviouslyMissed": "existing ordinary startup coverage did not force a real external lock before the first lock-sensitive pragma; the configured busy timeout existed but was installed too late",
+  "applicableScope": [
+    "SQLite initialization sequences where a busy timeout is intended to cover earlier lock-sensitive startup operations",
+    "consumer-owned startup code with a deterministic external-lock reproducer"
+  ],
+  "nonApplicableScope": [
+    "arbitrary SQL pragma ordering without a proven lock-sensitive precondition",
+    "transaction semantics, schema changes, retry policy or Yunka Executor/UoW behavior",
+    "other database drivers without equivalent demonstrated semantics"
+  ],
+  "toolSelection": "DEFERRED_TO_CG_02",
+  "freshReplay": {
+    "status": "PENDING",
+    "mustNotUseHistoricalRunAsSubstitute": true
+  }
+}
