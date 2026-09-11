@@ -17,6 +17,7 @@ jobs:
     env:
       BUGGY_SHA: a72119b7bd00e32abb840f3c93ed486fc8b004dd
       FIXED_SHA: 51355872d1e6af2961826a053df6d0ad7008ff73
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - name: Checkout governance candidate
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -94,7 +95,6 @@ jobs:
           set -euo pipefail
           PYTHONPATH=fixed/scripts python3 - <<'PY'
           import json
-          from pathlib import Path
           from test_ce04_runtime_closure import fixture
 
           data = fixture()
