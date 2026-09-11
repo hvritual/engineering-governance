@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG13-CONTROLLED-PATCH-EXECUTION",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "sourceAuthorities": [
     {"path": "prevention/cg12/protocol.json", "blob": "42de586a1c4d78d36736b11292e5cabcfab515c2"},
     {"path": "prevention/cg12/subjects.json", "blob": "45f87bc2bea33758079d8cc2dc9518b1e617b4a5"},
@@ -63,6 +63,18 @@
     "requireExactDiffAttestation": true,
     "requireNegativeMatrix": true,
     "requireNoConsumerMutation": true,
-    "requireExactCg12SourceBlobs": true
+    "requireExactCg12SourceBlobs": true,
+    "primary": {
+      "head": "d64b8fc55ea0297b72c859514264edd7cc84dd00",
+      "run": 34611754227,
+      "job": 103303709260,
+      "result": "SUCCESS",
+      "decision": "CONTROLLED_PATCH_EXECUTION_VERIFIED",
+      "realCurrentStateRefusalCount": 3,
+      "isolatedFixture": "PASS",
+      "fixtureAttestationId": "df5b507f025fd916a49d8c68ab6567c53729ed6b811dcc6512b198429524520e",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
+    }
   }
 }
