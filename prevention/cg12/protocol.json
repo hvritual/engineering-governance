@@ -75,6 +75,13 @@
       "consumerMutation": false,
       "negativeMatrix": "PASS"
     },
+    "finalReplay": {
+      "head": "33e1630c6afee80d1aed21e899435ab1010a2742",
+      "run": 34609219798,
+      "job": 103295181355,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED"
+    },
     "subjects": {
       "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER": {
         "disposition": "STOP_AND_INVESTIGATE",
