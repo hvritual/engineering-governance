@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "id": "CG10-PREVENTION-PLAN-CONTRACT",
+  "status": "QUALIFIED",
+  "sourceAuthorities": [
+    {
+      "path": "prevention/cg09/protocol.json",
+      "blob": "4f731903115ed2d787251ed4e0f82b6343cde457"
+    },
+    {
+      "path": "prevention/cg09/cases.json",
+      "blob": "770a136711a16e071c7dc2ec3f5da6a6a9a11d06"
+    },
+    {
+      "path": "prevention/cg09/verify_strategy.py",
+      "blob": "4c86ef5198351f75a5c7df655c5a733f5eaa9216"
+    }
+  ],
+  "authorityCeiling": {
+    "planningOnly": true,
+    "executionAuthorized": false,
+    "consumerAdoption": false,
+    "consumerImplementationPr": false,
+    "modifiesYunka": false,
+    "modifiesGeneratedSource": false,
+    "modifiesServerReadOnly": false,
+    "repositoryBlocking": false
+  },
+  "globalPlanConstraints": {
+    "executionAuthorization": "NOT_GRANTED",
+    "consumerAdoption": "NOT_ADOPTED",
+    "scopeMustEqualQualifiedScope": true,
+    "forbiddenMutationClasses": [
+      "YUNKA_SOURCE",
+      "GENERATED_SOURCE",
+      "SERVER_READ_ONLY",
+      "REPOSITORY_ADMIN"
+    ],
+    "positivePlanDisposition": "PLAN_READY_FOR_CONTROLLED_IMPLEMENTATION",
+    "fallbackPlanDisposition": "HUMAN_EVIDENCE_REQUIRED"
+  },
+  "strategyPlans": [
+    {
+      "strategy": "HYBRID_RECURRENCE_GUARD",
+      "planKind": "BOUNDED_PREVENTION_PLAN",
+      "requiredPlanningEvidence": [
+        "authoritativeBehavioralProof",
+        "recurrenceMutationControl",
+        "advisoryStaticDetector"
+      ],
+      "requiredControls": {
+        "authoritativeProof": {
+          "kind": "BEHAVIORAL_RUNTIME_REGRESSION",
+          "authority": "AUTHORITATIVE",
+          "required": true,
+          "retention": "MUST_RETAIN"
+        },
+        "staticDetector": {
+          "authority": "ADVISORY",
+          "required": true,
+          "maySubstituteForRuntimeProof": false
+        },
+        "recurrenceMutationControl": {
+          "required": true
+        }
+      },
+      "requiredVerificationClasses": [
+        "AUTHORITATIVE_BEHAVIOR_REGRESSION",
+        "KNOWN_RECURRENCE_MUTATION",
+        "STATIC_DETECTOR_MATRIX"
+      ],
+      "allowedFutureChangeClasses": [
+        "GOVERNANCE_PREVENTION_ASSET",
+        "CONSUMER_OWNED_TEST_OR_CHECKER"
+      ],
+      "forbiddenIntents": [
+        "STATIC_ONLY_AUTHORITY",
+        "DROP_AUTHORITATIVE_BEHAVIORAL_REGRESSION",
+        "STATIC_FINDINGS_AS_RUNTIME_REPAIR_PROOF"
+      ]
+    },
+    {
+      "strategy": "AUTHORITY_RECONCILIATION",
+      "planKind": "BOUNDED_PREVENTION_PLAN",
+      "requiredPlanningEvidence": [
+        "authoritativeInventory",
+        "reconciliationSurfaces",
+        "negativeIntegrityControls",
+        "validGrowthControl"
+      ],
+      "requiredControls": {
+        "deriveExpectedFromAuthority": true,
+        "semanticReconciliation": true,
+        "fixedReplacementCardinality": false,
+        "copiedLiteralInventory": false,
+        "validGrowthControl": true,
+        "requiredNegativeControlKinds": [
+          "OMISSION",
+          "EXTRA",
+          "DUPLICATE",
+          "NOT_READY"
+        ]
+      },
+      "requiredVerificationClasses": [
+        "AUTHORITATIVE_INVENTORY_BINDING",
+        "SEMANTIC_RECONCILIATION",
+        "NEGATIVE_INTEGRITY_MATRIX",
+        "VALID_GROWTH_CONTROL"
+      ],
+      "allowedFutureChangeClasses": [
+        "GOVERNANCE_PREVENTION_ASSET",
+        "CONSUMER_OWNED_ACCEPTANCE_GATE",
+        "CONSUMER_OWNED_TEST_OR_CHECKER"
+      ],
+      "forbiddenIntents": [
+        "FIXED_REPLACEMENT_CARDINALITY",
+        "COPIED_LITERAL_INVENTORY",
+        "SECOND_SOURCE_OF_TRUTH"
+      ]
+    }
+  ],
+  "fallback": {
+    "strategy": "NO_AUTOMATIC_CONTROL",
+    "planKind": "NON_EXECUTABLE_EVIDENCE_REQUEST",
+    "disposition": "HUMAN_EVIDENCE_REQUIRED",
+    "automaticChangeTargets": [],
+    "executionAuthorization": "NOT_GRANTED",
+    "consumerAdoption": "NOT_ADOPTED",
+    "requiresMissingEvidenceReasons": true
+  },
+  "qualification": {
+    "minimumQualifiedRealPlans": 2,
+    "requireDistinctStrategies": true,
+    "requireFallbackPlan": true,
+    "requireNegativeMutationMatrix": true,
+    "requireExactCg09SourceBlobs": true,
+    "primaryHead": "1e5129284afbb9e9a26be2583dcee8f86cea602d",
+    "primaryRun": 34602428029,
+    "primaryJob": 103272721607,
+    "primaryResult": "SUCCESS",
+    "finalReplayHead": "59a7e40e9963984b9d2a4a0d29de8641cd68e25b",
+    "finalReplayRun": 34602515941,
+    "finalReplayJob": 103273005546,
+    "finalReplayResult": "SUCCESS",
+    "sourceAuthorities": "PASS",
+    "inputGrounding": "PASS",
+    "cg09SelectionReplay": "PASS",
+    "positiveDecision": "BOUNDED_PREVENTION_PLANS_VERIFIED",
+    "planCount": 3,
+    "qualifiedRealPlanCount": 2,
+    "fallbackPlanCount": 1,
+    "selectedStrategies": [
+      "AUTHORITY_RECONCILIATION",
+      "HYBRID_RECURRENCE_GUARD"
+    ],
+    "fallbackDisposition": "HUMAN_EVIDENCE_REQUIRED",
+    "executionAuthorized": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false,
+    "rejectedCases": {
+      "hybrid static detector promoted to authority": "STATIC_RULE_PROMOTED_TO_AUTHORITY",
+      "hybrid authoritative behavioral proof dropped": "AUTHORITATIVE_BEHAVIORAL_PROOF_DROPPED",
+      "authority reconciliation fixed replacement count": "FIXED_REPLACEMENT_CARDINALITY_FORBIDDEN",
+      "authority reconciliation copied inventory": "COPIED_LITERAL_INVENTORY_FORBIDDEN",
+      "authority reconciliation valid growth dropped": "VALID_GROWTH_CONTROL_REQUIRED",
+      "scope broadening": "APPLICABILITY_SCOPE_EXCEEDED",
+      "implicit consumer adoption": "CONSUMER_ADOPTION_IMPLICIT",
+      "Yunka mutation request": "CG10_FORBIDDEN_MUTATION_CLASS",
+      "fallback executable target": "CG10_AUTOMATIC_CHANGE_TARGET_FORBIDDEN",
+      "execution authorization": "CG10_EXECUTION_AUTHORIZATION_FORBIDDEN"
+    },
+    "negativeMatrix": "PASS"
+  }
+}
