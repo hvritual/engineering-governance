@@ -75,6 +75,18 @@
       "fixtureAttestationId": "df5b507f025fd916a49d8c68ab6567c53729ed6b811dcc6512b198429524520e",
       "negativeMatrix": "PASS",
       "consumerMutation": false
+    },
+    "finalReplay": {
+      "head": "1f3d40597f094a55065b1fbd3c5da58677bdc143",
+      "run": 34611857562,
+      "job": 103304053122,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "realCurrentStateRefusalCount": 3,
+      "isolatedFixture": "PASS",
+      "fixtureAttestationId": "66132bad75245ca1d7a28dff0d275baca7edc6ea77420fc35f2be550d5330508",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
     }
   }
 }
