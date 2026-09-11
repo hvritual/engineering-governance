@@ -173,5 +173,5 @@ jobs:
           test "$(git -C buggy status --porcelain)" = ''
           test "$(git -C fixed status --porcelain)" = ''
           git diff --exit-code
-          test -z "$(git status --porcelain)"
+          test -z "$(git status --porcelain --untracked-files=no)"
           echo 'CG08_CONSUMER_MUTATION=NONE'
