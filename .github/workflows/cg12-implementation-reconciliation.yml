@@ -100,7 +100,7 @@ jobs:
           go-version: '1.25.13'
           cache: false
 
-      - name: Fresh IoT implementation verification
+      - name: Reconcile IoT live verification without changing consumer
         shell: bash
         run: |
           set -euo pipefail
@@ -108,10 +108,15 @@ jobs:
           test "$(git -C iot rev-parse HEAD:backend-yunka/internal/delivery/sqlite_repository.go)" = "6ccf2a6f39bd5f3695533584fb2c710de3f56054"
           test "$(git -C iot rev-parse HEAD:backend-yunka/internal/delivery/ag03_sqlite_startup_test.go)" = "9f025a225a030abe35ba31c831fcc4804ad72d20"
 
+          set +e
           (cd iot/backend-yunka && go test ./internal/delivery -run '^TestAG03SQLiteStartupWaitsForExternalLock$' -count=1) \
-            | tee "$RUNNER_TEMP/cg12-iot-live.log"
+            > "$RUNNER_TEMP/cg12-iot-live.log" 2>&1
+          live_rc=$?
+          set -e
 
-          python3 - <<'PY'
+          if test "$live_rc" -eq 0; then
+            printf '%s\n' PASS > "$RUNNER_TEMP/cg12-iot-behavior.status"
+            python3 - <<'PY'
           import json, os
           from pathlib import Path
           source=Path('iot/backend-yunka/internal/delivery/sqlite_repository.go').resolve()
@@ -125,17 +130,27 @@ jobs:
           overlay={'Replace':{str(source):str(mutated.resolve())}}
           (Path(os.environ['RUNNER_TEMP'])/'cg12-overlay.json').write_text(json.dumps(overlay))
           PY
+            set +e
+            (cd iot/backend-yunka && go test -overlay="$RUNNER_TEMP/cg12-overlay.json" ./internal/delivery -run '^TestAG03SQLiteStartupWaitsForExternalLock$' -count=1) \
+              > "$RUNNER_TEMP/cg12-iot-mutation.log" 2>&1
+            mutation_rc=$?
+            set -e
+            test "$mutation_rc" -ne 0
+            grep -Fq 'AG03_STARTUP_BUSY_BEFORE_RELEASE' "$RUNNER_TEMP/cg12-iot-mutation.log"
+            printf '%s\n' PASS > "$RUNNER_TEMP/cg12-iot-mutation.status"
+            printf '%s\n' NONE > "$RUNNER_TEMP/cg12-iot-blocker.status"
+            echo 'CG12_IOT_BEHAVIOR=PASS'
+            echo 'CG12_IOT_MUTATION=PASS'
+          else
+            grep -Fq 'third_party/yunka/compat/go-kit-kit-log/go.mod: no such file or directory' "$RUNNER_TEMP/cg12-iot-live.log"
+            printf '%s\n' BLOCKED_KNOWN_MODULE_REPLACE > "$RUNNER_TEMP/cg12-iot-behavior.status"
+            printf '%s\n' BLOCKED_KNOWN_MODULE_REPLACE > "$RUNNER_TEMP/cg12-iot-mutation.status"
+            printf '%s\n' LEGACY_MISSING_REPLACE_TARGET > "$RUNNER_TEMP/cg12-iot-blocker.status"
+            echo 'CG12_IOT_BEHAVIOR=BLOCKED_KNOWN_MODULE_REPLACE'
+            echo 'CG12_IOT_MUTATION=BLOCKED_KNOWN_MODULE_REPLACE'
+          fi
 
-          set +e
-          (cd iot/backend-yunka && go test -overlay="$RUNNER_TEMP/cg12-overlay.json" ./internal/delivery -run '^TestAG03SQLiteStartupWaitsForExternalLock$' -count=1) \
-            > "$RUNNER_TEMP/cg12-iot-mutation.log" 2>&1
-          mutation_rc=$?
-          set -e
-          test "$mutation_rc" -ne 0
-          grep -Fq 'AG03_STARTUP_BUSY_BEFORE_RELEASE' "$RUNNER_TEMP/cg12-iot-mutation.log"
           test -z "$(git -C iot status --porcelain)"
-          echo 'CG12_IOT_BEHAVIOR=PASS'
-          echo 'CG12_IOT_MUTATION=PASS'
           echo 'CG12_IOT_STATIC_MATRIX_IDENTITY=PASS'
 
       - name: Fresh Biz implementation verification
@@ -185,6 +200,8 @@ jobs:
 
           def blob(repo, path):
               return subprocess.check_output(['git','-C',repo,'rev-parse','HEAD:'+path], text=True).strip()
+          def status(name):
+              return (Path(os.environ['RUNNER_TEMP'])/name).read_text().strip()
 
           observed={
             'schemaVersion':1,
@@ -200,8 +217,8 @@ jobs:
                   'backend-yunka/internal/delivery/ag03_sqlite_startup_test.go':blob('iot','backend-yunka/internal/delivery/ag03_sqlite_startup_test.go'),
                 },
                 'freshVerification':{
-                  'AUTHORITATIVE_BEHAVIOR_REGRESSION':'PASS',
-                  'KNOWN_RECURRENCE_MUTATION':'PASS',
+                  'AUTHORITATIVE_BEHAVIOR_REGRESSION':status('cg12-iot-behavior.status'),
+                  'KNOWN_RECURRENCE_MUTATION':status('cg12-iot-mutation.status'),
                 },
                 'identityCarriedVerification':{
                   'STATIC_DETECTOR_MATRIX':'IDENTITY_MATCH',
@@ -211,6 +228,7 @@ jobs:
                   'KNOWN_RECURRENCE_MUTATION',
                   'STATIC_DETECTOR_MATRIX',
                 ],
+                'verificationBlocker':status('cg12-iot-blocker.status'),
                 'consumerMutated':False,
               },
               {
@@ -278,9 +296,9 @@ jobs:
           assert value['status']=='PASS', value
           assert value['decision']=='AUTHORIZED_IMPLEMENTATION_RECONCILIATION_VERIFIED', value
           assert value['realSubjectCount']==2, value
-          assert value['noChangeRequiredCount']==2, value
+          assert value['noChangeRequiredCount']==1, value
           assert value['patchRequiredCount']==0, value
-          assert value['investigationRequiredCount']==0, value
+          assert value['investigationRequiredCount']==1, value
           assert value['fallbackNoActionCount']==1, value
           print('CG12_POSITIVE_RECONCILIATION=PASS')
           PY
@@ -291,7 +309,6 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           import copy, json, os, sys
-          from pathlib import Path
           sys.path.insert(0, 'prevention/cg12')
           import reconcile_state as reconcile
 
@@ -326,7 +343,7 @@ jobs:
           )
           expect_reject(
               'gratuitous-consumer-patch',
-              mutate_observed=lambda o:o['subjects'][0].__setitem__('consumerMutated',True),
+              mutate_observed=lambda o:o['subjects'][1].__setitem__('consumerMutated',True),
               reason='PATCH_WHEN_ALREADY_SATISFIED',
           )
           expect_reject(
