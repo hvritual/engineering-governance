@@ -1,0 +1,211 @@
+name: CG-09 prevention strategy selection qualification
+
+on:
+  push:
+    branches:
+      - cg09/prevention-strategy-selection
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: qualify-evidence-driven-selection
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact qualified source authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:corpus/cg01/iot-sqlite-startup/case.json)" = "5cba82314a027f4ee6284741518a45238b2b6fdc"
+          test "$(git rev-parse HEAD:prevention/cg03/iot-sqlite-startup/problem.json)" = "88ef8167d17b0321dd47d97f0488f4e85f7f2b1d"
+          test "$(git rev-parse HEAD:prevention/cg03/iot-sqlite-startup/prevention.json)" = "5604caf97f0d0c5b4fafe3bd071e8b41d0cf51a5"
+          test "$(git rev-parse HEAD:prevention/cg03/iot-sqlite-startup/rule.yml)" = "0a5d293d8d3571d9cbf9e7dee2f4dbc20eed1d05"
+          test "$(git rev-parse HEAD:corpus/cg08/biz-runtime-gate/case.json)" = "4ffd9d9e5dabb296a6169d80cf159ccc3d82e498"
+          echo 'CG09_SOURCE_AUTHORITIES=PASS'
+
+      - name: Prove normalized evidence is grounded in qualified source facts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          cases = json.loads(Path('prevention/cg09/cases.json').read_text())['cases']
+          by_id = {case['caseId']: case for case in cases}
+
+          cg01 = json.loads(Path('corpus/cg01/iot-sqlite-startup/case.json').read_text())
+          cg03_problem = json.loads(Path('prevention/cg03/iot-sqlite-startup/problem.json').read_text())
+          cg03_prevention = json.loads(Path('prevention/cg03/iot-sqlite-startup/prevention.json').read_text())
+          cg03_rule = Path('prevention/cg03/iot-sqlite-startup/rule.yml').read_text()
+          norm03 = by_id['CG03-IOT-SQLITE-STARTUP-LOCK-ORDER']
+
+          assert cg01['status'] == 'QUALIFIED'
+          assert cg03_problem['problemClass'] == 'RUNTIME_INITIALIZATION_ORDER_DEFECT'
+          assert cg03_problem['knownVariants']
+          assert cg03_prevention['status'] == 'QUALIFIED'
+          assert cg03_prevention['authorityBoundary']['staticRule'] == 'ADVISORY_RECURRENCE_GUARD'
+          assert 'held-lock' in cg03_prevention['authorityBoundary']['authoritativeProof']
+          assert 'advisory recurrence guard' in cg03_rule.lower()
+          assert norm03['evidence']['authoritativeProof'] == 'BEHAVIORAL_RUNTIME_REGRESSION'
+          assert norm03['evidence']['recurrenceShape'] is True
+          assert norm03['control']['staticDetector']['authority'] == 'ADVISORY'
+          assert norm03['scope']['qualified'] == cg03_prevention['applicability']['scope']
+
+          cg08 = json.loads(Path('corpus/cg08/biz-runtime-gate/case.json').read_text())
+          norm08 = by_id['CG08-BIZ-RUNTIME-GATE-SOT-DRIFT']
+          assert cg08['status'] == 'QUALIFIED'
+          assert cg08['classification'] == 'CONSUMER_ACCEPTANCE_GATE_SOURCE_OF_TRUTH_DRIFT'
+          assert cg08['fixedShape']['authoritativeInventory'] == 'contracts/generated/manifest.json services with declared application'
+          assert cg08['fixedShape']['fixedCardinality'] is False
+          assert cg08['fixedShape']['validGrowthAllowed'] is True
+          assert cg08['freshReplay']['status'] == 'QUALIFIED'
+          assert cg08['freshReplay']['fixedCheckerTestCount'] == 25
+          assert cg08['freshReplay']['futureDeclaredApplicationGrowth'] == 'PASS'
+          assert norm08['evidence']['authoritativeInventory'] is True
+          assert norm08['evidence']['validGrowthControl'] is True
+          assert norm08['control']['deriveFromAuthority'] is True
+          assert norm08['control']['fixedReplacementCardinality'] is False
+          assert norm08['control']['copiedLiteralInventory'] is False
+
+          print('CG09_NORMALIZATION_GROUNDED=PASS')
+          PY
+
+      - name: Positive cross-case strategy qualification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 prevention/cg09/verify_strategy.py \
+            --protocol prevention/cg09/protocol.json \
+            --cases prevention/cg09/cases.json \
+            | tee /tmp/cg09-positive.json
+          python3 - <<'PY'
+          import json
+          value = json.load(open('/tmp/cg09-positive.json'))
+          assert value['status'] == 'PASS', value
+          assert value['decision'] == 'EVIDENCE_DRIVEN_PREVENTION_STRATEGY_SELECTION_VERIFIED', value
+          decisions = {item['caseId']: item['strategy'] for item in value['decisions']}
+          assert decisions['CG03-IOT-SQLITE-STARTUP-LOCK-ORDER'] == 'HYBRID_RECURRENCE_GUARD'
+          assert decisions['CG08-BIZ-RUNTIME-GATE-SOT-DRIFT'] == 'AUTHORITY_RECONCILIATION'
+          assert value['consumerAdoption'] is False
+          assert value['repositoryBlocking'] is False
+          print('CG09_POSITIVE_MATRIX=PASS')
+          PY
+
+      - name: Fail-closed fallback and rejection matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import copy
+          import json
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, 'prevention/cg09')
+          from verify_strategy import VerificationError, select_strategy
+
+          protocol = json.loads(Path('prevention/cg09/protocol.json').read_text())
+          cases = json.loads(Path('prevention/cg09/cases.json').read_text())['cases']
+          by_id = {case['caseId']: case for case in cases}
+          fallback = protocol['fallbackStrategy']
+
+          def expect_fallback(name, base_id, mutate):
+              case = copy.deepcopy(by_id[base_id])
+              mutate(case)
+              selected = select_strategy(protocol, case)
+              if selected != fallback:
+                  raise SystemExit(f'{name}: expected {fallback}, got {selected}')
+              print(f'{name}: PASS ({fallback})')
+
+          def expect_reject(name, base_id, mutate, reason):
+              case = copy.deepcopy(by_id[base_id])
+              mutate(case)
+              try:
+                  select_strategy(protocol, case)
+              except VerificationError as exc:
+                  if exc.reason != reason:
+                      raise SystemExit(f'{name}: expected {reason}, got {exc.reason}: {exc.detail}')
+                  print(f'{name}: PASS ({reason})')
+                  return
+              raise SystemExit(f'{name}: expected rejection {reason}')
+
+          expect_fallback(
+              'cg03-missing-behavioral-authority',
+              'CG03-IOT-SQLITE-STARTUP-LOCK-ORDER',
+              lambda c: c['evidence'].__setitem__('authoritativeProof', 'STATIC_ONLY'),
+          )
+          expect_fallback(
+              'cg03-missing-recurrence-shape',
+              'CG03-IOT-SQLITE-STARTUP-LOCK-ORDER',
+              lambda c: c['evidence'].__setitem__('recurrenceShape', False),
+          )
+          expect_reject(
+              'cg03-static-promoted-to-authority',
+              'CG03-IOT-SQLITE-STARTUP-LOCK-ORDER',
+              lambda c: c['control']['staticDetector'].__setitem__('authority', 'AUTHORITATIVE'),
+              'STATIC_RULE_PROMOTED_TO_AUTHORITY',
+          )
+          expect_fallback(
+              'cg08-missing-authoritative-inventory',
+              'CG08-BIZ-RUNTIME-GATE-SOT-DRIFT',
+              lambda c: c['evidence'].__setitem__('authoritativeInventory', False),
+          )
+          expect_fallback(
+              'cg08-missing-valid-growth-control',
+              'CG08-BIZ-RUNTIME-GATE-SOT-DRIFT',
+              lambda c: c['evidence'].__setitem__('validGrowthControl', False),
+          )
+          expect_reject(
+              'cg08-fixed-replacement-cardinality',
+              'CG08-BIZ-RUNTIME-GATE-SOT-DRIFT',
+              lambda c: c['control'].__setitem__('fixedReplacementCardinality', True),
+              'FIXED_REPLACEMENT_CARDINALITY_FORBIDDEN',
+          )
+          expect_reject(
+              'cg08-copied-literal-inventory',
+              'CG08-BIZ-RUNTIME-GATE-SOT-DRIFT',
+              lambda c: c['control'].__setitem__('copiedLiteralInventory', True),
+              'COPIED_LITERAL_INVENTORY_FORBIDDEN',
+          )
+          expect_reject(
+              'scope-broadening',
+              'CG08-BIZ-RUNTIME-GATE-SOT-DRIFT',
+              lambda c: c['scope'].__setitem__('proposed', 'all literals and numeric cardinalities in all repositories'),
+              'APPLICABILITY_SCOPE_EXCEEDED',
+          )
+          expect_reject(
+              'implicit-consumer-adoption',
+              'CG03-IOT-SQLITE-STARTUP-LOCK-ORDER',
+              lambda c: c.__setitem__('consumerAdoption', 'AUTO_ADOPT'),
+              'CONSUMER_ADOPTION_IMPLICIT',
+          )
+          expect_fallback(
+              'unknown-mechanism',
+              'CG08-BIZ-RUNTIME-GATE-SOT-DRIFT',
+              lambda c: c.__setitem__('mechanism', 'UNQUALIFIED_NEW_MECHANISM'),
+          )
+          print('CG09_NEGATIVE_MATRIX=PASS')
+          PY
+
+      - name: Stable asset syntax and clean worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile prevention/cg09/verify_strategy.py
+          python3 -m json.tool prevention/cg09/protocol.json >/dev/null
+          python3 -m json.tool prevention/cg09/cases.json >/dev/null
+          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=no)"
+          echo 'CG09_STABLE_ASSETS=PASS'
