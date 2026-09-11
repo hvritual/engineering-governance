@@ -1,0 +1,176 @@
+name: CG-06 Repository Blocking Readiness
+
+on:
+  push:
+    branches: [cg-06/repository-blocking-trusted-delivery]
+    paths:
+      - delivery/cg06/**
+      - .github/workflows/cg06-repository-blocking-readiness.yml
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-readiness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Freeze CG-05 authority and validate verifier source cleanliness
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg06"
+          mkdir -p "$out/results" "$out/fixtures" "$out/snapshots" "$out/pycache"
+          test "$(git rev-parse HEAD:delivery/cg05/protocol.json)" = 0cf5d2b79eaab72bbd52195de19ec602dff508c6
+          test "$(git rev-parse HEAD:delivery/cg05/hvritual/iot-delivery-system/required-checks.json)" = 174d23688ffeb9afc15d9cb1390b38a35853b19c
+          test "$(git rev-parse HEAD:delivery/cg05/reconcile.py)" = 939069aa9d821e3f228885b546f90268b795a562
+          PYTHONPYCACHEPREFIX="$out/pycache" python3 -m py_compile delivery/cg06/verify_blocking.py
+          test -z "$(git status --porcelain --untracked-files=all)"
+          cp delivery/cg06/protocol.json "$out/snapshots/protocol.json"
+          cp delivery/cg06/hvritual/iot-delivery-system/activation-intent.json "$out/snapshots/activation-intent.json"
+          cp delivery/cg06/evidence/current-state.json "$out/snapshots/current-state.json"
+          cp delivery/cg06/verify_blocking.py "$out/snapshots/verify_blocking.py"
+
+      - name: Current live state must fail closed; readiness must pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg06"
+          v=delivery/cg06/verify_blocking.py
+          p=delivery/cg06/protocol.json
+          i=delivery/cg06/hvritual/iot-delivery-system/activation-intent.json
+          o=delivery/cg06/evidence/current-state.json
+
+          python3 "$v" --protocol "$p" --intent "$i" --observed "$o" --mode readiness > "$out/results/readiness.json"
+          python3 - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'],'cg06/results/readiness.json')
+          v=json.loads(p.read_text())
+          assert v['status']=='PASS' and v['decision']=='READY_FOR_EXTERNAL_ADMIN_ACTIVATION' and v['repositoryBlocking'] is False, v
+          PY
+
+          set +e
+          python3 "$v" --protocol "$p" --intent "$i" --observed "$o" --mode live > "$out/results/current-live.json"
+          code=$?
+          set -e
+          test "$code" -eq 2
+          python3 - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'],'cg06/results/current-live.json')
+          v=json.loads(p.read_text())
+          assert v['status']=='REJECTED' and v['reason']=='BRANCH_NOT_PROTECTED' and v['repositoryBlocking'] is False, v
+          PY
+
+      - name: Contract-only activated fixture and negative invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg06"
+          python3 - <<'PY'
+          import copy,json,os,pathlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP'],'cg06')
+          candidate='bcd20632b666405c3f7a8fe8d53f591c78450087'
+          integration=424242
+          base={
+            'schemaVersion':1,
+            'evidenceClass':'SYNTHETIC_CONTRACT_ONLY_NOT_PRODUCTION_PROOF',
+            'repository':'hvritual/iot-delivery-system',
+            'branch':'main',
+            'branchObservation':{'protected':True},
+            'accountPermission':{'user':'hvritual','permission':'admin'},
+            'rulesets':[{
+              'name':'cg06-trusted-delivery-main',
+              'enforcement':'active',
+              'bypass_actors':[{'actor_id':integration,'actor_type':'Integration','bypass_mode':'always'}],
+              'rules':[
+                {'type':'update','parameters':{'update_allows_fetch_and_merge':False}},
+                {'type':'deletion'},
+                {'type':'non_fast_forward'},
+                {'type':'required_status_checks','parameters':{
+                  'do_not_enforce_on_create':False,
+                  'strict_required_status_checks_policy':True,
+                  'required_status_checks':[{'context':'engineering-governance/trusted-delivery','integration_id':integration}]
+                }}
+              ]
+            }],
+            'trustedPublisher':{'integrationId':integration,'installed':True,'statusesWrite':True,'candidateControlled':False},
+            'qualifiedCandidate':{'sourceCommit':candidate,'cg05Aggregate':'PASS'},
+            'trustedStatus':{'context':'engineering-governance/trusted-delivery','sourceCommit':candidate,'integrationId':integration,'state':'success'},
+            'postIntegration':{'nonForce':True,'mainSha':candidate,'rulesetStillActive':True,'negativeBypassProof':'PASS'}
+          }
+          (root/'fixtures/activated-contract.json').write_text(json.dumps(base,indent=2)+'\n')
+          cases={}
+          x=copy.deepcopy(base); x['rulesets'][0]['bypass_actors'].append({'actor_id':5,'actor_type':'RepositoryRole','bypass_mode':'always'}); cases['extra-bypass']=(x,'LIVE_BYPASS_SET_NOT_MINIMAL')
+          x=copy.deepcopy(base); x['rulesets'][0]['rules'][3]['parameters']['required_status_checks'][0]['integration_id']=999; cases['wrong-status-app']=(x,'LIVE_STATUS_SOURCE_NOT_PINNED_TO_BYPASS_APP')
+          x=copy.deepcopy(base); x['trustedPublisher']['candidateControlled']=True; cases['candidate-controlled-publisher']=(x,'TRUSTED_PUBLISHER_CANDIDATE_CONTROLLED')
+          x=copy.deepcopy(base); x['postIntegration']['mainSha']='0'*40; cases['wrong-main-readback']=(x,'POST_INTEGRATION_MAIN_SHA_MISMATCH')
+          for name,(value,reason) in cases.items():
+            (root/f'fixtures/{name}.json').write_text(json.dumps(value,indent=2)+'\n')
+            (root/f'fixtures/{name}.reason').write_text(reason+'\n')
+          PY
+
+          v=delivery/cg06/verify_blocking.py
+          p=delivery/cg06/protocol.json
+          i=delivery/cg06/hvritual/iot-delivery-system/activation-intent.json
+          python3 "$v" --protocol "$p" --intent "$i" --observed "$out/fixtures/activated-contract.json" --mode live > "$out/results/synthetic-contract-pass.json"
+          python3 - <<'PY'
+          import json,os,pathlib
+          v=json.loads(pathlib.Path(os.environ['RUNNER_TEMP'],'cg06/results/synthetic-contract-pass.json').read_text())
+          assert v['status']=='PASS' and v['decision']=='REPOSITORY_BLOCKING_TRUSTED_DELIVERY_VERIFIED' and v['repositoryBlocking'] is True, v
+          PY
+
+          for name in extra-bypass wrong-status-app candidate-controlled-publisher wrong-main-readback; do
+            expected="$(cat "$out/fixtures/$name.reason")"
+            set +e
+            python3 "$v" --protocol "$p" --intent "$i" --observed "$out/fixtures/$name.json" --mode live > "$out/results/$name.json"
+            code=$?
+            set -e
+            test "$code" -eq 2
+            python3 - "$out/results/$name.json" "$expected" <<'PY'
+          import json,sys
+          v=json.load(open(sys.argv[1])); assert v['status']=='REJECTED' and v['reason']==sys.argv[2] and v['repositoryBlocking'] is False, v
+          PY
+          done
+
+      - name: Emit readiness qualification receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg06"
+          python3 - <<'PY'
+          import json,os,pathlib,subprocess
+          root=pathlib.Path(os.environ['RUNNER_TEMP'],'cg06')
+          result={
+            'schemaVersion':1,
+            'task':'CG-06',
+            'status':'PASS_WITH_EXTERNAL_ADMIN_ACTIVATION_BLOCKER',
+            'repositoryBlocking':False,
+            'governanceHead':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
+            'contentTree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip(),
+            'readiness':json.loads((root/'results/readiness.json').read_text()),
+            'currentLive':json.loads((root/'results/current-live.json').read_text()),
+            'syntheticContractOnly':json.loads((root/'results/synthetic-contract-pass.json').read_text()),
+            'negativeContractCases':{
+              n:json.loads((root/f'results/{n}.json').read_text())
+              for n in ['extra-bypass','wrong-status-app','candidate-controlled-publisher','wrong-main-readback']
+            },
+            'externalBlockers':['Administration:write ruleset activation','trusted GitHub App statuses:write publisher/integrator','live negative bypass proof','live positive exact-SHA integration/readback'],
+            'syntheticFixtureIsProductionProof':False
+          }
+          (root/'qualification.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          PY
+          test -z "$(git status --porcelain --untracked-files=all)"
+          rm -rf "$out/pycache"
+          (cd "$out" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cg06-repository-blocking-readiness-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/cg06
+          retention-days: 30
+          if-no-files-found: error
