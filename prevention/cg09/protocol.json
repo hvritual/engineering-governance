@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG09-EVIDENCE-DRIVEN-PREVENTION-STRATEGY",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "fallbackStrategy": "NO_AUTOMATIC_CONTROL",
   "globalConstraints": [
     {
@@ -123,6 +123,34 @@
       "blob": "4ffd9d9e5dabb296a6169d80cf159ccc3d82e498"
     }
   ],
+  "qualification": {
+    "primaryHead": "01c349b1256f149e9e72f788dea9af42113b2e73",
+    "primaryRun": 34592042817,
+    "primaryJob": 103239319956,
+    "result": "SUCCESS",
+    "sourceAuthorities": "PASS",
+    "normalizationGrounded": "PASS",
+    "positiveDecision": "EVIDENCE_DRIVEN_PREVENTION_STRATEGY_SELECTION_VERIFIED",
+    "selectedStrategies": {
+      "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER": "HYBRID_RECURRENCE_GUARD",
+      "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT": "AUTHORITY_RECONCILIATION"
+    },
+    "fallbackCases": [
+      "missing behavioral authority",
+      "missing deterministic recurrence shape",
+      "missing authoritative inventory",
+      "missing valid-growth control",
+      "unknown mechanism"
+    ],
+    "rejectedCases": {
+      "static rule promoted to authority": "STATIC_RULE_PROMOTED_TO_AUTHORITY",
+      "fixed replacement cardinality": "FIXED_REPLACEMENT_CARDINALITY_FORBIDDEN",
+      "copied literal inventory": "COPIED_LITERAL_INVENTORY_FORBIDDEN",
+      "scope broadening": "APPLICABILITY_SCOPE_EXCEEDED",
+      "implicit consumer adoption": "CONSUMER_ADOPTION_IMPLICIT"
+    },
+    "negativeMatrix": "PASS"
+  },
   "authorityCeiling": {
     "publishesSelectionContractOnly": true,
     "consumerAdoption": false,
