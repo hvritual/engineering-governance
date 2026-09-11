@@ -143,7 +143,7 @@ jobs:
           rg="$out/tools/bin/ruleguard"
           mut="$RUNNER_TEMP/cg02-final-mutation"
           ctrl="$RUNNER_TEMP/cg02-final-control"
-          ast_pattern='for _, $STMT := range []string{"PRAGMA journal_mode = WAL", "PRAGMA busy_timeout = 5000", "PRAGMA foreign_keys = ON"} { if _, $ERR := $DB.Exec($STMT); $ERR != nil { $$$BODY } }'
+          ast_pattern='for _, $STMT := range []string{$$$A, "PRAGMA journal_mode = WAL", "PRAGMA busy_timeout = 5000", $$$B} { if _, $ERR := $DB.Exec($STMT); $ERR != nil { $$$BODY } }'
           rg_expr='m.Match(`for _, $stmt := range []string{"PRAGMA journal_mode = WAL", "PRAGMA busy_timeout = 5000", "PRAGMA foreign_keys = ON"} { if _, $err := $db.Exec($stmt); $err != nil { $*_ } }`)'
           capture() {
             name="$1"; shift
@@ -173,11 +173,17 @@ jobs:
             t=(logs/f'{name}.stdout').read_text().strip()
             return json.loads(t) if t else []
           def canon(v): return json.dumps(v,sort_keys=True,separators=(',',':'))
-          def diag_count(v):
-            if isinstance(v,list): return len(v)
+          def ruleguard_diags(v):
+            out=set()
             if isinstance(v,dict):
-              return sum((len(x) if k=='diagnostics' and isinstance(x,list) else diag_count(x)) for k,x in v.items())
-            return 0
+              for k,x in v.items():
+                if k=='ruleguard' and isinstance(x,list):
+                  for d in x:
+                    if isinstance(d,dict): out.add((d.get('posn',''),d.get('message','')))
+                else: out.update(ruleguard_diags(x))
+            elif isinstance(v,list):
+              for x in v: out.update(ruleguard_diags(x))
+            return out
           def errors(v):
             if isinstance(v,dict):
               return [x for k,x in v.items() if k=='error'] + sum((errors(x) for x in v.values()),[])
@@ -188,16 +194,17 @@ jobs:
             assert canon(load(f'rg-{s}-1'))==canon(load(f'rg-{s}-2')), ('ruleguard',s)
             assert not errors(load(f'rg-{s}-1')), (s, errors(load(f'rg-{s}-1')))
           ast={s:len(load(f'ast-{s}-1')) for s in ('buggy','fixed','mutation','unrelated')}
-          rg={s:diag_count(load(f'rg-{s}-1')) for s in ('buggy','fixed','mutation','unrelated')}
-          assert ast=={'buggy':1,'fixed':0,'mutation':1,'unrelated':0}, ast
-          assert rg=={'buggy':1,'fixed':0,'mutation':1,'unrelated':0}, rg
+          rg={s:len(ruleguard_diags(load(f'rg-{s}-1'))) for s in ('buggy','fixed','mutation','unrelated')}
+          expected={'buggy':1,'fixed':0,'mutation':1,'unrelated':0}
+          assert ast==expected, ast
+          assert rg==expected, rg
           mod=json.loads((logs/'ruleguard.module.json').read_text()); dsl=json.loads((logs/'ruleguard-dsl.module.json').read_text())
           result={
             'schemaVersion':1,'status':'PASS','task':'CG-02','caseId':'CG01-IOT-SQLITE-STARTUP-LOCK-ORDER',
             'authorityBoundary':{'externalTools':'ADVISORY_STATIC_DETECTOR_ONLY','authoritativeProof':'CG-01 held-lock runtime regression'},
-            'matrix':{'expected':{'buggy':1,'fixed':0,'mutation':1,'unrelated':0},'ast-grep':ast,'go-ruleguard':rg},
+            'matrix':{'expected':expected,'ast-grep':ast,'go-ruleguard':rg},
             'ast-grep':{'version':os.environ['AST_GREP_VERSION'],'semanticDeterminism':True},
-            'go-ruleguard':{'version':os.environ['RULEGUARD_VERSION'],'dslVersion':os.environ['RULEGUARD_DSL_VERSION'],'semanticDeterminism':True,'moduleSum':mod['Sum'],'goModSum':mod['GoModSum'],'dslSum':dsl['Sum'],'dslGoModSum':dsl['GoModSum'],'legacyDslArchiveBootstrapRequired':True},
+            'go-ruleguard':{'version':os.environ['RULEGUARD_VERSION'],'dslVersion':os.environ['RULEGUARD_DSL_VERSION'],'semanticDeterminism':True,'moduleSum':mod['Sum'],'goModSum':mod['GoModSum'],'dslSum':dsl['Sum'],'dslGoModSum':dsl['GoModSum'],'legacyDslArchiveBootstrapRequired':True,'duplicatePackageDiagnosticsDeduplicatedByPositionAndMessage':True},
             'consumerTrackedSourceMutated':False,'consumerDependencyLocksMutated':False
           }
           (r/'qualification.json').write_text(json.dumps(result,indent=2)+'\n')
