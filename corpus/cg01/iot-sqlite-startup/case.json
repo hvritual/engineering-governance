@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "caseId": "CG01-IOT-SQLITE-STARTUP-LOCK-ORDER",
-  "status": "STARTED_EVIDENCE_FROZEN_REPLAY_PENDING",
+  "status": "QUALIFIED",
   "classification": "consumer_runtime_initialization_defect",
   "origin": {
     "repository": "hvritual/iot-delivery-system",
@@ -10,26 +10,34 @@
   },
   "source": {
     "buggyBaseCommit": "f190fe237fa1efb738b4866275804093a209de5b",
+    "buggyBaseTree": "ff00a33ed7427d7c8b727f3adcf94dc65ca376ad",
     "observedFailingCandidateCommit": "59b31eb8302972fce8cef9f95cf81d926794198d",
     "fixedCommit": "bcd20632b666405c3f7a8fe8d53f591c78450087",
     "fixedTree": "0c0d1a2da23de4b7315245faba2103ec7a64377e",
-    "yunkaPin": "057ebcf88a87303eb633eb6e604d306f633dfac0"
+    "yunkaPin": "057ebcf88a87303eb633eb6e604d306f633dfac0",
+    "yunkaPinChangedByFix": false
   },
   "files": {
     "buggyRepository": {
       "path": "backend-yunka/internal/delivery/sqlite_repository.go",
       "commit": "f190fe237fa1efb738b4866275804093a209de5b",
-      "gitBlobSha": "8e4784d76021e0b7eca8c61e6ef353eaa359fea7"
+      "gitBlobSha": "8e4784d76021e0b7eca8c61e6ef353eaa359fea7",
+      "sha256": "8c05ff2e736cc6995e751da1840bee08f100f7f20eb689f6c95b2c6c8488a136",
+      "bytes": 20868
     },
     "fixedRepository": {
       "path": "backend-yunka/internal/delivery/sqlite_repository.go",
       "commit": "bcd20632b666405c3f7a8fe8d53f591c78450087",
-      "gitBlobSha": "6ccf2a6f39bd5f3695533584fb2c710de3f56054"
+      "gitBlobSha": "6ccf2a6f39bd5f3695533584fb2c710de3f56054",
+      "sha256": "0cc2360077e37dc84ea886d3fe37d9b23cec9d1709a219dec99821c1c3679c0a",
+      "bytes": 20876
     },
     "fixedRegression": {
       "path": "backend-yunka/internal/delivery/ag03_sqlite_startup_test.go",
       "commit": "bcd20632b666405c3f7a8fe8d53f591c78450087",
       "gitBlobSha": "9f025a225a030abe35ba31c831fcc4804ad72d20",
+      "sha256": "57933ecd625283169f2e46d0365ee16e95336b09bfa2532cd5e74d4fcea581b0",
+      "bytes": 3054,
       "test": "TestAG03SQLiteStartupWaitsForExternalLock"
     }
   },
@@ -51,6 +59,7 @@
   },
   "failure": {
     "historicalRun": 34221473016,
+    "historicalEvidenceClass": "CORROBORATIVE_ONLY",
     "expectedClass": "SQLITE_BUSY",
     "sqliteCode": 5,
     "messageContains": "configure SQLite connection",
@@ -62,17 +71,25 @@
     "green": "fixed constructor waits within the existing 5000ms budget and succeeds after release"
   },
   "validControls": [
-    "normal constructor/bootstrap startup remains successful",
-    "fixed constructor reads back journal_mode=wal, busy_timeout=5000, foreign_keys=1 and preserved data"
+    {
+      "id": "C1_FIXED_READBACK",
+      "expectation": "fixed held-lock regression reads back journal_mode=wal, busy_timeout=5000, foreign_keys=1 and preserved data"
+    },
+    {
+      "id": "C2_BOOTSTRAP",
+      "test": "TestBootstrapSeedStagesCommittedOutboxEventsThenProjectsExactlyOnce",
+      "package": "./internal/bootstrap",
+      "expectation": "existing bootstrap seed/restart behavior remains green"
+    }
   ],
   "mutationVariants": [
     {
       "id": "M1_REINTRODUCE_PRAGMA_ORDER",
-      "change": "move PRAGMA journal_mode = WAL before PRAGMA busy_timeout = 5000 in the fixed source",
+      "change": "move PRAGMA journal_mode = WAL before PRAGMA busy_timeout = 5000 in the fixed source through a Go overlay",
       "expected": "held-lock regression fails for AG03_STARTUP_BUSY_BEFORE_RELEASE / SQLITE_BUSY"
     }
   ],
-  "whyPreviouslyMissed": "existing ordinary startup coverage did not force a real external lock before the first lock-sensitive pragma; the configured busy timeout existed but was installed too late",
+  "whyPreviouslyMissed": "ordinary startup coverage did not force a real external lock before the first lock-sensitive pragma; the busy timeout existed but was installed too late",
   "applicableScope": [
     "SQLite initialization sequences where a busy timeout is intended to cover earlier lock-sensitive startup operations",
     "consumer-owned startup code with a deterministic external-lock reproducer"
@@ -84,7 +101,22 @@
   ],
   "toolSelection": "DEFERRED_TO_CG_02",
   "freshReplay": {
-    "status": "PENDING",
+    "status": "PASS",
+    "run": 34555252382,
+    "job": 103126454958,
+    "artifact": 10182320171,
+    "artifactSha256": "6dcc37cb11e8cc08ee5838de8b38afaea4040be6ed78fa5a27feb843af69954f",
+    "workflowHead": "fb5c5414f8a6f7ea42c60c9c1ddefc1c0149541e",
+    "toolchain": "go1.25.13",
+    "outcomes": {
+      "originalBuggy": "RED_EXPECTED_SQLITE_BUSY",
+      "fixed": "GREEN",
+      "mutationReintroduction": "RED_EXPECTED_SQLITE_BUSY",
+      "validBootstrapControl": "GREEN"
+    },
+    "consumerSourceMutated": false,
+    "dependencyLocksMutated": false,
+    "portableManifestVerifiedAfterDownload": true,
     "mustNotUseHistoricalRunAsSubstitute": true
   }
 }
