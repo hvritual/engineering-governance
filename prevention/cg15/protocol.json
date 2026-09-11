@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "id": "CG15-CONTROLLED-REMOTE-BRANCH-PUBLICATION",
+  "status": "CANDIDATE",
+  "sourceAuthorities": [
+    {"path": "prevention/cg14/protocol.json", "blob": "6e281f535cd7138f37454e3e0aaa28e7fa504588"},
+    {"path": "prevention/cg14/cases.json", "blob": "0383a5b6756aad1e5982a3278adf291df6748387"},
+    {"path": "prevention/cg14/package_commit.py", "blob": "b6862708208da1fa8aa198869b9d7b90d8391c55"},
+    {"path": "prevention/cg14/verify_commit.py", "blob": "4b40832d510e233e17af22bb01ce58b7d33f7c87"}
+  ],
+  "principle": "Only a CG-14-attested local commit may be published, and publication is create-only to an exact non-main remote branch while the remote base remains the attested base.",
+  "publication": {
+    "requiredSourceProtocol": "CG14-CONTROLLED-LOCAL-COMMIT-PACKAGING",
+    "requiredSourceStatus": "LOCAL_COMMIT_ATTESTED",
+    "requiredSourceDecision": "CONTROLLED_LOCAL_COMMIT_VERIFIED",
+    "remoteName": "origin",
+    "baseBranch": "main",
+    "publicationAuthority": "SINGLE_REMOTE_BRANCH_CREATE_ONLY",
+    "requireExactRepositoryIdentity": true,
+    "requireExactLocalCommit": true,
+    "requireExactLocalWorkBranch": true,
+    "requireNonMainWorkBranch": true,
+    "requireCleanLocalWorktree": true,
+    "requireRemoteBaseExact": true,
+    "requireTargetBranchAbsent": true,
+    "requireExactCommitRefspec": true,
+    "forbidForcePush": true,
+    "forbidExistingBranchUpdate": true,
+    "forbidRemoteRefDeletion": true,
+    "requirePostPushRemoteRefReadback": true,
+    "requireRemoteBaseUnchanged": true,
+    "pullRequestAuthorization": "NOT_GRANTED",
+    "mergeAuthorization": "NOT_GRANTED"
+  },
+  "authorityCeiling": {
+    "createsRemoteNonMainBranch": true,
+    "updatesExistingRemoteBranch": false,
+    "forcePushes": false,
+    "deletesRemoteRef": false,
+    "modifiesLocalCommit": false,
+    "createsLocalBranch": false,
+    "opensConsumerPullRequest": false,
+    "mergesConsumerChange": false,
+    "directMainUpdate": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "requireCurrentRealSubjectsRejectedWithoutCg14Attestation": true,
+    "requireIsolatedBareRemoteFixture": true,
+    "fixtureIsNotConsumerEvidence": true,
+    "requireCreateOnlyPublication": true,
+    "requireRemoteIdentityReadback": true,
+    "requireNegativeMatrix": true,
+    "requireNoConsumerMutation": true,
+    "requireExactCg14SourceBlobs": true
+  }
+}
