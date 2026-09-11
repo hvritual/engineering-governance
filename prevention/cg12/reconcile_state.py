@@ -51,7 +51,19 @@ def check_authorization(subject, authorization):
     require(authorization.get("status") == "AUTHORIZED", "CG11_AUTHORIZATION_REQUIRED", {"caseId": case_id})
     require(authorization.get("grant") == "PATCH_BRANCH_ONLY", "CG11_GRANT_MISMATCH", {"caseId": case_id})
     require(authorization.get("authorizationId") == subject.get("expectedAuthorizationId"), "AUTHORIZATION_ID_MISMATCH", {"caseId": case_id})
-    require(authorization.get("target") == target, "AUTHORIZATION_TARGET_MISMATCH", {"caseId": case_id})
+
+    authorization_target = authorization.get("target")
+    require(isinstance(authorization_target, dict), "AUTHORIZATION_TARGET_MISMATCH", {"caseId": case_id})
+    for field in ("repository", "baseBranch", "baseSha", "workBranch"):
+        require(authorization_target.get(field) == target.get(field), "AUTHORIZATION_TARGET_MISMATCH", {
+            "caseId": case_id,
+            "field": field,
+            "expected": target.get(field),
+            "actual": authorization_target.get(field),
+        })
+    require(authorization_target.get("baseMustRemainExact") is True, "AUTHORIZATION_BASE_POLICY_WEAKENED", {"caseId": case_id})
+    require(authorization_target.get("staleWhenBaseMoves") is True, "AUTHORIZATION_BASE_POLICY_WEAKENED", {"caseId": case_id})
+
     require(sorted_strings(authorization.get("allowedPaths"), "AUTHORIZATION_ALLOWED_PATHS_INVALID") == sorted(subject["authorizedPaths"]),
             "AUTHORIZATION_ALLOWED_PATHS_MISMATCH", {"caseId": case_id})
     require(sorted_strings(authorization.get("requiredVerificationClasses"), "AUTHORIZATION_VERIFICATION_CLASSES_INVALID") == sorted(subject["requiredVerificationClasses"]),
