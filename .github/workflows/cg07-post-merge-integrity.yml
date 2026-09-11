@@ -1,0 +1,183 @@
+name: CG-07 post-merge integrity qualification
+
+on:
+  push:
+    branches:
+      - cg07/post-merge-integrity
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: qualify-post-merge-integrity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Build exact qualification receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cg07
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          protocol=json.loads(Path('delivery/cg07/protocol.json').read_text())
+          q=protocol['qualificationCase']
+          receipt={
+            'schemaVersion':1,
+            'protocolId':protocol['id'],
+            'delivery':{
+              'repository':q['repository'],
+              'pullRequest':q['pullRequest'],
+              'baseBranch':q['baseBranch'],
+              'reviewedHeadSha':q['reviewedHeadSha'],
+              'preMainSha':q['preMainSha'],
+              'mergeMethod':q['mergeMethod'],
+              'postMergeSha':q['postMergeSha'],
+              'reviewedPaths':q['reviewedPaths'],
+            },
+            'mergeRequest':{
+              'expectedHeadSha':q['reviewedHeadSha'],
+              'nonForce':True,
+            },
+            'recovery':{
+              'requestedDisposition':'NO_ACTION',
+              'automaticForcePush':False,
+              'automaticReset':False,
+              'automaticRevert':False,
+            },
+          }
+          Path('/tmp/cg07/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Read back live GitHub delivery evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo='hvritual/iot-delivery-system'
+          pr='12'
+          post='c38ce0efcbe11d8ef9201381f895c7e9a85ddbc0'
+          api='https://api.github.com'
+          curl -fsSL -H 'Accept: application/vnd.github+json' "$api/repos/$repo/pulls/$pr" > /tmp/cg07/pr.json
+          curl -fsSL -H 'Accept: application/vnd.github+json' "$api/repos/$repo/pulls/$pr/files?per_page=100" > /tmp/cg07/files.json
+          curl -fsSL -H 'Accept: application/vnd.github+json' "$api/repos/$repo/commits/$post" > /tmp/cg07/post.json
+          curl -fsSL -H 'Accept: application/vnd.github+json' "$api/repos/$repo/git/ref/heads/main" > /tmp/cg07/main.json
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+          root=pathlib.Path('/tmp/cg07')
+          pr=json.loads((root/'pr.json').read_text())
+          files=json.loads((root/'files.json').read_text())
+          post=json.loads((root/'post.json').read_text())
+          main=json.loads((root/'main.json').read_text())
+          if len(files) >= 100:
+              raise SystemExit('PR file list reached pagination boundary; fail closed')
+          post_sha='c38ce0efcbe11d8ef9201381f895c7e9a85ddbc0'
+          main_sha=main['object']['sha']
+          if main_sha == post_sha:
+              relation='identical'
+              contains=True
+          else:
+              url=f"https://api.github.com/repos/hvritual/iot-delivery-system/compare/{post_sha}...{main_sha}"
+              raw=subprocess.check_output(['curl','-fsSL','-H','Accept: application/vnd.github+json',url],text=True)
+              cmp=json.loads(raw)
+              relation=cmp.get('status')
+              contains=relation in {'ahead','identical'}
+          observed={
+            'schemaVersion':1,
+            'repository':'hvritual/iot-delivery-system',
+            'pullRequest':{
+              'number':pr['number'],
+              'state':pr['state'],
+              'merged':bool(pr.get('merged_at')),
+              'baseBranch':pr['base']['ref'],
+              'headSha':pr['head']['sha'],
+              'mergeCommitSha':pr['merge_commit_sha'],
+            },
+            'postMergeCommit':{
+              'sha':post['sha'],
+              'parents':[p['sha'] for p in post.get('parents',[])],
+            },
+            'pullRequestPaths':sorted(f['filename'] for f in files),
+            'currentMain':{
+              'sha':main_sha,
+              'relationFromQualifiedMerge':relation,
+              'containsQualifiedMerge':contains,
+            },
+          }
+          (root/'observed.json').write_text(json.dumps(observed,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(observed,indent=2,sort_keys=True))
+          PY
+
+      - name: Positive real-delivery qualification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 delivery/cg07/verify_post_merge.py \
+            --protocol delivery/cg07/protocol.json \
+            --receipt /tmp/cg07/receipt.json \
+            --observed /tmp/cg07/observed.json \
+            | tee /tmp/cg07/positive.json
+          python3 - <<'PY'
+          import json
+          value=json.load(open('/tmp/cg07/positive.json'))
+          assert value['status']=='PASS', value
+          assert value['decision']=='POST_MERGE_INTEGRITY_VERIFIED', value
+          assert value['recoveryDisposition']=='NO_ACTION', value
+          PY
+
+      - name: Fail-closed negative matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import copy, json, pathlib, subprocess, tempfile
+          root=pathlib.Path('/tmp/cg07')
+          receipt=json.loads((root/'receipt.json').read_text())
+          observed=json.loads((root/'observed.json').read_text())
+          verifier='delivery/cg07/verify_post_merge.py'
+          protocol='delivery/cg07/protocol.json'
+
+          def run_case(name, mutate_receipt=None, mutate_observed=None, reason=None):
+              r=copy.deepcopy(receipt)
+              o=copy.deepcopy(observed)
+              if mutate_receipt:
+                  mutate_receipt(r)
+              if mutate_observed:
+                  mutate_observed(o)
+              with tempfile.TemporaryDirectory() as td:
+                  td=pathlib.Path(td)
+                  rp=td/'receipt.json'; op=td/'observed.json'
+                  rp.write_text(json.dumps(r))
+                  op.write_text(json.dumps(o))
+                  p=subprocess.run(['python3',verifier,'--protocol',protocol,'--receipt',str(rp),'--observed',str(op)],capture_output=True,text=True)
+              if p.returncode != 2:
+                  raise SystemExit(f'{name}: expected exit 2, got {p.returncode}: {p.stdout} {p.stderr}')
+              value=json.loads(p.stdout)
+              if value.get('reason') != reason:
+                  raise SystemExit(f'{name}: expected {reason}, got {value}')
+              if value.get('recoveryDisposition') != 'STOP_AND_INVESTIGATE':
+                  raise SystemExit(f'{name}: recovery not fail-closed: {value}')
+              print(f'{name}: PASS ({reason})')
+
+          run_case('wrong-head', mutate_observed=lambda o:o['pullRequest'].__setitem__('headSha','0'*40), reason='OBSERVED_REVIEWED_HEAD_MISMATCH')
+          run_case('wrong-parent', mutate_observed=lambda o:o['postMergeCommit'].__setitem__('parents',['1'*40]), reason='SQUASH_PARENT_MISMATCH')
+          run_case('wrong-merge', mutate_observed=lambda o:o['pullRequest'].__setitem__('mergeCommitSha','2'*40), reason='OBSERVED_MERGE_SHA_MISMATCH')
+          run_case('wrong-paths', mutate_observed=lambda o:o.__setitem__('pullRequestPaths',['README.md']), reason='REVIEWED_PATH_SET_MISMATCH')
+          run_case('wrong-repository', mutate_observed=lambda o:o.__setitem__('repository','hvritual/not-the-consumer'), reason='OBSERVED_REPOSITORY_MISMATCH')
+          run_case('automatic-revert', mutate_receipt=lambda r:r['recovery'].__setitem__('automaticRevert',True), reason='AUTOMATIC_REVERT_FORBIDDEN')
+          run_case('main-diverged', mutate_observed=lambda o:o['currentMain'].update({'relationFromQualifiedMerge':'diverged','containsQualifiedMerge':False}), reason='CURRENT_MAIN_DOES_NOT_CONTAIN_QUALIFIED_MERGE')
+          PY
+
+      - name: Stable asset syntax and read-only boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile delivery/cg07/verify_post_merge.py
+          python3 -m json.tool delivery/cg07/protocol.json >/dev/null
+          git diff --exit-code -- delivery/cg07
