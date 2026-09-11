@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG14-CONTROLLED-LOCAL-COMMIT-PACKAGING",
+  "realCurrentStateRefusals": [
+    {
+      "caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER",
+      "sourceAttestation": null,
+      "currentDisposition": "STOP_AND_INVESTIGATE",
+      "expectedReason": "CG13_ATTESTATION_REQUIRED"
+    },
+    {
+      "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+      "sourceAttestation": null,
+      "currentDisposition": "NO_CHANGE_REQUIRED",
+      "expectedReason": "CG13_ATTESTATION_REQUIRED"
+    },
+    {
+      "caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL",
+      "sourceAttestation": null,
+      "currentDisposition": "NO_ACTION",
+      "expectedReason": "CG13_ATTESTATION_REQUIRED"
+    }
+  ],
+  "qualificationFixture": {
+    "qualificationOnly": true,
+    "consumerEvidence": false,
+    "sourceFixture": "prevention/cg13/cases.json#qualificationFixture",
+    "commitMessage": "cg14 fixture: package attested patch",
+    "expectedChangedPaths": ["src/allowed.txt"],
+    "expectedVerificationClasses": ["FIXTURE_BEHAVIOR_CHECK", "FIXTURE_STATIC_CHECK"]
+  }
+}
