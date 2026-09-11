@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "CG11-CONTROLLED-IMPLEMENTATION-AUTHORIZATION",
+  "status": "QUALIFIED",
+  "sourceAuthorities": [
+    {
+      "path": "prevention/cg10/protocol.json",
+      "blob": "843b4d02f9ef0e286a16a894eeb5455a5d1ded59"
+    },
+    {
+      "path": "prevention/cg10/inputs.json",
+      "blob": "830731814b90205ab23303767507aaf63a7d8479"
+    },
+    {
+      "path": "prevention/cg10/build_plan.py",
+      "blob": "4f351f3c61c738ad53a67efa2a7c94dfcf4eed78"
+    },
+    {
+      "path": "prevention/cg10/verify_plan.py",
+      "blob": "f0a0f94f43f769fb42412c749be92ccc93110e3c"
+    }
+  ],
+  "authorization": {
+    "grant": "PATCH_BRANCH_ONLY",
+    "baseBranch": "main",
+    "requireExactLiveBase": true,
+    "requireExactFinitePathAllowlist": true,
+    "requireExistingAllowedPaths": true,
+    "requiredSourcePlanKind": "BOUNDED_PREVENTION_PLAN",
+    "requiredSourcePlanDisposition": "PLAN_READY_FOR_CONTROLLED_IMPLEMENTATION",
+    "preserveVerificationClasses": true,
+    "changeClassesMustBeSubsetOfPlan": true,
+    "staleWhenBaseMoves": true,
+    "singleUseSemanticIntent": true,
+    "directMainUpdate": false,
+    "mergeAuthorization": "NOT_GRANTED",
+    "repositoryAdministration": false,
+    "consumerAdoption": "NOT_ADOPTED",
+    "forbiddenPathPrefixes": [
+      "server/",
+      "third_party/yunka/",
+      "contracts/generated/",
+      ".yunka/"
+    ],
+    "forbiddenMutationClasses": [
+      "YUNKA_SOURCE",
+      "GENERATED_SOURCE",
+      "SERVER_READ_ONLY",
+      "REPOSITORY_ADMIN",
+      "DIRECT_MAIN_UPDATE"
+    ]
+  },
+  "fallback": {
+    "sourcePlanKind": "NON_EXECUTABLE_EVIDENCE_REQUEST",
+    "sourcePlanDisposition": "HUMAN_EVIDENCE_REQUIRED",
+    "authorizationStatus": "NOT_AUTHORIZED",
+    "disposition": "HUMAN_EVIDENCE_REQUIRED",
+    "grant": "NONE",
+    "allowedPaths": [],
+    "requestedChangeClasses": [],
+    "requiredVerificationClasses": [],
+    "consumerAdoption": "NOT_ADOPTED"
+  },
+  "authorityCeiling": {
+    "createsConsumerBranch": false,
+    "modifiesConsumerFiles": false,
+    "opensConsumerPullRequest": false,
+    "mergesConsumerChange": false,
+    "directMainUpdate": false,
+    "repositoryAdministration": false,
+    "modifiesYunka": false,
+    "modifiesGeneratedSource": false,
+    "modifiesServerReadOnly": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "minimumAuthorizedRealPlans": 2,
+    "requireFallbackNotAuthorized": true,
+    "requireLiveTargetReadback": true,
+    "requireNegativeMutationMatrix": true,
+    "requireExactCg10SourceBlobs": true,
+    "primaryHead": "9cc199aff098d174ec9e9a51b6383de5a248cdfd",
+    "primaryRun": 34606259147,
+    "primaryJob": 103285299215,
+    "primaryResult": "SUCCESS",
+    "cg10PlanReplay": "PASS",
+    "liveTargetReadback": {
+      "hvritual/iot-delivery-system": "c38ce0efcbe11d8ef9201381f895c7e9a85ddbc0",
+      "hvritual/biz": "a08602975266668d4a1c5e784f0b3cf43ff92185"
+    },
+    "authorizationIds": {
+      "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER": "57050154f46324ff6d399b4ec58313b64adf1975d80bb2b43c372207bd730700",
+      "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT": "ed545da349372de863006f96e91b70e36cf33c4513bdc41915133aaed0cc58c5"
+    },
+    "planSha256": {
+      "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER": "96f6b652b52d33b78a75225709a238fc6786909b4316b9947c1f3b84f58cff1d",
+      "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT": "aae3235c8c23816b61e38442ee6f024d58671bde3d7be095ae8108bac37a05d6",
+      "CG10-INCOMPLETE-EVIDENCE-CONTROL": "d1d6a10a68af47839537b63c2808cbdd6fcaf1fdea0da469e7a6978094a86196"
+    },
+    "positiveDecision": "CONTROLLED_IMPLEMENTATION_AUTHORIZATIONS_VERIFIED",
+    "authorizationCount": 3,
+    "authorizedRealPlanCount": 2,
+    "fallbackNotAuthorizedCount": 1,
+    "grant": "PATCH_BRANCH_ONLY",
+    "mergeAuthorization": false,
+    "directMainUpdate": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false,
+    "negativeMatrix": "PASS"
+  }
+}
