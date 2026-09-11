@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "id": "CG09-EVIDENCE-DRIVEN-PREVENTION-STRATEGY",
+  "status": "CANDIDATE",
+  "fallbackStrategy": "NO_AUTOMATIC_CONTROL",
+  "globalConstraints": [
+    {
+      "type": "equals",
+      "path": "consumerAdoption",
+      "value": "NOT_ADOPTED",
+      "reason": "CONSUMER_ADOPTION_IMPLICIT"
+    },
+    {
+      "type": "same_as",
+      "path": "scope.proposed",
+      "otherPath": "scope.qualified",
+      "reason": "APPLICABILITY_SCOPE_EXCEEDED"
+    }
+  ],
+  "strategies": [
+    {
+      "name": "HYBRID_RECURRENCE_GUARD",
+      "matchAll": [
+        {
+          "path": "mechanism",
+          "equals": "BEHAVIORAL_DEFECT_WITH_DETERMINISTIC_RECURRENCE_SHAPE"
+        }
+      ],
+      "requiresAll": [
+        {
+          "path": "evidence.authoritativeProof",
+          "equals": "BEHAVIORAL_RUNTIME_REGRESSION"
+        },
+        {
+          "path": "evidence.recurrenceShape",
+          "equals": true
+        },
+        {
+          "path": "control.staticDetector.present",
+          "equals": true
+        },
+        {
+          "path": "control.staticDetector.authority",
+          "equals": "ADVISORY"
+        }
+      ],
+      "forbids": [
+        {
+          "path": "control.staticDetector.authority",
+          "equals": "AUTHORITATIVE",
+          "reason": "STATIC_RULE_PROMOTED_TO_AUTHORITY"
+        }
+      ],
+      "authorityBoundary": "Behavioral/runtime proof remains authoritative; the static detector only prevents known recurrence shapes."
+    },
+    {
+      "name": "AUTHORITY_RECONCILIATION",
+      "matchAll": [
+        {
+          "path": "mechanism",
+          "equals": "DUPLICATED_DERIVED_AUTHORITY"
+        }
+      ],
+      "requiresAll": [
+        {
+          "path": "evidence.authoritativeProof",
+          "equals": "SEMANTIC_RECONCILIATION"
+        },
+        {
+          "path": "evidence.authoritativeInventory",
+          "equals": true
+        },
+        {
+          "path": "evidence.validGrowthControl",
+          "equals": true
+        },
+        {
+          "path": "control.deriveFromAuthority",
+          "equals": true
+        }
+      ],
+      "forbids": [
+        {
+          "path": "control.fixedReplacementCardinality",
+          "equals": true,
+          "reason": "FIXED_REPLACEMENT_CARDINALITY_FORBIDDEN"
+        },
+        {
+          "path": "control.copiedLiteralInventory",
+          "equals": true,
+          "reason": "COPIED_LITERAL_INVENTORY_FORBIDDEN"
+        }
+      ],
+      "authorityBoundary": "The acceptance control derives identities and cardinality from the existing authoritative inventory and must permit qualified valid growth."
+    }
+  ],
+  "crossCaseQualification": {
+    "minimumQualifiedRealCases": 2,
+    "requireDistinctSelectedStrategies": true,
+    "noUniversalToolMandate": true,
+    "consumerAdoptionImplicit": false,
+    "incompleteEvidenceMustFallBack": true
+  },
+  "sourceAuthorities": [
+    {
+      "path": "corpus/cg01/iot-sqlite-startup/case.json",
+      "blob": "5cba82314a027f4ee6284741518a45238b2b6fdc"
+    },
+    {
+      "path": "prevention/cg03/iot-sqlite-startup/problem.json",
+      "blob": "88ef8167d17b0321dd47d97f0488f4e85f7f2b1d"
+    },
+    {
+      "path": "prevention/cg03/iot-sqlite-startup/prevention.json",
+      "blob": "5604caf97f0d0c5b4fafe3bd071e8b41d0cf51a5"
+    },
+    {
+      "path": "prevention/cg03/iot-sqlite-startup/rule.yml",
+      "blob": "0a5d293d8d3571d9cbf9e7dee2f4dbc20eed1d05"
+    },
+    {
+      "path": "corpus/cg08/biz-runtime-gate/case.json",
+      "blob": "4ffd9d9e5dabb296a6169d80cf159ccc3d82e498"
+    }
+  ],
+  "authorityCeiling": {
+    "publishesSelectionContractOnly": true,
+    "consumerAdoption": false,
+    "repositoryBlocking": false,
+    "modifiesYunka": false,
+    "modifiesConsumerSource": false
+  }
+}
