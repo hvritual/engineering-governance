@@ -69,6 +69,19 @@
       "atomicCreateOnlyLease": "PASS",
       "negativeMatrix": "PASS",
       "consumerMutation": false
+    },
+    "finalReplay": {
+      "head": "ee964e4dd75112f27a4e45facf38a982dda0b266",
+      "run": 34630919417,
+      "job": 103367247988,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "realCurrentStateRefusalCount": 3,
+      "isolatedFixture": "PASS",
+      "fixturePublicationAttestationId": "91c743459d3ff0b1b1fe03aa2452371d513d686b465c7c66d28044ca1d21eaca",
+      "atomicCreateOnlyLease": "PASS",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
     }
   }
 }
