@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "id": "CG05-IOT-DELIVERY-REQUIRED-CHECKS",
+  "version": 1,
+  "status": "CANDIDATE",
+  "consumer": {
+    "repository": "hvritual/iot-delivery-system",
+    "targetRef": "main"
+  },
+  "adoption": {
+    "profileId": "ADOPT-CG04-HVRITUAL-IOT-DELIVERY",
+    "profileBlob": "cd772ffff980036024880c3dd691adcdbbb29915",
+    "lockId": "LOCK-CG04-HVRITUAL-IOT-DELIVERY-0001",
+    "lockBlob": "f6261ed9799780a62cd8ffce76002235d7737dee"
+  },
+  "requiredChecks": [
+    {
+      "id": "CG05_STATIC_RECURRENCE_GUARD",
+      "authority": "REQUIRED_ADVISORY_STATIC_GUARD",
+      "tool": {
+        "name": "ast-grep",
+        "version": "0.45.3",
+        "linuxAmd64AssetSha256": "f8ac830881339d1edee6b2652f54798c0f4da5a827f2db38a08ee31117783ce8"
+      },
+      "rule": {
+        "id": "cg03-sqlite-busy-timeout-before-wal",
+        "blob": "0a5d293d8d3571d9cbf9e7dee2f4dbc20eed1d05"
+      },
+      "target": "backend-yunka/internal/delivery/sqlite_repository.go",
+      "passCondition": "zero recurrence findings"
+    },
+    {
+      "id": "CG05_AUTHORITATIVE_HELD_LOCK_REGRESSION",
+      "authority": "AUTHORITATIVE_FUNCTIONAL_PROOF",
+      "toolchain": "go1.25.13",
+      "workdir": "backend-yunka",
+      "command": "go test -mod=readonly -json -count=1 -run '^TestAG03SQLiteStartupWaitsForExternalLock$' ./internal/delivery",
+      "requiredTest": "TestAG03SQLiteStartupWaitsForExternalLock",
+      "passCondition": "named test executed and passed and package passed"
+    }
+  ],
+  "exactSetPolicy": {
+    "allowMissing": false,
+    "allowUnknownSubstitution": false,
+    "allowDuplicateIds": false,
+    "allowFailedRequiredCheck": false
+  }
+}
