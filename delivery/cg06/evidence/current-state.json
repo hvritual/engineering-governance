@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-11T06:28:00Z",
+  "repository": "hvritual/iot-delivery-system",
+  "branch": "main",
+  "mainSha": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+  "branchObservation": {
+    "protected": false,
+    "protectionEnabled": false,
+    "requiredStatusChecks": {
+      "enforcementLevel": "off",
+      "contexts": [],
+      "checks": []
+    }
+  },
+  "rulesets": [],
+  "commitStatuses": [],
+  "accountPermission": {
+    "user": "hvritual",
+    "permission": "admin"
+  },
+  "connectedIntegrationCapability": {
+    "branchProtectionEndpointRead": {
+      "status": 403,
+      "message": "Resource not accessible by integration"
+    },
+    "rulesetMutationActionExposed": false,
+    "branchProtectionMutationActionExposed": false,
+    "commitStatusPublisherActionExposed": false,
+    "checkRunPublisherActionExposed": false
+  },
+  "conclusion": "Human/account administration authority exists, but the connected automation principal used by this task cannot perform the repository administration/status publication actions required to activate CG-06."
+}
