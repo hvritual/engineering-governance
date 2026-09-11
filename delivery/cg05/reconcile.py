@@ -124,7 +124,10 @@ def main():
 
             execution = receipt.get("execution", {})
             reject_unless(isinstance(execution.get("run"), int) and execution["run"] > 0, "INVALID_EXECUTION_ID", {"checkId": check_id, "field": "run"})
-            reject_unless(isinstance(execution.get("job"), int) and execution["job"] > 0, "INVALID_EXECUTION_ID", {"checkId": check_id, "field": "job"})
+            job_identity = execution.get("job")
+            reject_unless((isinstance(job_identity, int) and job_identity > 0) or (isinstance(job_identity, str) and job_identity.strip()), "INVALID_EXECUTION_ID", {"checkId": check_id, "field": "job"})
+            reject_unless(isinstance(execution.get("attempt"), int) and execution["attempt"] > 0, "INVALID_EXECUTION_ID", {"checkId": check_id, "field": "attempt"})
+            reject_unless(HEX40.match(execution.get("workflowHead") or "") is not None, "INVALID_WORKFLOW_HEAD", {"checkId": check_id})
 
             evidence = receipt.get("evidence", {})
             evidence_rel = evidence.get("path")
@@ -141,7 +144,9 @@ def main():
                 "receiptSha256": sha256_file(receipt_path),
                 "evidenceSha256": actual_digest,
                 "run": execution["run"],
-                "job": execution["job"],
+                "job": job_identity,
+                "attempt": execution["attempt"],
+                "workflowHead": execution["workflowHead"],
             })
 
         actual_set = set(seen)
