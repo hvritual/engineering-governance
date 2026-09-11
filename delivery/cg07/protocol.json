@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG07-POST-MERGE-INTEGRITY-RECOVERY",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "authorityCeiling": {
     "repositoryBlocking": false,
     "changesCg06TrustSemantics": false,
@@ -55,5 +55,28 @@
       ".github/workflows/cg06-trusted-integrate.yml"
     ],
     "cg06State": "BLOCKED_ADMIN_ACTIVATION"
+  },
+  "qualification": {
+    "primaryRun": 34586854563,
+    "primaryJob": 103222950903,
+    "primaryHead": "4e282773bea5eb89ac9d741164b070196a6a3b86",
+    "positiveDecision": "POST_MERGE_INTEGRITY_VERIFIED",
+    "positiveRecoveryDisposition": "NO_ACTION",
+    "liveReadback": {
+      "currentMainSha": "c38ce0efcbe11d8ef9201381f895c7e9a85ddbc0",
+      "relationFromQualifiedMerge": "identical",
+      "postMergeParent": "2d022a3ee2d83e1cf261e57e8f04f0228d9b7334",
+      "pullRequestPath": ".github/workflows/cg06-trusted-integrate.yml"
+    },
+    "negativeCases": {
+      "wrongHead": "OBSERVED_REVIEWED_HEAD_MISMATCH",
+      "wrongParent": "SQUASH_PARENT_MISMATCH",
+      "wrongMerge": "OBSERVED_MERGE_SHA_MISMATCH",
+      "wrongPaths": "REVIEWED_PATH_SET_MISMATCH",
+      "wrongRepository": "OBSERVED_REPOSITORY_MISMATCH",
+      "automaticRevert": "AUTOMATIC_REVERT_FORBIDDEN",
+      "mainDiverged": "CURRENT_MAIN_DOES_NOT_CONTAIN_QUALIFIED_MERGE"
+    },
+    "allNegativeCasesFailClosedTo": "STOP_AND_INVESTIGATE"
   }
 }
