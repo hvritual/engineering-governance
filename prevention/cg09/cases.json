@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG09-EVIDENCE-DRIVEN-PREVENTION-STRATEGY",
+  "cases": [
+    {
+      "caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER",
+      "qualifiedRealCase": true,
+      "sourceRefs": [
+        {
+          "path": "corpus/cg01/iot-sqlite-startup/case.json",
+          "blob": "5cba82314a027f4ee6284741518a45238b2b6fdc"
+        },
+        {
+          "path": "prevention/cg03/iot-sqlite-startup/problem.json",
+          "blob": "88ef8167d17b0321dd47d97f0488f4e85f7f2b1d"
+        },
+        {
+          "path": "prevention/cg03/iot-sqlite-startup/prevention.json",
+          "blob": "5604caf97f0d0c5b4fafe3bd071e8b41d0cf51a5"
+        },
+        {
+          "path": "prevention/cg03/iot-sqlite-startup/rule.yml",
+          "blob": "0a5d293d8d3571d9cbf9e7dee2f4dbc20eed1d05"
+        }
+      ],
+      "mechanism": "BEHAVIORAL_DEFECT_WITH_DETERMINISTIC_RECURRENCE_SHAPE",
+      "evidence": {
+        "authoritativeProof": "BEHAVIORAL_RUNTIME_REGRESSION",
+        "recurrenceShape": true,
+        "authoritativeInventory": false,
+        "validGrowthControl": false
+      },
+      "control": {
+        "staticDetector": {
+          "present": true,
+          "authority": "ADVISORY",
+          "engine": "ast-grep"
+        },
+        "deriveFromAuthority": false,
+        "fixedReplacementCardinality": false,
+        "copiedLiteralInventory": false
+      },
+      "scope": {
+        "qualified": "SQLite initialization code that executes ordered startup PRAGMA strings through the same database Exec loop",
+        "proposed": "SQLite initialization code that executes ordered startup PRAGMA strings through the same database Exec loop"
+      },
+      "consumerAdoption": "NOT_ADOPTED",
+      "expectedStrategy": "HYBRID_RECURRENCE_GUARD"
+    },
+    {
+      "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+      "qualifiedRealCase": true,
+      "sourceRefs": [
+        {
+          "path": "corpus/cg08/biz-runtime-gate/case.json",
+          "blob": "4ffd9d9e5dabb296a6169d80cf159ccc3d82e498"
+        }
+      ],
+      "mechanism": "DUPLICATED_DERIVED_AUTHORITY",
+      "evidence": {
+        "authoritativeProof": "SEMANTIC_RECONCILIATION",
+        "recurrenceShape": false,
+        "authoritativeInventory": true,
+        "validGrowthControl": true
+      },
+      "control": {
+        "staticDetector": {
+          "present": false,
+          "authority": "NONE",
+          "engine": null
+        },
+        "deriveFromAuthority": true,
+        "fixedReplacementCardinality": false,
+        "copiedLiteralInventory": false
+      },
+      "scope": {
+        "qualified": "acceptance or qualification gates that validate generated/runtime topology while separately hand-maintaining the same derived topology identities or cardinality",
+        "proposed": "acceptance or qualification gates that validate generated/runtime topology while separately hand-maintaining the same derived topology identities or cardinality"
+      },
+      "consumerAdoption": "NOT_ADOPTED",
+      "expectedStrategy": "AUTHORITY_RECONCILIATION"
+    }
+  ]
+}
