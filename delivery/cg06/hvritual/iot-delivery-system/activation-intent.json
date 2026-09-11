@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "id": "CG06-IOT-DELIVERY-ACTIVATION-INTENT",
+  "status": "READY_EXCEPT_EXTERNAL_ADMIN_ACTIVATION",
+  "repository": "hvritual/iot-delivery-system",
+  "branch": "main",
+  "rulesetRequest": {
+    "endpoint": "POST /repos/hvritual/iot-delivery-system/rulesets",
+    "requiredPermission": "Administration:write",
+    "apiVersion": "2026-03-10",
+    "payloadTemplate": {
+      "name": "cg06-trusted-delivery-main",
+      "target": "branch",
+      "enforcement": "active",
+      "bypass_actors": [
+        {
+          "actor_id": "${TRUSTED_GITHUB_APP_INTEGRATION_ID}",
+          "actor_type": "Integration",
+          "bypass_mode": "always"
+        }
+      ],
+      "conditions": {
+        "ref_name": {
+          "include": [
+            "~DEFAULT_BRANCH"
+          ],
+          "exclude": []
+        }
+      },
+      "rules": [
+        {
+          "type": "update",
+          "parameters": {
+            "update_allows_fetch_and_merge": false
+          }
+        },
+        {
+          "type": "deletion"
+        },
+        {
+          "type": "non_fast_forward"
+        },
+        {
+          "type": "required_status_checks",
+          "parameters": {
+            "do_not_enforce_on_create": false,
+            "strict_required_status_checks_policy": true,
+            "required_status_checks": [
+              {
+                "context": "engineering-governance/trusted-delivery",
+                "integration_id": "${TRUSTED_GITHUB_APP_INTEGRATION_ID}"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "trustedPublisherRequest": {
+    "principalType": "GitHubApp",
+    "repositoryPermissions": {
+      "metadata": "read",
+      "statuses": "write"
+    },
+    "mustBeInstalledOnConsumer": true,
+    "mustPublishStatusBeforeRulesetSourcePinning": true,
+    "mustNotBeControlledByCandidateRepositoryContents": true,
+    "integrationId": null,
+    "state": "UNRESOLVED"
+  },
+  "trustedIntegratorRequest": {
+    "principal": "SAME_AS_TRUSTED_PUBLISHER",
+    "operation": "NON_FORCE_FAST_FORWARD_MAIN_TO_EXACT_QUALIFIED_SHA",
+    "preconditions": [
+      "candidate is descendant of current main",
+      "CG-05 aggregate for the exact candidate is PASS",
+      "trusted status on exact candidate is success and source-pinned to the trusted app",
+      "ruleset is active and trusted app is the only update bypass actor"
+    ],
+    "postconditions": [
+      "main SHA equals qualified candidate SHA",
+      "ruleset remains active",
+      "no force push occurred"
+    ]
+  },
+  "normalActorPolicy": {
+    "repositoryAdminsMayBypass": false,
+    "writeActorsMayBypass": false,
+    "directMainUpdateAllowed": false
+  },
+  "notes": [
+    "This file is an activation intent, not evidence that activation has occurred.",
+    "Placeholders must be resolved to a real installed GitHub App integration ID before any ruleset is activated.",
+    "A required status check should be pinned to that app; GitHub supports selecting an app as the expected source when the app has statuses:write and has recently submitted the check."
+  ]
+}
