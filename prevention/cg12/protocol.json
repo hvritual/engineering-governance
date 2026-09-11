@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "CG12-AUTHORIZED-IMPLEMENTATION-RECONCILIATION",
+  "status": "CANDIDATE",
+  "sourceAuthorities": [
+    {"path": "prevention/cg11/protocol.json", "blob": "d73c764bb1a6748971ea2df97c45cb6596e8b458"},
+    {"path": "prevention/cg11/requests.json", "blob": "23d0b8cb6750423e7f02da2de1ada85034f6a627"},
+    {"path": "prevention/cg11/build_authorization.py", "blob": "7810d34e440ca8252cbe5265a6d7f01566f09936"},
+    {"path": "prevention/cg11/verify_authorization.py", "blob": "c8ec6b875503bf4e267489659ce2d6ec930e19f4"}
+  ],
+  "principle": "Authorization is permission to change, not evidence that change is necessary.",
+  "dispositions": {
+    "alreadySatisfied": "NO_CHANGE_REQUIRED",
+    "patchRequired": "PATCH_REQUIRED_ON_AUTHORIZED_BRANCH_ONLY",
+    "notAuthorized": "NO_ACTION"
+  },
+  "reconciliation": {
+    "requireExactCg11Authorization": true,
+    "requireExactLiveBase": true,
+    "requireExactAllowedPaths": true,
+    "requirePreservedVerificationClasses": true,
+    "requireLiveEvidenceForSatisfiedDisposition": true,
+    "forbidGratuitousPatchWhenSatisfied": true,
+    "forbidConsumerMutationDuringReconciliation": true,
+    "fallbackMayNotBecomeExecutable": true,
+    "patchDispositionDoesNotAuthorizeMerge": true
+  },
+  "forbiddenOutcomes": [
+    "PATCH_WHEN_ALREADY_SATISFIED",
+    "DIRECT_MAIN_UPDATE",
+    "MERGE_AUTHORIZATION",
+    "REPOSITORY_ADMINISTRATION",
+    "IMPLICIT_CONSUMER_ADOPTION",
+    "MUTATE_FORBIDDEN_PATH",
+    "WEAKEN_REQUIRED_VERIFICATION",
+    "ACCEPT_STALE_BASE"
+  ],
+  "authorityCeiling": {
+    "modifiesConsumerFiles": false,
+    "createsConsumerBranch": false,
+    "opensConsumerPullRequest": false,
+    "authorizesMerge": false,
+    "directMainUpdate": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "minimumRealSubjects": 2,
+    "requireAlreadySatisfiedRealSubjects": true,
+    "requireNegativeMatrix": true,
+    "requireConsumerWorktreesClean": true,
+    "requireExactCg11SourceBlobs": true
+  }
+}
