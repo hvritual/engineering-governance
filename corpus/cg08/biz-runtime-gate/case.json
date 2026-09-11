@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+  "status": "QUALIFIED",
+  "classification": "CONSUMER_ACCEPTANCE_GATE_SOURCE_OF_TRUTH_DRIFT",
+  "origin": {
+    "repository": "hvritual/biz",
+    "issue": 26,
+    "pullRequest": 25
+  },
+  "source": {
+    "historicalFailingCandidate": "a72119b7bd00e32abb840f3c93ed486fc8b004dd",
+    "fixedCommit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+    "mergedCommit": "c3530e6f572ba74160fc383f3a5506ca2666b2c4",
+    "finalReceiptMain": "1ec638a090213620fcb5c9f5734f7856cea2613b",
+    "yunkaPin": "6ba99c1440dc6c9416f6afd08f3282e35fa5a3fb",
+    "yunkaPinChangedByFix": false
+  },
+  "files": {
+    "buggyWorkflow": {
+      "path": ".github/workflows/b12-7-runtime-qualification.yml",
+      "commit": "a72119b7bd00e32abb840f3c93ed486fc8b004dd",
+      "gitBlobSha": "b04644dc5d674e4bb02ad35da2b6ffe3ac00ccb6",
+      "sha256": "473d7866f4a97bb68c4c61ec08388c137bd1a8dbfcf5c94bd57809dc8706da98"
+    },
+    "fixedWorkflow": {
+      "path": ".github/workflows/b12-7-runtime-qualification.yml",
+      "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+      "gitBlobSha": "dc3520b5962fc312063a34e0b016a86882e15e08",
+      "sha256": "75bf13aecba9cb0c119908cda9f2f4bfd05e5e456a4f8eb3c47038d9dfdfd51b"
+    },
+    "fixedChecker": {
+      "path": "scripts/ce04_runtime_closure.py",
+      "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+      "gitBlobSha": "2b75316b4341e8abc8c7e8ba067d7404a88f365d",
+      "sha256": "f09d123ba746318ffb3aa646f38daa32503486dcbf8ba3a7fc4f8a5f02814209"
+    },
+    "fixedCheckerTests": {
+      "path": "scripts/test_ce04_runtime_closure.py",
+      "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+      "gitBlobSha": "f2b7d4ce12683bb63372d4976a882c0723379cd0",
+      "sha256": "87e28c52bcb477153376655c8bde7b1c4583fe009d6edfb9f2d92f1fde074338"
+    },
+    "fixedManifest": {
+      "path": "contracts/generated/manifest.json",
+      "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+      "gitBlobSha": "998079e346be285d84b6d6421a453afd2f56b5c4",
+      "sha256": "bfd9af6613435edcd7d49dbbb38e4f72f324456226bde134d79488f98973ac07"
+    },
+    "fixedDevProfile": {
+      "path": ".yunka/dev.json",
+      "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+      "gitBlobSha": "48cda1687594a97d1abf52412d9273aaee58dd20",
+      "sha256": "184997ef8ffac77e0ed2292bb0d51bbbbec78b30db9383df0a6c4ee27fe147d5"
+    }
+  },
+  "bugShape": {
+    "duplicatedAuthority": "The acceptance workflow hand-maintained the expected Application identities instead of deriving them from the generated contract manifest.",
+    "fixedCardinality": 6,
+    "hardcodedApplications": [
+      "application:access/tenant_lifecycle",
+      "application:access/tenant_member_lifecycle",
+      "application:access/tenant_role_permission",
+      "application:deviceops/device_management",
+      "application:deviceops/device_transfer",
+      "application:deviceops/site_management"
+    ],
+    "additionalPredicate": "runs edges from process:biz must have length == 6"
+  },
+  "fixedShape": {
+    "authoritativeInventory": "contracts/generated/manifest.json services with declared application",
+    "reconciledSurfaces": [
+      ".yunka/dev.json process graphNodes",
+      "runtime status process graphNodes and readiness",
+      "runtime graph application nodes and runs edges",
+      "diagnostics generated HTTP route inventory and readiness"
+    ],
+    "fixedCardinality": false,
+    "validGrowthAllowed": true
+  },
+  "qualifiedInvariant": "When an acceptance gate validates generated/runtime topology, expected topology identities and cardinality must be derived from the authoritative generated contract/source rather than duplicated as hand-maintained literals.",
+  "historicalEvidence": {
+    "class": "CORROBORATIVE_ONLY",
+    "run": 34324260641,
+    "artifact": 10093126000,
+    "artifactSha256": "17695c8b33f634f29245376980a1ae228aa9652387f4e63ee37565f884930589",
+    "observedFailure": "valid CE-04 topology expanded from six to eight Applications and was rejected by the stale gate"
+  },
+  "qualifiedFixEvidence": {
+    "candidateRun": 34333644367,
+    "candidateArtifact": 10096831988,
+    "candidateArtifactSha256": "52c4396a66f2f49069d70fb33e5e6218b3545c3633fbd437e8a1680fee57dec7",
+    "finalMainRuntimeRun": 34335818520,
+    "finalRuntimeArtifact": 10097699462,
+    "finalRuntimeArtifactSha256": "676fcdebd74a9874b73327048bc3bfa20c588eea91a1ecec9a1561f673e1965f"
+  },
+  "freshReplayTarget": {
+    "required": true,
+    "historicalRunMaySubstitute": false,
+    "expectedValidApplicationCount": 8,
+    "expectedFixedCheckerTestCount": 25,
+    "requiredOutcomes": [
+      "exact buggy source shape present",
+      "authoritative fixed manifest/dev profile describe the valid expanded topology",
+      "legacy fixed-six predicate rejects the valid expanded topology",
+      "fixed checker accepts complete authoritative fixture",
+      "fixed checker negative matrix rejects omissions/extras/duplicates/not-ready evidence",
+      "future declared Application growth remains accepted"
+    ]
+  },
+  "applicableScope": [
+    "acceptance/qualification gates that validate a generated or declared topology while separately hand-maintaining the same topology identities or cardinality",
+    "runtime graph/status/config consistency checks where a generated contract or descriptor is already the authoritative inventory"
+  ],
+  "nonApplicableScope": [
+    "literal allowlists that are themselves the authoritative security or policy contract",
+    "fixed cardinalities that are genuine product invariants rather than copies of generated topology",
+    "business-domain enumerations without an existing authoritative generated inventory",
+    "generic uses of numeric literals or lists unrelated to duplicated source-of-truth facts"
+  ],
+  "preventionDecision": "SECOND_REAL_PROBLEM_QUALIFIED__UNIVERSAL_RULE_STILL_DEFERRED_PENDING_CROSS_CASE_ABSTRACTION",
+  "freshReplay": {
+    "status": "QUALIFIED",
+    "headSha": "b4d61aef9fde4b23f3e5eca4331637ea2bd56df2",
+    "run": 34587905394,
+    "job": 103226243105,
+    "result": "SUCCESS",
+    "exactSourceIdentity": "PASS",
+    "bugShape": "PROVEN",
+    "authoritativeApplications": [
+      "application:access/tenant_lifecycle",
+      "application:access/tenant_member_lifecycle",
+      "application:access/tenant_role_permission",
+      "application:commercial/entitlement_management",
+      "application:commercial/module_catalog",
+      "application:deviceops/device_management",
+      "application:deviceops/device_transfer",
+      "application:deviceops/site_management"
+    ],
+    "authoritativeApplicationCount": 8,
+    "legacyApplicationCount": 6,
+    "legacyStatusPredicate": "REJECTS_VALID_EXPANSION",
+    "legacyRunsPredicate": "REJECTS_VALID_EXPANSION",
+    "fixedCheckerTestCount": 25,
+    "fixedCheckerMatrix": "PASS",
+    "fixedGateAuthority": "GENERATED_MANIFEST",
+    "futureDeclaredApplicationGrowth": "PASS",
+    "consumerMutation": "NONE",
+    "harnessNotes": [
+      "run 34587557928 proved substantive replay but exposed Python bytecode in a read-only checkout",
+      "run 34587731580 proved substantive replay but root cleanliness incorrectly counted nested qualification checkouts as governance mutations",
+      "both harness issues were corrected without changing consumer evidence or the qualified problem invariant"
+    ]
+  }
+}
