@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG14-CONTROLLED-LOCAL-COMMIT-PACKAGING",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "sourceAuthorities": [
     {"path": "prevention/cg13/protocol.json", "blob": "6c91cf3300e63f3092c744f3db45f5063757267f"},
     {"path": "prevention/cg13/cases.json", "blob": "775d8706b83c8a1e46f932bf03090f3c0a9e0961"},
@@ -50,6 +50,25 @@
     "requireExactCommitAttestation": true,
     "requireNegativeMatrix": true,
     "requireNoConsumerMutation": true,
-    "requireExactCg13SourceBlobs": true
+    "requireExactCg13SourceBlobs": true,
+    "discovery": {
+      "head": "7008db81ffb95a996e35511c2e88026226c3f673",
+      "run": 34625638298,
+      "job": 103349940082,
+      "result": "QUALIFICATION_HARNESS_FAILURE",
+      "finding": "The first negative-control mutation changed a signed CG-13 attestation field without recomputing its attestationId, so the harness correctly observed CG13_ATTESTATION_ID_MISMATCH before the intended authority-specific assertion. The protocol boundary was not weakened; the mutation harness was corrected to keep authority mutations internally self-consistent."
+    },
+    "primary": {
+      "head": "ce7b4d03c4a43338602188c23e4bd51b25c625e1",
+      "run": 34625745722,
+      "job": 103350281991,
+      "result": "SUCCESS",
+      "decision": "CONTROLLED_LOCAL_COMMIT_VERIFIED",
+      "realCurrentStateRefusalCount": 3,
+      "isolatedFixture": "PASS",
+      "fixtureCommitAttestationId": "a6033199d32192b75371d37a2cb1d931109fe9970c742c9891a2e9851f13c4bf",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
+    }
   }
 }
