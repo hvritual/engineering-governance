@@ -1,0 +1,148 @@
+name: CG-00 R6 fixed CLI qualification
+
+on:
+  push:
+    branches: [control/cg00-r6-exec]
+    paths: [.github/workflows/cg00-r6-fixed-cli-qualification.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      GOTOOLCHAIN: local
+      GOPROXY: https://proxy.golang.org,direct
+      GOSUMDB: sum.golang.org
+      GOFLAGS: -mod=readonly
+      BIZ_SHA: fed9051bae618ab28df200038682f808c82e854b
+      BIZ_YUNKA_SHA: 33b98ceba57494abda2299e4f0290a5651dab4bc
+      IOT_SHA: bcd20632b666405c3f7a8fe8d53f591c78450087
+      IOT_YUNKA_SHA: 057ebcf88a87303eb633eb6e604d306f633dfac0
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: hvritual/biz
+          ref: ${{ env.BIZ_SHA }}
+          path: biz
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: hvritual/yunka.io
+          ref: ${{ env.BIZ_YUNKA_SHA }}
+          path: yunka.io
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: hvritual/iot-delivery-system
+          ref: ${{ env.IOT_SHA }}
+          path: iot-delivery-system
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+        with:
+          go-version: '1.25.13'
+          check-latest: false
+          cache: false
+
+      - name: Freeze source identities and dependency files
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg00-r6"
+          mkdir -p "$out/logs"
+          test "$(git -C biz rev-parse HEAD)" = "$BIZ_SHA"
+          test "$(git -C yunka.io rev-parse HEAD)" = "$BIZ_YUNKA_SHA"
+          test "$(git -C iot-delivery-system rev-parse HEAD)" = "$IOT_SHA"
+          test "$(git -C iot-delivery-system/third_party/yunka rev-parse HEAD)" = "$IOT_YUNKA_SHA"
+          {
+            printf 'biz\t%s\t%s\n' "$(git -C biz rev-parse HEAD)" "$(git -C biz rev-parse 'HEAD^{tree}')"
+            printf 'biz-yunka\t%s\t%s\n' "$(git -C yunka.io rev-parse HEAD)" "$(git -C yunka.io rev-parse 'HEAD^{tree}')"
+            printf 'iot\t%s\t%s\n' "$(git -C iot-delivery-system rev-parse HEAD)" "$(git -C iot-delivery-system rev-parse 'HEAD^{tree}')"
+            printf 'iot-yunka\t%s\t%s\n' "$(git -C iot-delivery-system/third_party/yunka rev-parse HEAD)" "$(git -C iot-delivery-system/third_party/yunka rev-parse 'HEAD^{tree}')"
+            printf 'go\t%s\n' "$(go version)"
+            printf 'GOPROXY\t%s\n' "$(go env GOPROXY)"
+            printf 'GOSUMDB\t%s\n' "$(go env GOSUMDB)"
+          } | tee "$out/identity.tsv"
+          find biz yunka.io iot-delivery-system -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-before.sha256"
+
+      - name: Run six fixed CLI commands and Biz workspace graph
+        shell: bash
+        run: |
+          set -uo pipefail
+          out="$RUNNER_TEMP/cg00-r6"
+          result=0
+          capture() {
+            name="$1"; shift
+            printf '%s\n' "$*" > "$out/logs/$name.command.txt"
+            "$@" >"$out/logs/$name.stdout" 2>"$out/logs/$name.stderr"
+            code=$?
+            printf '%s\t%s\n' "$name" "$code" | tee -a "$out/exit-codes.tsv"
+            if [ "$code" -ne 0 ]; then result=1; fi
+          }
+          set +e
+          capture biz-help env GOWORK="$GITHUB_WORKSPACE/yunka.io/go.work" go -C "$GITHUB_WORKSPACE/yunka.io/app" run ./cmd --help
+          capture biz-context-help env GOWORK="$GITHUB_WORKSPACE/yunka.io/go.work" go -C "$GITHUB_WORKSPACE/yunka.io/app" run ./cmd context --help
+          capture biz-context-json env GOWORK="$GITHUB_WORKSPACE/yunka.io/go.work" go -C "$GITHUB_WORKSPACE/yunka.io/app" run ./cmd context --root "$GITHUB_WORKSPACE/biz" --json
+          capture iot-help env GOWORK="$GITHUB_WORKSPACE/iot-delivery-system/third_party/yunka/go.work" go -C "$GITHUB_WORKSPACE/iot-delivery-system/third_party/yunka/app" run ./cmd --help
+          capture iot-context-help env GOWORK="$GITHUB_WORKSPACE/iot-delivery-system/third_party/yunka/go.work" go -C "$GITHUB_WORKSPACE/iot-delivery-system/third_party/yunka/app" run ./cmd context --help
+          capture iot-context-json env GOWORK="$GITHUB_WORKSPACE/iot-delivery-system/third_party/yunka/go.work" go -C "$GITHUB_WORKSPACE/iot-delivery-system/third_party/yunka/app" run ./cmd context --root "$GITHUB_WORKSPACE/iot-delivery-system" --json
+          capture biz-workspace env GOWORK="$GITHUB_WORKSPACE/biz/go.work" bash "$GITHUB_WORKSPACE/biz/scripts/consumer-resolution-check.sh"
+          exit "$result"
+
+      - name: Validate outputs and prove no dependency/source mutation
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg00-r6"
+          find biz yunka.io iot-delivery-system -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-after.sha256"
+          diff -u "$out/dependency-before.sha256" "$out/dependency-after.sha256" > "$out/dependency-diff.txt"
+          git -C biz status --porcelain --untracked-files=all > "$out/biz-status.txt"
+          git -C yunka.io status --porcelain --untracked-files=all > "$out/biz-yunka-status.txt"
+          git -C iot-delivery-system status --porcelain --untracked-files=all > "$out/iot-status.txt"
+          git -C iot-delivery-system/third_party/yunka status --porcelain --untracked-files=all > "$out/iot-yunka-status.txt"
+          test ! -s "$out/biz-status.txt"
+          test ! -s "$out/biz-yunka-status.txt"
+          test ! -s "$out/iot-status.txt"
+          test ! -s "$out/iot-yunka-status.txt"
+          test -s "$out/logs/biz-help.stdout"
+          test -s "$out/logs/biz-context-help.stdout"
+          test -s "$out/logs/biz-context-json.stdout"
+          test -s "$out/logs/iot-help.stdout"
+          test -s "$out/logs/iot-context-help.stdout"
+          test -s "$out/logs/iot-context-json.stdout"
+          python3 - <<'PY'
+          import json, os, pathlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])/'cg00-r6'
+          expected={'biz-help','biz-context-help','biz-context-json','iot-help','iot-context-help','iot-context-json','biz-workspace'}
+          rows={}
+          for line in (root/'exit-codes.tsv').read_text().splitlines():
+              k,v=line.split('\t'); rows[k]=int(v)
+          assert set(rows)==expected, (set(rows), expected)
+          assert all(v==0 for v in rows.values()), rows
+          for name in ('biz-context-json','iot-context-json'):
+              obj=json.loads((root/'logs'/f'{name}.stdout').read_text())
+              assert isinstance(obj,dict) and obj, name
+          for name in ('biz-help','biz-context-help','iot-help','iot-context-help'):
+              text=(root/'logs'/f'{name}.stdout').read_text().lower()
+              assert 'usage' in text or 'help' in text or 'commands' in text, name
+          (root/'qualification.json').write_text(json.dumps({'status':'PASS','commands':rows,'go':'1.25.13','dependencyFilesUnchanged':True,'worktreesClean':True},indent=2)+'\n')
+          PY
+          find "$out" -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > "$out/SHA256SUMS"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cg00-r6-fixed-cli-qualification-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/cg00-r6
+          retention-days: 30
+          if-no-files-found: error
