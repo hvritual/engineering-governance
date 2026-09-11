@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+  "status": "QUALIFICATION_PENDING",
+  "classification": "CONSUMER_ACCEPTANCE_GATE_SOURCE_OF_TRUTH_DRIFT",
+  "origin": {
+    "repository": "hvritual/biz",
+    "issue": 26,
+    "pullRequest": 25
+  },
+  "source": {
+    "historicalFailingCandidate": "a72119b7bd00e32abb840f3c93ed486fc8b004dd",
+    "fixedCommit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+    "mergedCommit": "c3530e6f572ba74160fc383f3a5506ca2666b2c4",
+    "finalReceiptMain": "1ec638a090213620fcb5c9f5734f7856cea2613b",
+    "yunkaPin": "6ba99c1440dc6c9416f6afd08f3282e35fa5a3fb",
+    "yunkaPinChangedByFix": false
+  },
+  "files": {
+    "buggyWorkflow": {
+      "path": ".github/workflows/b12-7-runtime-qualification.yml",
+      "commit": "a72119b7bd00e32abb840f3c93ed486fc8b004dd",
+      "gitBlobSha": "b04644dc5d674e4bb02ad35da2b6ffe3ac00ccb6"
+    },
+    "fixedWorkflow": {
+      "path": ".github/workflows/b12-7-runtime-qualification.yml",
+      "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+      "gitBlobSha": "dc3520b5962fc312063a34e0b016a86882e15e08"
+    },
+    "fixedChecker": {
+      "path": "scripts/ce04_runtime_closure.py",
+      "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+      "gitBlobSha": "2b75316b4341e8abc8c7e8ba067d7404a88f365d"
+    },
+    "fixedCheckerTests": {
+      "path": "scripts/test_ce04_runtime_closure.py",
+      "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+      "gitBlobSha": "f2b7d4ce12683bb63372d4976a882c0723379cd0"
+    },
+    "fixedManifest": {
+      "path": "contracts/generated/manifest.json",
+      "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+      "gitBlobSha": "998079e346be285d84b6d6421a453afd2f56b5c4"
+    },
+    "fixedDevProfile": {
+      "path": ".yunka/dev.json",
+      "commit": "51355872d1e6af2961826a053df6d0ad7008ff73",
+      "gitBlobSha": "48cda1687594a97d1abf52412d9273aaee58dd20"
+    }
+  },
+  "bugShape": {
+    "duplicatedAuthority": "The acceptance workflow hand-maintained the expected Application identities instead of deriving them from the generated contract manifest.",
+    "fixedCardinality": 6,
+    "hardcodedApplications": [
+      "application:access/tenant_lifecycle",
+      "application:access/tenant_member_lifecycle",
+      "application:access/tenant_role_permission",
+      "application:deviceops/device_management",
+      "application:deviceops/device_transfer",
+      "application:deviceops/site_management"
+    ],
+    "additionalPredicate": "runs edges from process:biz must have length == 6"
+  },
+  "fixedShape": {
+    "authoritativeInventory": "contracts/generated/manifest.json services with declared application",
+    "reconciledSurfaces": [
+      ".yunka/dev.json process graphNodes",
+      "runtime status process graphNodes and readiness",
+      "runtime graph application nodes and runs edges",
+      "diagnostics generated HTTP route inventory and readiness"
+    ],
+    "fixedCardinality": false,
+    "validGrowthAllowed": true
+  },
+  "violatedInvariantCandidate": "When an acceptance gate validates generated/runtime topology, expected topology identities and cardinality must be derived from the authoritative generated contract/source rather than duplicated as hand-maintained literals.",
+  "historicalEvidence": {
+    "class": "CORROBORATIVE_ONLY",
+    "run": 34324260641,
+    "artifact": 10093126000,
+    "artifactSha256": "17695c8b33f634f29245376980a1ae228aa9652387f4e63ee37565f884930589",
+    "observedFailure": "valid CE-04 topology expanded from six to eight Applications and was rejected by the stale gate"
+  },
+  "qualifiedFixEvidence": {
+    "candidateRun": 34333644367,
+    "candidateArtifact": 10096831988,
+    "candidateArtifactSha256": "52c4396a66f2f49069d70fb33e5e6218b3545c3633fbd437e8a1680fee57dec7",
+    "finalMainRuntimeRun": 34335818520,
+    "finalRuntimeArtifact": 10097699462,
+    "finalRuntimeArtifactSha256": "676fcdebd74a9874b73327048bc3bfa20c588eea91a1ecec9a1561f673e1965f"
+  },
+  "freshReplayTarget": {
+    "required": true,
+    "historicalRunMaySubstitute": false,
+    "expectedValidApplicationCount": 8,
+    "expectedFixedCheckerTestCount": 25,
+    "requiredOutcomes": [
+      "exact buggy source shape present",
+      "authoritative fixed manifest/dev profile describe the valid expanded topology",
+      "legacy fixed-six predicate rejects the valid expanded topology",
+      "fixed checker accepts complete authoritative fixture",
+      "fixed checker negative matrix rejects omissions/extras/duplicates/not-ready evidence",
+      "future declared Application growth remains accepted"
+    ]
+  },
+  "applicableScope": [
+    "acceptance/qualification gates that validate a generated or declared topology while separately hand-maintaining the same topology identities or cardinality",
+    "runtime graph/status/config consistency checks where a generated contract or descriptor is already the authoritative inventory"
+  ],
+  "nonApplicableScope": [
+    "literal allowlists that are themselves the authoritative security or policy contract",
+    "fixed cardinalities that are genuine product invariants rather than copies of generated topology",
+    "business-domain enumerations without an existing authoritative generated inventory",
+    "generic uses of numeric literals or lists unrelated to duplicated source-of-truth facts"
+  ],
+  "preventionDecision": "DEFER_UNIVERSAL_RULE_UNTIL_FRESH_SECOND_PROBLEM_QUALIFICATION",
+  "freshReplay": {
+    "status": "PENDING"
+  }
+}
