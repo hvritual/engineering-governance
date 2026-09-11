@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG15-CONTROLLED-REMOTE-BRANCH-PUBLICATION",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "sourceAuthorities": [
     {"path": "prevention/cg14/protocol.json", "blob": "6e281f535cd7138f37454e3e0aaa28e7fa504588"},
     {"path": "prevention/cg14/cases.json", "blob": "0383a5b6756aad1e5982a3278adf291df6748387"},
@@ -24,7 +24,9 @@
     "requireRemoteBaseExact": true,
     "requireTargetBranchAbsent": true,
     "requireExactCommitRefspec": true,
-    "forbidForcePush": true,
+    "requireAtomicPush": true,
+    "requireCreateOnlyLease": true,
+    "forbidUnconditionalForcePush": true,
     "forbidExistingBranchUpdate": true,
     "forbidRemoteRefDeletion": true,
     "requirePostPushRemoteRefReadback": true,
@@ -54,6 +56,19 @@
     "requireRemoteIdentityReadback": true,
     "requireNegativeMatrix": true,
     "requireNoConsumerMutation": true,
-    "requireExactCg14SourceBlobs": true
+    "requireExactCg14SourceBlobs": true,
+    "primary": {
+      "head": "a4928007bd64fc1de744e08d4a543079cd810caa",
+      "run": 34630829009,
+      "job": 103366960811,
+      "result": "SUCCESS",
+      "decision": "CONTROLLED_REMOTE_BRANCH_PUBLICATION_VERIFIED",
+      "realCurrentStateRefusalCount": 3,
+      "isolatedFixture": "PASS",
+      "fixturePublicationAttestationId": "da97bddd9808cd660f31a48d13f5ef2a5121557d4dd7c7577ab32f06e8f02eae",
+      "atomicCreateOnlyLease": "PASS",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
+    }
   }
 }
