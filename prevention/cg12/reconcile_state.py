@@ -85,7 +85,8 @@ def reconcile_subject(protocol, subject, authorization, observed):
         "expected": target["baseSha"],
         "actual": observed.get("liveBaseSha"),
     })
-    require(observed.get("consumerMutated") is False, "CONSUMER_MUTATION_DURING_RECONCILIATION", {"caseId": case_id})
+    mutated = observed.get("consumerMutated")
+    require(isinstance(mutated, bool), "CONSUMER_MUTATION_STATE_INVALID", {"caseId": case_id})
 
     existing = sorted_strings(observed.get("existingAuthorizedPaths"), "OBSERVED_AUTHORIZED_PATHS_INVALID")
     expected_paths = sorted(subject["authorizedPaths"])
@@ -148,6 +149,11 @@ def reconcile_subject(protocol, subject, authorization, observed):
         disposition = protocol["dispositions"]["alreadySatisfied"]
         patch_required = False
         reason = "CURRENT_IMPLEMENTATION_SATISFIES_AUTHORIZED_PLAN"
+
+    if mutated:
+        if disposition == protocol["dispositions"]["alreadySatisfied"]:
+            raise ReconciliationError("PATCH_WHEN_ALREADY_SATISFIED", {"caseId": case_id})
+        raise ReconciliationError("CONSUMER_MUTATION_DURING_RECONCILIATION", {"caseId": case_id})
 
     return {
         "caseId": case_id,
