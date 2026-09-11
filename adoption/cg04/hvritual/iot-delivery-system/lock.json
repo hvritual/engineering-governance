@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "LOCK-CG04-HVRITUAL-IOT-DELIVERY-0001",
   "profileId": "ADOPT-CG04-HVRITUAL-IOT-DELIVERY",
-  "status": "LOCKED_PENDING_QUALIFICATION",
+  "status": "ACTIVE",
   "asset": {
     "id": "PV-CG03-IOT-SQLITE-BUSY-TIMEOUT-BEFORE-WAL",
     "version": "1.0.0",
@@ -28,8 +28,25 @@
     "previousLock": null
   },
   "activation": {
+    "state": "ACTIVE_EXTERNAL_SHADOW",
     "mode": "EXTERNAL_SHADOW",
     "consumerRepositoryMutationRequired": false,
-    "yunkaUpgradeRequired": false
+    "yunkaUpgradeRequired": false,
+    "qualifiedAgainstConsumerCommit": "bcd20632b666405c3f7a8fe8d53f591c78450087"
+  },
+  "qualificationEvidence": {
+    "run": 34561483769,
+    "job": 103144940418,
+    "head": "cf45a35d0af43de780031af8a7225ab23e12205f",
+    "artifact": 10184468547,
+    "artifactSha256": "34730e507bac731d1a7d58cc037107f2612658135b31d6d2822e1f2d28e2a020",
+    "artifactManifestReplay": "PASS",
+    "activeLockResolved": true,
+    "staticVerification": "PASS_ZERO_FINDINGS",
+    "authoritativeBehaviorVerification": "PASS",
+    "noOpUpgradePreview": "NO_CHANGE",
+    "unqualifiedVersionPreview": "REJECTED",
+    "tamperedBlobPreview": "REJECTED",
+    "rollbackResolution": "PASS"
   }
 }
