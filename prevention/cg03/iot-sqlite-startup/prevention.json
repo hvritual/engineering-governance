@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "PV-CG03-IOT-SQLITE-BUSY-TIMEOUT-BEFORE-WAL",
   "version": "1.0.0",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "problemRecord": "prevention/cg03/iot-sqlite-startup/problem.json",
   "rule": {
     "path": "prevention/cg03/iot-sqlite-startup/rule.yml",
@@ -22,6 +22,21 @@
       "mutation": 1,
       "unrelated": 0
     }
+  },
+  "qualificationEvidence": {
+    "primaryRun": 34558560970,
+    "primaryJob": 103136357225,
+    "primaryHead": "8ab7096c23bd2d05b387e5a1eebd8d4c1e793c29",
+    "primaryArtifact": 10183473843,
+    "primaryArtifactSha256": "6fb5abd9d7b6737650695d3f27bb93eb09c1a89fb0dc8735315d924511b3b0f3",
+    "artifactManifestReplay": "PASS",
+    "matrix": {
+      "buggy": 1,
+      "fixed": 0,
+      "mutation": 1,
+      "unrelated": 0
+    },
+    "semanticDeterminism": true
   },
   "authorityBoundary": {
     "staticRule": "ADVISORY_RECURRENCE_GUARD",
