@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG15-CONTROLLED-REMOTE-BRANCH-PUBLICATION",
+  "realCurrentStateRefusals": [
+    {
+      "caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER",
+      "sourceCommitAttestation": null,
+      "currentDisposition": "STOP_AND_INVESTIGATE",
+      "expectedReason": "CG14_COMMIT_ATTESTATION_REQUIRED"
+    },
+    {
+      "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+      "sourceCommitAttestation": null,
+      "currentDisposition": "NO_CHANGE_REQUIRED",
+      "expectedReason": "CG14_COMMIT_ATTESTATION_REQUIRED"
+    },
+    {
+      "caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL",
+      "sourceCommitAttestation": null,
+      "currentDisposition": "NO_ACTION",
+      "expectedReason": "CG14_COMMIT_ATTESTATION_REQUIRED"
+    }
+  ],
+  "qualificationFixture": {
+    "qualificationOnly": true,
+    "consumerEvidence": false,
+    "transport": "LOCAL_BARE_GIT_REMOTE",
+    "baseBranch": "main",
+    "workBranch": "cg15-fixture/remote-publication",
+    "initialFiles": {
+      "src/allowed.txt": "one\n",
+      "src/other.txt": "keep\n"
+    },
+    "patchedFiles": {
+      "src/allowed.txt": "two\n"
+    },
+    "allowedPaths": ["src/allowed.txt"],
+    "verificationClasses": ["FIXTURE_BEHAVIOR_CHECK", "FIXTURE_STATIC_CHECK"],
+    "commitMessage": "cg15 fixture: package attested patch",
+    "expectedChangedPaths": ["src/allowed.txt"]
+  }
+}
