@@ -49,7 +49,9 @@
   },
   "qualification": {
     "minimumRealSubjects": 2,
-    "requireAlreadySatisfiedRealSubjects": true,
+    "requireAtLeastOneAlreadySatisfiedRealSubject": true,
+    "requireAtLeastOneInvestigationRealSubject": true,
+    "requireNoPatchRequiredInQualification": true,
     "requireNegativeMatrix": true,
     "requireConsumerWorktreesClean": true,
     "requireExactCg11SourceBlobs": true
