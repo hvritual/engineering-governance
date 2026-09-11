@@ -1,0 +1,390 @@
+name: CG-12 implementation reconciliation qualification
+
+on:
+  push:
+    branches:
+      - cg12/implementation-reconciliation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: qualify-no-gratuitous-change-boundary
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      IOT_SHA: c38ce0efcbe11d8ef9201381f895c7e9a85ddbc0
+      BIZ_SHA: a08602975266668d4a1c5e784f0b3cf43ff92185
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact CG-11 authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:prevention/cg11/protocol.json)" = "d73c764bb1a6748971ea2df97c45cb6596e8b458"
+          test "$(git rev-parse HEAD:prevention/cg11/requests.json)" = "23d0b8cb6750423e7f02da2de1ada85034f6a627"
+          test "$(git rev-parse HEAD:prevention/cg11/build_authorization.py)" = "7810d34e440ca8252cbe5265a6d7f01566f09936"
+          test "$(git rev-parse HEAD:prevention/cg11/verify_authorization.py)" = "c8ec6b875503bf4e267489659ce2d6ec930e19f4"
+          test "$(git rev-parse HEAD:prevention/cg03/iot-sqlite-startup/rule.yml)" = "0a5d293d8d3571d9cbf9e7dee2f4dbc20eed1d05"
+          python3 - <<'PY'
+          import json
+          p=json.load(open('prevention/cg11/protocol.json'))
+          assert p['status']=='QUALIFIED', p
+          PY
+          echo 'CG12_CG11_SOURCE_AUTHORITIES=PASS'
+
+      - name: Rebuild qualified CG-10 plans and CG-11 authorizations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 prevention/cg10/build_plan.py \
+            --protocol prevention/cg10/protocol.json \
+            --inputs prevention/cg10/inputs.json \
+            --cg09-protocol prevention/cg09/protocol.json \
+            --cg09-cases prevention/cg09/cases.json \
+            --cg09-verifier prevention/cg09/verify_strategy.py \
+            > "$RUNNER_TEMP/cg12-plans.json"
+          python3 prevention/cg10/verify_plan.py \
+            --protocol prevention/cg10/protocol.json \
+            --inputs prevention/cg10/inputs.json \
+            --cg09-cases prevention/cg09/cases.json \
+            --plans "$RUNNER_TEMP/cg12-plans.json" \
+            > "$RUNNER_TEMP/cg12-plans-verified.json"
+          python3 prevention/cg11/build_authorization.py \
+            --protocol prevention/cg11/protocol.json \
+            --plans "$RUNNER_TEMP/cg12-plans.json" \
+            --requests prevention/cg11/requests.json \
+            > "$RUNNER_TEMP/cg12-authorizations.json"
+          python3 - <<'PY'
+          import json, os
+          verified=json.load(open(os.environ['RUNNER_TEMP'] + '/cg12-plans-verified.json'))
+          assert verified['status']=='PASS', verified
+          auth=json.load(open(os.environ['RUNNER_TEMP'] + '/cg12-authorizations.json'))
+          by={x['caseId']:x for x in auth['authorizations']}
+          assert by['CG03-IOT-SQLITE-STARTUP-LOCK-ORDER']['authorizationId']=='57050154f46324ff6d399b4ec58313b64adf1975d80bb2b43c372207bd730700'
+          assert by['CG08-BIZ-RUNTIME-GATE-SOT-DRIFT']['authorizationId']=='ed545da349372de863006f96e91b70e36cf33c4513bdc41915133aaed0cc58c5'
+          assert by['CG10-INCOMPLETE-EVIDENCE-CONTROL']['status']=='NOT_AUTHORIZED'
+          print('CG12_AUTHORIZATION_REPLAY=PASS')
+          PY
+
+      - name: Checkout exact IoT implementation
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: hvritual/iot-delivery-system
+          ref: ${{ env.IOT_SHA }}
+          path: iot
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Checkout exact Biz implementation
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: hvritual/biz
+          ref: ${{ env.BIZ_SHA }}
+          path: biz
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup locked Go for IoT live regression
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        with:
+          go-version: '1.25.13'
+          cache: false
+
+      - name: Fresh IoT implementation verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C iot rev-parse HEAD)" = "$IOT_SHA"
+          test "$(git -C iot rev-parse HEAD:backend-yunka/internal/delivery/sqlite_repository.go)" = "6ccf2a6f39bd5f3695533584fb2c710de3f56054"
+          test "$(git -C iot rev-parse HEAD:backend-yunka/internal/delivery/ag03_sqlite_startup_test.go)" = "9f025a225a030abe35ba31c831fcc4804ad72d20"
+
+          (cd iot/backend-yunka && go test ./internal/delivery -run '^TestAG03SQLiteStartupWaitsForExternalLock$' -count=1) \
+            | tee "$RUNNER_TEMP/cg12-iot-live.log"
+
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          source=Path('iot/backend-yunka/internal/delivery/sqlite_repository.go').resolve()
+          text=source.read_text()
+          old='\t\t"PRAGMA busy_timeout = 5000",\n\t\t"PRAGMA journal_mode = WAL",'
+          new='\t\t"PRAGMA journal_mode = WAL",\n\t\t"PRAGMA busy_timeout = 5000",'
+          if text.count(old) != 1:
+              raise SystemExit('expected exact qualified pragma pair once')
+          mutated=Path(os.environ['RUNNER_TEMP'])/'cg12-mutated-sqlite_repository.go'
+          mutated.write_text(text.replace(old,new,1))
+          overlay={'Replace':{str(source):str(mutated.resolve())}}
+          (Path(os.environ['RUNNER_TEMP'])/'cg12-overlay.json').write_text(json.dumps(overlay))
+          PY
+
+          set +e
+          (cd iot/backend-yunka && go test -overlay="$RUNNER_TEMP/cg12-overlay.json" ./internal/delivery -run '^TestAG03SQLiteStartupWaitsForExternalLock$' -count=1) \
+            > "$RUNNER_TEMP/cg12-iot-mutation.log" 2>&1
+          mutation_rc=$?
+          set -e
+          test "$mutation_rc" -ne 0
+          grep -Fq 'AG03_STARTUP_BUSY_BEFORE_RELEASE' "$RUNNER_TEMP/cg12-iot-mutation.log"
+          test -z "$(git -C iot status --porcelain)"
+          echo 'CG12_IOT_BEHAVIOR=PASS'
+          echo 'CG12_IOT_MUTATION=PASS'
+          echo 'CG12_IOT_STATIC_MATRIX_IDENTITY=PASS'
+
+      - name: Fresh Biz implementation verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C biz rev-parse HEAD)" = "$BIZ_SHA"
+          test "$(git -C biz rev-parse HEAD:.github/workflows/b12-7-runtime-qualification.yml)" = "60ccee5ad9deefe04869d3ebfb6177a0632fe582"
+          test "$(git -C biz rev-parse HEAD:scripts/ce04_runtime_closure.py)" = "2b75316b4341e8abc8c7e8ba067d7404a88f365d"
+          test "$(git -C biz rev-parse HEAD:scripts/test_ce04_runtime_closure.py)" = "f2b7d4ce12683bb63372d4976a882c0723379cd0"
+          test "$(git -C biz rev-parse HEAD:contracts/generated/manifest.json)" = "69c592f63e7319aaf986e5f246ccb7019efc991c"
+          test "$(git -C biz rev-parse HEAD:.yunka/dev.json)" = "41460e3dc6cde44f64a326efc5c14f301d1dc0c8"
+
+          PYTHONPATH=biz/scripts python3 - <<'PY'
+          import unittest
+          suite=unittest.defaultTestLoader.discover('biz/scripts', pattern='test_ce04_runtime_closure.py')
+          count=suite.countTestCases()
+          print(f'CG12_BIZ_CHECKER_TEST_COUNT={count}')
+          if count != 25:
+              raise SystemExit(f'expected 25 tests, got {count}')
+          result=unittest.TextTestRunner(verbosity=2).run(suite)
+          if not result.wasSuccessful():
+              raise SystemExit('CE-04 checker matrix failed')
+          PY
+
+          workflow=biz/.github/workflows/b12-7-runtime-qualification.yml
+          grep -Fq 'python3 scripts/ce04_runtime_closure.py' "$workflow"
+          grep -Fq -- '--manifest contracts/generated/manifest.json' "$workflow"
+          grep -Fq -- '--config .yunka/dev.json' "$workflow"
+          if grep -Fq "| length == 6' .yunka/runtime-graph.json" "$workflow"; then
+            echo 'historical fixed-six predicate reappeared' >&2
+            exit 1
+          fi
+          grep -Fq 'test_future_declared_application_is_not_rejected_by_fixed_count' biz/scripts/test_ce04_runtime_closure.py
+          test -z "$(git -C biz status --porcelain)"
+          echo 'CG12_BIZ_SEMANTIC_RECONCILIATION=PASS'
+          echo 'CG12_BIZ_NEGATIVE_MATRIX=PASS'
+          echo 'CG12_BIZ_VALID_GROWTH=PASS'
+
+      - name: Build exact live observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+
+          def blob(repo, path):
+              return subprocess.check_output(['git','-C',repo,'rev-parse','HEAD:'+path], text=True).strip()
+
+          observed={
+            'schemaVersion':1,
+            'subjects':[
+              {
+                'caseId':'CG03-IOT-SQLITE-STARTUP-LOCK-ORDER',
+                'repository':'hvritual/iot-delivery-system',
+                'baseBranch':'main',
+                'liveBaseSha':subprocess.check_output(['git','-C','iot','rev-parse','HEAD'],text=True).strip(),
+                'existingAuthorizedPaths':['backend-yunka/internal/delivery/ag03_sqlite_startup_test.go'],
+                'blobs':{
+                  'backend-yunka/internal/delivery/sqlite_repository.go':blob('iot','backend-yunka/internal/delivery/sqlite_repository.go'),
+                  'backend-yunka/internal/delivery/ag03_sqlite_startup_test.go':blob('iot','backend-yunka/internal/delivery/ag03_sqlite_startup_test.go'),
+                },
+                'freshVerification':{
+                  'AUTHORITATIVE_BEHAVIOR_REGRESSION':'PASS',
+                  'KNOWN_RECURRENCE_MUTATION':'PASS',
+                },
+                'identityCarriedVerification':{
+                  'STATIC_DETECTOR_MATRIX':'IDENTITY_MATCH',
+                },
+                'preservedVerificationClasses':[
+                  'AUTHORITATIVE_BEHAVIOR_REGRESSION',
+                  'KNOWN_RECURRENCE_MUTATION',
+                  'STATIC_DETECTOR_MATRIX',
+                ],
+                'consumerMutated':False,
+              },
+              {
+                'caseId':'CG08-BIZ-RUNTIME-GATE-SOT-DRIFT',
+                'repository':'hvritual/biz',
+                'baseBranch':'main',
+                'liveBaseSha':subprocess.check_output(['git','-C','biz','rev-parse','HEAD'],text=True).strip(),
+                'existingAuthorizedPaths':[
+                  '.github/workflows/b12-7-runtime-qualification.yml',
+                  'scripts/ce04_runtime_closure.py',
+                  'scripts/test_ce04_runtime_closure.py',
+                ],
+                'blobs':{
+                  '.github/workflows/b12-7-runtime-qualification.yml':blob('biz','.github/workflows/b12-7-runtime-qualification.yml'),
+                  'scripts/ce04_runtime_closure.py':blob('biz','scripts/ce04_runtime_closure.py'),
+                  'scripts/test_ce04_runtime_closure.py':blob('biz','scripts/test_ce04_runtime_closure.py'),
+                  'contracts/generated/manifest.json':blob('biz','contracts/generated/manifest.json'),
+                  '.yunka/dev.json':blob('biz','.yunka/dev.json'),
+                },
+                'freshVerification':{
+                  'AUTHORITATIVE_INVENTORY_BINDING':'PASS',
+                  'SEMANTIC_RECONCILIATION':'PASS',
+                  'NEGATIVE_INTEGRITY_MATRIX':'PASS',
+                  'VALID_GROWTH_CONTROL':'PASS',
+                },
+                'identityCarriedVerification':{},
+                'preservedVerificationClasses':[
+                  'AUTHORITATIVE_INVENTORY_BINDING',
+                  'SEMANTIC_RECONCILIATION',
+                  'NEGATIVE_INTEGRITY_MATRIX',
+                  'VALID_GROWTH_CONTROL',
+                ],
+                'consumerMutated':False,
+              },
+            ],
+          }
+          out=Path(os.environ['RUNNER_TEMP'])/'cg12-observed.json'
+          out.write_text(json.dumps(observed,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(observed,indent=2,sort_keys=True))
+          PY
+
+      - name: Reconcile authorized implementation state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 prevention/cg12/reconcile_state.py \
+            --protocol prevention/cg12/protocol.json \
+            --subjects prevention/cg12/subjects.json \
+            --authorizations "$RUNNER_TEMP/cg12-authorizations.json" \
+            --observed "$RUNNER_TEMP/cg12-observed.json" \
+            | tee "$RUNNER_TEMP/cg12-reconciliations.json"
+
+          python3 prevention/cg12/verify_reconciliation.py \
+            --protocol prevention/cg12/protocol.json \
+            --subjects prevention/cg12/subjects.json \
+            --authorizations "$RUNNER_TEMP/cg12-authorizations.json" \
+            --observed "$RUNNER_TEMP/cg12-observed.json" \
+            --reconciliations "$RUNNER_TEMP/cg12-reconciliations.json" \
+            --reconciler prevention/cg12/reconcile_state.py \
+            | tee "$RUNNER_TEMP/cg12-verification.json"
+
+          python3 - <<'PY'
+          import json, os
+          value=json.load(open(os.environ['RUNNER_TEMP'] + '/cg12-verification.json'))
+          assert value['status']=='PASS', value
+          assert value['decision']=='AUTHORIZED_IMPLEMENTATION_RECONCILIATION_VERIFIED', value
+          assert value['realSubjectCount']==2, value
+          assert value['noChangeRequiredCount']==2, value
+          assert value['patchRequiredCount']==0, value
+          assert value['investigationRequiredCount']==0, value
+          assert value['fallbackNoActionCount']==1, value
+          print('CG12_POSITIVE_RECONCILIATION=PASS')
+          PY
+
+      - name: Fail-closed no-gratuitous-change matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import copy, json, os, sys
+          from pathlib import Path
+          sys.path.insert(0, 'prevention/cg12')
+          import reconcile_state as reconcile
+
+          protocol=json.load(open('prevention/cg12/protocol.json'))
+          subjects=json.load(open('prevention/cg12/subjects.json'))
+          auths=json.load(open(os.environ['RUNNER_TEMP'] + '/cg12-authorizations.json'))
+          observed=json.load(open(os.environ['RUNNER_TEMP'] + '/cg12-observed.json'))
+
+          def expect_reject(name, mutate_auth=None, mutate_observed=None, reason=None):
+              a=copy.deepcopy(auths)
+              o=copy.deepcopy(observed)
+              if mutate_auth: mutate_auth(a)
+              if mutate_observed: mutate_observed(o)
+              try:
+                  reconcile.reconcile_document(protocol, subjects, a, o)
+              except reconcile.ReconciliationError as exc:
+                  if exc.reason != reason:
+                      raise SystemExit(f'{name}: expected {reason}, got {exc.reason}: {exc.detail}')
+                  print(f'{name}: PASS ({reason})')
+                  return
+              raise SystemExit(f'{name}: expected rejection {reason}')
+
+          expect_reject(
+              'stale-live-base',
+              mutate_observed=lambda o:o['subjects'][0].__setitem__('liveBaseSha','0'*40),
+              reason='LIVE_BASE_SHA_MISMATCH',
+          )
+          expect_reject(
+              'missing-authorized-path',
+              mutate_observed=lambda o:o['subjects'][1].__setitem__('existingAuthorizedPaths',o['subjects'][1]['existingAuthorizedPaths'][:-1]),
+              reason='AUTHORIZED_PATH_MISSING_OR_BROADENED',
+          )
+          expect_reject(
+              'gratuitous-consumer-patch',
+              mutate_observed=lambda o:o['subjects'][0].__setitem__('consumerMutated',True),
+              reason='PATCH_WHEN_ALREADY_SATISFIED',
+          )
+          expect_reject(
+              'authorization-path-broadening',
+              mutate_auth=lambda a:a['authorizations'][0]['allowedPaths'].append('backend-yunka/internal/delivery/sqlite_repository.go'),
+              reason='AUTHORIZATION_ALLOWED_PATHS_MISMATCH',
+          )
+          expect_reject(
+              'verification-weakened',
+              mutate_observed=lambda o:o['subjects'][1].__setitem__('preservedVerificationClasses',o['subjects'][1]['preservedVerificationClasses'][:-1]),
+              reason='REQUIRED_VERIFICATION_WEAKENED',
+          )
+          expect_reject(
+              'direct-main-grant',
+              mutate_auth=lambda a:a['authorizations'][0].__setitem__('directMainUpdate',True),
+              reason='DIRECT_MAIN_UPDATE_FORBIDDEN',
+          )
+          expect_reject(
+              'fallback-executable',
+              mutate_auth=lambda a:a['authorizations'][2].update({'status':'AUTHORIZED','grant':'PATCH_BRANCH_ONLY'}),
+              reason='FALLBACK_BECAME_EXECUTABLE',
+          )
+
+          drift=copy.deepcopy(observed)
+          drift['subjects'][0]['blobs']['backend-yunka/internal/delivery/ag03_sqlite_startup_test.go']='1'*40
+          result=reconcile.reconcile_document(protocol, subjects, auths, drift)
+          receipt=next(x for x in result['receipts'] if x['caseId']=='CG03-IOT-SQLITE-STARTUP-LOCK-ORDER')
+          assert receipt['disposition']=='PATCH_REQUIRED_ON_AUTHORIZED_BRANCH_ONLY', receipt
+          assert receipt['patchRequired'] is True, receipt
+          assert receipt['mergeAuthorization'] is False, receipt
+          print('implementation-drift: PASS (PATCH_REQUIRED_ON_AUTHORIZED_BRANCH_ONLY)')
+
+          unproven=copy.deepcopy(observed)
+          unproven['subjects'][1]['freshVerification']['NEGATIVE_INTEGRITY_MATRIX']='FAIL'
+          result=reconcile.reconcile_document(protocol, subjects, auths, unproven)
+          receipt=next(x for x in result['receipts'] if x['caseId']=='CG08-BIZ-RUNTIME-GATE-SOT-DRIFT')
+          assert receipt['disposition']=='STOP_AND_INVESTIGATE', receipt
+          assert receipt['patchRequired'] is False, receipt
+          print('verification-not-proven: PASS (STOP_AND_INVESTIGATE)')
+          print('CG12_NEGATIVE_MATRIX=PASS')
+          PY
+
+      - name: Stable assets and read-only consumer boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool prevention/cg12/protocol.json >/dev/null
+          python3 -m json.tool prevention/cg12/subjects.json >/dev/null
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          for path in ['prevention/cg12/reconcile_state.py','prevention/cg12/verify_reconciliation.py']:
+              ast.parse(Path(path).read_text(), filename=path)
+          print('CG12_PYTHON_SYNTAX=PASS')
+          PY
+          test -z "$(git -C iot status --porcelain)"
+          test -z "$(git -C biz status --porcelain)"
+          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=no)"
+          echo 'CG12_CONSUMER_MUTATION=NONE'
+          echo 'CG12_STABLE_ASSETS=PASS'
