@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "task": "CG-02",
+  "governanceBase": "ebd497d3b2beff02bed5df60a26fdb3dd120a64b",
+  "corpus": {
+    "caseId": "CG01-IOT-SQLITE-STARTUP-LOCK-ORDER",
+    "blob": "5cba82314a027f4ee6284741518a45238b2b6fdc"
+  },
+  "authorityModel": {
+    "externalToolRole": "ADVISORY_STATIC_DETECTOR",
+    "authoritativeProof": "CG-01 held-lock runtime regression",
+    "rule": "a static match may block or warn only within an explicitly adopted policy; it must never claim the runtime defect is repaired"
+  },
+  "candidates": [
+    {
+      "name": "ast-grep",
+      "repository": "ast-grep/ast-grep",
+      "version": "0.45.3",
+      "tagCommit": "979c143639e3588c31f563091e69398683ed34f0",
+      "linuxX8664Asset": "app-x86_64-unknown-linux-gnu.zip",
+      "linuxX8664AssetSha256": "f8ac830881339d1edee6b2652f54798c0f4da5a827f2db38a08ee31117783ce8",
+      "license": "MIT",
+      "distribution": "pinned upstream release binary",
+      "status": "PENDING_FRESH_QUALIFICATION"
+    },
+    {
+      "name": "go-ruleguard",
+      "repository": "quasilyte/go-ruleguard",
+      "version": "v0.4.5",
+      "tagCommit": "53ee6ef0c75c144ddf76c8a9be430ac32e206d3a",
+      "releaseBinaryAssets": 0,
+      "license": "BSD-3-Clause",
+      "distribution": "go install from exact module version with Sum/GoModSum captured by the qualification runner",
+      "status": "PENDING_FRESH_QUALIFICATION"
+    }
+  ]
+}
