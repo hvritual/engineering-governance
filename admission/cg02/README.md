@@ -1,6 +1,6 @@
 # CG-02 External Tool Admission
 
-Status: **QUALIFIED / READY TO PUBLISH**
+Status: **COMPLETE / QUALIFIED / PUBLISHED**
 
 CG-02 qualifies external tools against the immutable CG-01 IoT SQLite startup corpus. External tools are admitted only as **advisory static detectors**; the authoritative proof for the defect remains the CG-01 held-lock runtime regression.
 
