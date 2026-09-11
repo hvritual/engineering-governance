@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG13-CONTROLLED-PATCH-EXECUTION",
+  "realCurrentStateRefusals": [
+    {
+      "caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER",
+      "receipt": {
+        "caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER",
+        "authorizationStatus": "AUTHORIZED",
+        "authorizationId": "57050154f46324ff6d399b4ec58313b64adf1975d80bb2b43c372207bd730700",
+        "repository": "hvritual/iot-delivery-system",
+        "baseSha": "c38ce0efcbe11d8ef9201381f895c7e9a85ddbc0",
+        "workBranch": "cg11/iot-sqlite-prevention-control",
+        "allowedPaths": ["backend-yunka/internal/delivery/ag03_sqlite_startup_test.go"],
+        "preservedVerificationClasses": [
+          "AUTHORITATIVE_BEHAVIOR_REGRESSION",
+          "KNOWN_RECURRENCE_MUTATION",
+          "STATIC_DETECTOR_MATRIX"
+        ],
+        "disposition": "STOP_AND_INVESTIGATE",
+        "reason": "VERIFICATION_NOT_PROVEN",
+        "patchRequired": false,
+        "consumerMutation": false,
+        "directMainUpdate": false,
+        "mergeAuthorization": false,
+        "repositoryAdministration": false,
+        "consumerAdoption": false
+      },
+      "expectedReason": "CG12_DISPOSITION_NOT_EXECUTABLE"
+    },
+    {
+      "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+      "receipt": {
+        "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+        "authorizationStatus": "AUTHORIZED",
+        "authorizationId": "ed545da349372de863006f96e91b70e36cf33c4513bdc41915133aaed0cc58c5",
+        "repository": "hvritual/biz",
+        "baseSha": "a08602975266668d4a1c5e784f0b3cf43ff92185",
+        "workBranch": "cg11/biz-runtime-gate-control",
+        "allowedPaths": [
+          ".github/workflows/b12-7-runtime-qualification.yml",
+          "scripts/ce04_runtime_closure.py",
+          "scripts/test_ce04_runtime_closure.py"
+        ],
+        "preservedVerificationClasses": [
+          "AUTHORITATIVE_INVENTORY_BINDING",
+          "NEGATIVE_INTEGRITY_MATRIX",
+          "SEMANTIC_RECONCILIATION",
+          "VALID_GROWTH_CONTROL"
+        ],
+        "disposition": "NO_CHANGE_REQUIRED",
+        "reason": "CURRENT_IMPLEMENTATION_SATISFIES_AUTHORIZED_PLAN",
+        "patchRequired": false,
+        "consumerMutation": false,
+        "directMainUpdate": false,
+        "mergeAuthorization": false,
+        "repositoryAdministration": false,
+        "consumerAdoption": false
+      },
+      "expectedReason": "CG12_DISPOSITION_NOT_EXECUTABLE"
+    },
+    {
+      "caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL",
+      "receipt": {
+        "caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL",
+        "authorizationStatus": "NOT_AUTHORIZED",
+        "disposition": "NO_ACTION",
+        "patchRequired": false,
+        "mergeAuthorization": false,
+        "consumerMutation": false
+      },
+      "expectedReason": "CG12_DISPOSITION_NOT_EXECUTABLE"
+    }
+  ],
+  "qualificationFixture": {
+    "qualificationOnly": true,
+    "consumerEvidence": false,
+    "caseId": "CG13-ISOLATED-PATCH-FIXTURE",
+    "repository": "hvritual/cg13-fixture",
+    "baseBranch": "main",
+    "workBranch": "cg13-fixture/patch",
+    "allowedPaths": ["src/allowed.txt"],
+    "preservedVerificationClasses": ["FIXTURE_BEHAVIOR_CHECK", "FIXTURE_STATIC_CHECK"],
+    "initialFiles": {
+      "src/allowed.txt": "one\n",
+      "src/other.txt": "keep\n"
+    },
+    "patchedFiles": {
+      "src/allowed.txt": "two\n"
+    }
+  }
+}

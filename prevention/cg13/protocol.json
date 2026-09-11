@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "id": "CG13-CONTROLLED-PATCH-EXECUTION",
+  "status": "QUALIFIED",
+  "sourceAuthorities": [
+    {"path": "prevention/cg12/protocol.json", "blob": "42de586a1c4d78d36736b11292e5cabcfab515c2"},
+    {"path": "prevention/cg12/subjects.json", "blob": "45f87bc2bea33758079d8cc2dc9518b1e617b4a5"},
+    {"path": "prevention/cg12/reconcile_state.py", "blob": "1fd3a4b2e13affdc1abfbd2bde807c7caf40a541"},
+    {"path": "prevention/cg12/verify_reconciliation.py", "blob": "85b2364c33bf59570c808d0eeec7e87208a6259a"}
+  ],
+  "principle": "A patch may execute only when CG-12 explicitly requires a patch, and the actual diff must remain inside the exact authorization envelope.",
+  "execution": {
+    "requiredDisposition": "PATCH_REQUIRED_ON_AUTHORIZED_BRANCH_ONLY",
+    "requirePatchRequiredTrue": true,
+    "requireExactBaseSha": true,
+    "requireRepositoryIdentity": true,
+    "requireNonMainWorkBranch": true,
+    "requireCleanStart": true,
+    "requireExistingAuthorizedPaths": true,
+    "requireNonEmptyDiff": true,
+    "changedPathsMustBeSubsetOfAllowedPaths": true,
+    "forbidPathTraversal": true,
+    "forbidRename": true,
+    "forbidCopy": true,
+    "forbidCreateFile": true,
+    "forbidSymlink": true,
+    "forbidGitlink": true,
+    "requirePostApplyDiffReadback": true,
+    "requireUnstagedUncommittedPatch": true,
+    "requireVerificationReceipt": true,
+    "requireExactVerificationClassSet": true,
+    "requireAllVerificationPass": true,
+    "commitAuthorization": "NOT_GRANTED",
+    "pullRequestAuthorization": "NOT_GRANTED",
+    "mergeAuthorization": "NOT_GRANTED"
+  },
+  "forbiddenPathPrefixes": [
+    "server/",
+    "third_party/yunka/",
+    "contracts/generated/",
+    ".yunka/"
+  ],
+  "nonExecutableDispositions": [
+    "NO_CHANGE_REQUIRED",
+    "STOP_AND_INVESTIGATE",
+    "NO_ACTION"
+  ],
+  "authorityCeiling": {
+    "createsConsumerBranch": false,
+    "commitsConsumerChanges": false,
+    "pushesConsumerBranch": false,
+    "opensConsumerPullRequest": false,
+    "mergesConsumerChange": false,
+    "directMainUpdate": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "requireCurrentRealSubjectsRejected": true,
+    "requireIsolatedPatchApplyFixture": true,
+    "fixtureIsNotConsumerEvidence": true,
+    "requireExactDiffAttestation": true,
+    "requireNegativeMatrix": true,
+    "requireNoConsumerMutation": true,
+    "requireExactCg12SourceBlobs": true,
+    "primary": {
+      "head": "d64b8fc55ea0297b72c859514264edd7cc84dd00",
+      "run": 34611754227,
+      "job": 103303709260,
+      "result": "SUCCESS",
+      "decision": "CONTROLLED_PATCH_EXECUTION_VERIFIED",
+      "realCurrentStateRefusalCount": 3,
+      "isolatedFixture": "PASS",
+      "fixtureAttestationId": "df5b507f025fd916a49d8c68ab6567c53729ed6b811dcc6512b198429524520e",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
+    },
+    "finalReplay": {
+      "head": "1f3d40597f094a55065b1fbd3c5da58677bdc143",
+      "run": 34611857562,
+      "job": 103304053122,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "realCurrentStateRefusalCount": 3,
+      "isolatedFixture": "PASS",
+      "fixtureAttestationId": "66132bad75245ca1d7a28dff0d275baca7edc6ea77420fc35f2be550d5330508",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
+    }
+  }
+}
