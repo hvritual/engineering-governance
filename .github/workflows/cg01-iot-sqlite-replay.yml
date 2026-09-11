@@ -56,7 +56,7 @@ jobs:
         run: |
           set -euo pipefail
           out="$RUNNER_TEMP/cg01-replay"
-          mkdir -p "$out/logs" "$out/overlay"
+          mkdir -p "$out/logs" "$out/overlay" "$out/sources"
           test "$(git -C buggy rev-parse HEAD)" = "$BUGGY_SHA"
           test "$(git -C fixed rev-parse HEAD)" = "$FIXED_SHA"
           test "$(git -C buggy rev-parse HEAD:third_party/yunka)" = "$YUNKA_SHA"
@@ -64,13 +64,18 @@ jobs:
           test "$(git -C buggy rev-parse HEAD:backend-yunka/internal/delivery/sqlite_repository.go)" = "$BUGGY_REPO_BLOB"
           test "$(git -C fixed rev-parse HEAD:backend-yunka/internal/delivery/sqlite_repository.go)" = "$FIXED_REPO_BLOB"
           test "$(git -C fixed rev-parse HEAD:backend-yunka/internal/delivery/ag03_sqlite_startup_test.go)" = "$REGRESSION_BLOB"
+          git -C buggy show "$BUGGY_SHA:backend-yunka/internal/delivery/sqlite_repository.go" > "$out/sources/sqlite_repository.buggy.go"
+          git -C fixed show "$FIXED_SHA:backend-yunka/internal/delivery/sqlite_repository.go" > "$out/sources/sqlite_repository.fixed.go"
+          git -C fixed show "$FIXED_SHA:backend-yunka/internal/delivery/ag03_sqlite_startup_test.go" > "$out/sources/ag03_sqlite_startup_test.go"
           {
-            printf 'buggy\t%s\t%s\n' "$(git -C buggy rev-parse HEAD)" "$(git -C buggy rev-parse 'HEAD^{tree}')"
-            printf 'fixed\t%s\t%s\n' "$(git -C fixed rev-parse HEAD)" "$(git -C fixed rev-parse 'HEAD^{tree}')"
+            printf 'buggy\t%s\t%s\t%s\n' "$(git -C buggy rev-parse HEAD)" "$(git -C buggy rev-parse 'HEAD^{tree}')" "$BUGGY_REPO_BLOB"
+            printf 'fixed\t%s\t%s\t%s\n' "$(git -C fixed rev-parse HEAD)" "$(git -C fixed rev-parse 'HEAD^{tree}')" "$FIXED_REPO_BLOB"
+            printf 'regression\t%s\n' "$REGRESSION_BLOB"
             printf 'buggy-yunka\t%s\n' "$(git -C buggy rev-parse HEAD:third_party/yunka)"
             printf 'fixed-yunka\t%s\n' "$(git -C fixed rev-parse HEAD:third_party/yunka)"
             printf 'go\t%s\n' "$(go version)"
           } | tee "$out/identity.tsv"
+          (cd "$out/sources" && sha256sum *.go > SHA256SUMS)
           find buggy fixed -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-before.sha256"
 
       - name: Build read-only overlays
@@ -85,7 +90,6 @@ jobs:
           regression = w/'fixed/backend-yunka/internal/delivery/ag03_sqlite_startup_test.go'
           buggy_virtual = w/'buggy/backend-yunka/internal/delivery/ag03_sqlite_startup_test.go'
           (out/'buggy.json').write_text(json.dumps({'Replace': {str(buggy_virtual): str(regression)}}, indent=2)+'\n')
-
           fixed_repo = w/'fixed/backend-yunka/internal/delivery/sqlite_repository.go'
           text = fixed_repo.read_text()
           old = '\t\t"PRAGMA busy_timeout = 5000",\n\t\t"PRAGMA journal_mode = WAL",'
@@ -161,7 +165,7 @@ jobs:
           for repo in buggy fixed buggy/third_party/yunka fixed/third_party/yunka; do
             test -z "$(git -C "$repo" status --porcelain --untracked-files=all)"
           done
-          find "$out" -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > "$out/SHA256SUMS"
+          (cd "$out" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
