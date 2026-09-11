@@ -41,7 +41,8 @@ def verify_document(protocol, subjects, authorizations, observed, actual, reconc
 
     real_subjects = [subject for subject in subjects["subjects"] if subject.get("target") is not None]
     fallback_subjects = [subject for subject in subjects["subjects"] if subject.get("target") is None]
-    require(len(real_subjects) >= protocol["qualification"]["minimumRealSubjects"], "INSUFFICIENT_REAL_SUBJECTS")
+    qualification = protocol["qualification"]
+    require(len(real_subjects) >= qualification["minimumRealSubjects"], "INSUFFICIENT_REAL_SUBJECTS")
 
     no_change = 0
     patch_required = 0
@@ -64,13 +65,12 @@ def verify_document(protocol, subjects, authorizations, observed, actual, reconc
         require(receipt.get("preservedVerificationClasses") == sorted(subject["requiredVerificationClasses"]),
                 "REQUIRED_VERIFICATION_WEAKENED", {"caseId": subject["caseId"]})
 
-    if protocol["qualification"].get("requireAlreadySatisfiedRealSubjects"):
-        require(no_change == len(real_subjects), "REAL_SUBJECT_NOT_ALREADY_SATISFIED", {
-            "realSubjects": len(real_subjects),
-            "noChange": no_change,
-            "patchRequired": patch_required,
-            "investigationRequired": investigation_required,
-        })
+    if qualification.get("requireAtLeastOneAlreadySatisfiedRealSubject"):
+        require(no_change >= 1, "NO_ALREADY_SATISFIED_REAL_SUBJECT")
+    if qualification.get("requireAtLeastOneInvestigationRealSubject"):
+        require(investigation_required >= 1, "NO_INVESTIGATION_REAL_SUBJECT")
+    if qualification.get("requireNoPatchRequiredInQualification"):
+        require(patch_required == 0, "UNEXPECTED_PATCH_REQUIRED_IN_QUALIFICATION", {"patchRequired": patch_required})
 
     for subject in fallback_subjects:
         receipt = by_case[subject["caseId"]]
@@ -133,7 +133,7 @@ def main():
         )
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
-    except (VerificationError, Exception) as exc:
+    except Exception as exc:
         if isinstance(exc, VerificationError):
             reason, detail = exc.reason, exc.detail
         else:
