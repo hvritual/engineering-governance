@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "CG05-IOT-DELIVERY-REQUIRED-CHECKS",
   "version": 1,
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "consumer": {
     "repository": "hvritual/iot-delivery-system",
     "targetRef": "main"
@@ -44,5 +44,17 @@
     "allowUnknownSubstitution": false,
     "allowDuplicateIds": false,
     "allowFailedRequiredCheck": false
+  },
+  "qualificationEvidence": {
+    "run": 34566552609,
+    "job": 103159750499,
+    "head": "42315d25294c15208f31573cb63a26f45e1f220a",
+    "artifact": 10186227702,
+    "artifactSha256": "da0d707163c5edb6cdb0287b554308baa2b09e443ac5e31cedc12f68c24c19d6",
+    "artifactManifestReplay": "PASS",
+    "consumerSource": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+    "exactSetReconciled": true,
+    "validAggregate": "PASS",
+    "repositoryBlocking": false
   }
 }
