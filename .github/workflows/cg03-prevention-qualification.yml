@@ -181,7 +181,14 @@ jobs:
 
           prevention=json.loads((root/'snapshots/prevention.json').read_text())
           problem=json.loads((root/'snapshots/problem.json').read_text())
-          assert prevention['status']=='CANDIDATE'
+          assert prevention['status'] in ('CANDIDATE','QUALIFIED')
+          if prevention['status']=='QUALIFIED':
+            evidence=prevention.get('qualificationEvidence',{})
+            assert evidence.get('primaryRun')==34558560970
+            assert evidence.get('primaryJob')==103136357225
+            assert evidence.get('primaryArtifact')==10183473843
+            assert evidence.get('primaryArtifactSha256')=='6fb5abd9d7b6737650695d3f27bb93eb09c1a89fb0dc8735315d924511b3b0f3'
+            assert evidence.get('artifactManifestReplay')=='PASS'
           assert prevention['qualificationCorpus']['blob']==os.environ['CG01_BLOB']
           assert prevention['rule']['admissionDecisionBlob']==os.environ['CG02_BLOB']
           assert prevention['rule']['engineVersion']==os.environ['AST_GREP_VERSION']
@@ -192,6 +199,7 @@ jobs:
             'schemaVersion':1,
             'status':'PASS',
             'task':'CG-03',
+            'assetStatus':prevention['status'],
             'preventionId':prevention['id'],
             'preventionVersion':prevention['version'],
             'problemRecord':problem['id'],
