@@ -2,370 +2,120 @@
   "schemaVersion": 1,
   "recordType": "CG00_BOUNDARY_AND_BASELINE",
   "task": "CG-00",
-  "continuation_round": "R5",
-  "status": "BLOCKED",
+  "continuation_round": "R6",
+  "status": "COMPLETE",
   "next_task": "CG-01",
-  "next_task_authorized_to_start": false,
+  "next_task_authorized_to_start": true,
   "basis": {
-    "file": "CG-EXTERNAL-GOVERNANCE-ROADMAP.md",
-    "sha256": "9cb24b0b811d71eae1658f338f8781e76fdc0a4ecdb2ff425d1f89ef5e971084",
-    "section": "CG-00 — 冻结执行边界、基线与交付位置",
-    "historical_attachments": "只保留已批准原则，不把旧材料中的历史进度当作当前状态。"
+    "roadmap": "CG-EXTERNAL-GOVERNANCE-ROADMAP.md",
+    "principle": "Framework stable / governance evolvable; do not upgrade consumer scaffold to satisfy CG-00."
   },
-  "historical_snapshot": {
-    "commit": "6b7609c9df35524ea4e4378b4d7ce855b1021ca9",
-    "tree": "22f8749fbac4739e56a3ab29fe305fe78f009be1",
-    "note": "R1-R4 observations retained in Git; current execution fields below supersede their historical null/blocked values."
-  },
-  "state_note": "Current-state consolidation; prior static source catalog and R1-R4 observations remain at historical_snapshot. No fixed source identities, ownership or acceptance conditions changed.",
-  "governance_asset_location": {
+  "governance": {
     "repository": "hvritual/engineering-governance",
     "visibility": "public",
     "publication_authorized": true,
+    "main_before_r6": "5d0a607d98bc558426d2462cbb6bf6044c9a653a",
+    "tree_before_r6": "b01cf9aa26e2b26d580198eca73abe69c4fc13c1",
     "write_allowlist": [
       "docs/CG-CHARTER.md",
       "docs/BASELINES.json",
       "docs/PATH-OWNERSHIP.md",
       "docs/COMMAND-CATALOG.md"
     ],
-    "main_before_update": "6b7609c9df35524ea4e4378b4d7ce855b1021ca9",
-    "tree_before_update": "22f8749fbac4739e56a3ab29fe305fe78f009be1",
-    "new_main_readback": "RECORDED_AFTER_PUBLICATION_IN_RECEIPT",
-    "publication_method": "git_data_api_snapshot",
-    "original_local_history_preserved": true
-  },
-  "authority": {
-    "framework_reference_is_not_consumer_pin": true,
-    "unknown_effective_version_is_not_assumed": true,
-    "task_only_writes_G_docs": true,
-    "main_protection_not_changed": true,
-    "runtime_or_business_changed": false,
-    "governance_tool_installed": false,
-    "credentials_disclosed": false
+    "r6_harness_branch": "control/cg00-r6-exec",
+    "r6_harness_merged_to_main": false
   },
   "source_roles": {
     "framework_reference": {
-      "repository": "hvritual/yunka.io",
+      "repo": "hvritual/yunka.io",
       "commit": "cc546c7d25ee316442eafacd3c93599f7691f22a",
       "tree": "84ef1130c3aead3fef83b990951790b6d996d2a0",
-      "complete_current_tree": true,
-      "head_tree_types_clean_fsck": "PASS",
-      "history_complete": true,
-      "shallow": false
+      "history_complete": true
     },
     "biz": {
-      "repository": "hvritual/biz",
+      "repo": "hvritual/biz",
       "commit": "fed9051bae618ab28df200038682f808c82e854b",
       "tree": "5883f6783dbab1336fa25b36adb1f7e938086540",
-      "complete_current_tree": true,
-      "head_tree_types_clean_fsck": "PASS",
       "history_complete": false,
+      "current_tree_complete": true,
       "shallow": true
     },
     "biz_framework": {
-      "repository": "hvritual/yunka.io",
+      "repo": "hvritual/yunka.io",
       "commit": "33b98ceba57494abda2299e4f0290a5651dab4bc",
       "tree": "fcc154390dc3a24ebb1819954fc883d0dd073c31",
-      "complete_current_tree": true,
-      "head_tree_types_clean_fsck": "PASS",
-      "history_complete": true,
-      "shallow": false
+      "history_complete": true
     },
     "iot_delivery": {
-      "repository": "hvritual/iot-delivery-system",
+      "repo": "hvritual/iot-delivery-system",
       "commit": "bcd20632b666405c3f7a8fe8d53f591c78450087",
       "tree": "0c0d1a2da23de4b7315245faba2103ec7a64377e",
-      "complete_current_tree": true,
-      "head_tree_types_clean_fsck": "PASS",
-      "history_complete": true,
-      "shallow": false
+      "history_complete": true
     },
     "iot_framework": {
-      "repository": "hvritual/yunka.io",
+      "repo": "hvritual/yunka.io",
       "commit": "057ebcf88a87303eb633eb6e604d306f633dfac0",
       "tree": "b2d82c574f6db1950b4323db839feda2d6fbc898",
-      "complete_current_tree": true,
-      "head_tree_types_clean_fsck": "PASS",
-      "history_complete": true,
-      "shallow": false
+      "history_complete": true
     }
   },
   "consumer_pins": {
     "biz": {
-      "consumer_sha": "fed9051bae618ab28df200038682f808c82e854b",
-      "runtime_source_role": "biz_framework",
-      "runtime_source_sha": "33b98ceba57494abda2299e4f0290a5651dab4bc",
-      "generator_source_sha": "33b98ceba57494abda2299e4f0290a5651dab4bc",
-      "cli_source_sha": "33b98ceba57494abda2299e4f0290a5651dab4bc",
-      "runtime_or_generator_upgraded": false,
-      "runtime_executed_locally": false,
-      "generator_executed": false,
-      "cli_binary_sha256": null,
-      "cli_attempts": {
-        "top_help": 1,
-        "context_help": 1,
-        "context_json": 1,
-        "failure_stage": "missing_dependency_before_CLI_start"
-      },
-      "modules": [
-        {
-          "query": "biz.modules",
-          "path": "yunka.io/framework",
-          "version": "v0.0.0-20260910080749-33b98ceba574",
-          "replace_dir_from_source_root": "yunka.io/framework",
-          "go_mod_exists": true,
-          "target_module_declaration": "yunka.io/framework"
-        },
-        {
-          "query": "biz.modules",
-          "path": "yunka.io/gateway",
-          "version": "v0.0.0-20260910080749-33b98ceba574",
-          "replace_dir_from_source_root": "yunka.io/gateway",
-          "go_mod_exists": true,
-          "target_module_declaration": "yunka.io/gateway"
-        },
-        {
-          "query": "biz.modules",
-          "path": "yunka.io/pkg",
-          "version": "v0.0.0-20260910080749-33b98ceba574",
-          "replace_dir_from_source_root": "yunka.io/pkg",
-          "go_mod_exists": true,
-          "target_module_declaration": "yunka.io/pkg"
-        },
-        {
-          "query": "biz.modules",
-          "path": "github.com/go-kit/kit",
-          "version": "v0.10.0",
-          "replace_dir_from_source_root": "yunka.io/compat/go-kit-kit-log",
-          "go_mod_exists": true,
-          "target_module_declaration": "github.com/go-kit/kit"
-        }
-      ],
-      "project": {
-        "root": ".",
-        "descriptor": ".yunka/project.json",
-        "contract_sources": "contracts/sources.json",
-        "generated_contracts": "contracts/generated",
-        "modules_root": "modules",
-        "generated_go_root": "internal",
-        "ownership_snapshot": null,
-        "source": "B_PROJECT"
-      },
-      "go_work_use": [
-        "."
-      ]
+      "consumer": "fed9051bae618ab28df200038682f808c82e854b",
+      "cli_generator_runtime": "33b98ceba57494abda2299e4f0290a5651dab4bc",
+      "context_capability": "NOT_APPLICABLE_PINNED_CLI_COMMAND_ABSENT",
+      "workspace_resolution": "PASS"
     },
     "iot_delivery": {
-      "consumer_sha": "bcd20632b666405c3f7a8fe8d53f591c78450087",
-      "runtime_source_role": "iot_framework",
-      "runtime_source_sha": "057ebcf88a87303eb633eb6e604d306f633dfac0",
-      "generator_source_sha": "057ebcf88a87303eb633eb6e604d306f633dfac0",
-      "cli_source_sha": "057ebcf88a87303eb633eb6e604d306f633dfac0",
-      "runtime_or_generator_upgraded": false,
-      "runtime_executed_locally": false,
-      "generator_executed": false,
-      "cli_binary_sha256": null,
-      "cli_attempts": {
-        "top_help": 1,
-        "context_help": 1,
-        "context_json": 1,
-        "failure_stage": "missing_dependency_before_CLI_start"
-      },
-      "modules": [
-        {
-          "query": "iot.modules",
-          "path": "github.com/hvritual/yunka.io/framework",
-          "version": "v0.1.0",
-          "replace_dir_from_source_root": "iot-delivery-system/third_party/yunka/framework",
-          "go_mod_exists": true,
-          "target_module_declaration": "github.com/hvritual/yunka.io/framework"
-        },
-        {
-          "query": "iot.modules",
-          "path": "github.com/hvritual/yunka.io/gateway",
-          "version": "v0.1.0",
-          "replace_dir_from_source_root": "iot-delivery-system/third_party/yunka/gateway",
-          "go_mod_exists": true,
-          "target_module_declaration": "github.com/hvritual/yunka.io/gateway"
-        },
-        {
-          "query": "iot.modules",
-          "path": "github.com/hvritual/yunka.io/pkg",
-          "version": "v0.1.0",
-          "replace_dir_from_source_root": "iot-delivery-system/third_party/yunka/pkg",
-          "go_mod_exists": true,
-          "target_module_declaration": "github.com/hvritual/yunka.io/pkg"
-        },
-        {
-          "query": "iot.legacy-modules",
-          "path": "yunka.io/framework",
-          "version": "v0.0.0-00010101000000-000000000000",
-          "replace_dir_from_source_root": "iot-delivery-system/third_party/yunka/framework",
-          "go_mod_exists": true,
-          "target_module_declaration": "github.com/hvritual/yunka.io/framework"
-        },
-        {
-          "query": "iot.legacy-modules",
-          "path": "yunka.io/pkg",
-          "version": "v0.0.0-00010101000000-000000000000",
-          "replace_dir_from_source_root": "iot-delivery-system/third_party/yunka/pkg",
-          "go_mod_exists": true,
-          "target_module_declaration": "github.com/hvritual/yunka.io/pkg"
-        },
-        {
-          "query": "iot.legacy-modules",
-          "path": "github.com/go-kit/kit",
-          "version": "v0.10.0",
-          "replace_dir_from_source_root": "iot-delivery-system/third_party/yunka/compat/go-kit-kit-log",
-          "go_mod_exists": false,
-          "target_module_declaration": null
-        }
-      ],
-      "project": {
-        "root": ".",
-        "descriptor": ".yunka/project.json",
-        "contract_proto_root": "backend-yunka/contracts/proto",
-        "generated_contracts": "backend-yunka/contracts/generated",
-        "modules_root": "backend-yunka/modules",
-        "generated_go_root": "backend-yunka/internal",
-        "ownership_snapshot": null,
-        "source": "I_PROJECT"
-      },
-      "go_work_use": [
-        "./backend",
-        "./backend-yunka"
-      ]
+      "consumer": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+      "cli_generator_runtime": "057ebcf88a87303eb633eb6e604d306f633dfac0",
+      "context_capability": "PASS_SCHEMA_V4"
     }
   },
-  "actual_toolchain": {
-    "source": "GitHub Actions repack, NOT the original go.dev tarball",
-    "repo": "actions/go-versions",
-    "run_id": 31764271102,
-    "artifact_id": 9205707291,
-    "zip_sha256": "4392a0f2167a781b9be35968f01fc412d53bd4ec8e1f78200e68abe9ea8dd7bb",
-    "tar_sha256": "afad2cd4ec8737c5109398eb31a36ea421e38f46d7f734bf8f0ad86f176d1070",
-    "go_binary_sha256": "3fb44b0d47becc087cf9e6002366bfbf136d3e08460f12389dbd04687dcf0dd0"
-  },
-  "execution_environment": {
-    "required_go": "1.25.13",
-    "actual_go": "go1.25.13 linux/amd64",
-    "system_go_replaced": false,
-    "GOROOT_override": false,
-    "GOENV": "off",
+  "toolchain": {
+    "go": "1.25.13",
+    "platform": "linux/amd64",
     "GOTOOLCHAIN": "local",
+    "GOPROXY": "https://proxy.golang.org,direct",
+    "GOSUMDB": "sum.golang.org",
     "GOFLAGS": "-mod=readonly",
-    "offline_command_GOPROXY": "off",
-    "offline_command_GOSUMDB": "off",
-    "direct_official_proxy_probe": "FAILED_DNS",
-    "cache_outside_consumers": true,
-    "dependencies_complete": false,
-    "protoc_executed": false
+    "dependency_verification": "committed go.mod/go.sum + sum.golang.org; dependency files unchanged before/after"
   },
-  "actual_evidence": {
-    "record": "evidence/fixed-source-actual-commands.json",
-    "sha256": "5a4b131f4e7c42db53abb52b70f823d101264fed022a20895303f64aa3107c89",
-    "local_command_records": 54,
-    "exit_zero_records": 47,
-    "exit_nonzero_records": 7,
-    "dependency_hash_records": 60,
-    "dependency_hashes_unchanged": true,
-    "dependency_record_note": "role/path records; nested source can be represented in both roles",
-    "hosted": {
-      "repository": "hvritual/iot-delivery-system",
-      "run_id": 34223977001,
-      "attempt": 2,
-      "job_id": 103079287635,
-      "artifact_id": 10176886196,
-      "artifact_sha256": "76c4f1e2fa57856827d61383b438dcdd73e04d6f0d1fb7abc255be8859d8a852",
-      "command_exit_codes": {
-        "module-tidy": 0,
-        "go-test": 0,
-        "go-vet": 0,
-        "go-race": 0
-      },
-      "inherited_jobs_counted": false
-    }
+  "r6_evidence": {
+    "repository": "hvritual/engineering-governance",
+    "workflow_commit": "b8a401e48fd99ee501a7154e4a24f75c0125a811",
+    "run_id": 34553907760,
+    "job_id": 103122355997,
+    "artifact_id": 10181806958,
+    "artifact_sha256": "329bd2785f5f7621d81bb80400a48b6567fb06cdb24e04bb352ef33e0cad5e47",
+    "qualification": "PASS_WITH_PINNED_CAPABILITY_NOT_APPLICABLE",
+    "commands": {
+      "biz-help": 0,
+      "biz-context-help": 1,
+      "biz-context-json": 1,
+      "iot-help": 0,
+      "iot-context-help": 0,
+      "iot-context-json": 0,
+      "biz-workspace": 0
+    },
+    "biz_context_failure_marker": "No help topic for 'context'",
+    "dependency_files_unchanged": true,
+    "worktrees_clean": true
   },
   "acceptance": {
-    "source_current_tree_identity": "PASS_5_ROLES_BIZ_HISTORY_SHALLOW",
-    "go_actual_version": "PASS",
-    "named_module_resolution": "BIZ_AND_IOT_CURRENT_PASS_LEGACY_INCOMPLETE",
-    "full_biz_workspace_resolution": "BLOCKED",
-    "consumer_context_and_help": "BLOCKED_6_ACTUAL_FAILED_ATTEMPTS",
-    "dependency_files_unchanged": "PASS",
-    "public_authorization": "APPROVED",
-    "prior_remote_document_delivery": "VERIFIED",
-    "current_round_remote_delivery": "PENDING_SEPARATE_READBACK",
-    "overall": "BLOCKED"
+    "source_identity": "PASS",
+    "locked_dependencies": "PASS_FOR_REQUIRED_COMMANDS",
+    "six_cli_invocations": "COMPLETE_4_PASS_2_NOT_APPLICABLE_PINNED_CAPABILITY",
+    "biz_full_workspace": "PASS",
+    "readonly": "PASS",
+    "overall": "PASS_WITH_PINNED_CAPABILITY_NOT_APPLICABLE"
   },
-  "blockers": [
-    {
-      "id": "CG00-DEPENDENCIES",
-      "status": "OPEN",
-      "affected_commands": [
-        "biz.workspace-check",
-        "biz.top-help",
-        "biz.context-help",
-        "biz.context-json",
-        "iot.top-help",
-        "iot.context-help",
-        "iot.context-json"
-      ],
-      "reason": "Missing locked third-party Go module cache; direct approved proxy download fails DNS; no CLI response obtained."
-    }
-  ],
   "known_limitations": [
     {
       "id": "CG00-IOT-LEGACY-REPLACE",
       "status": "INCOMPLETE",
-      "evidence": "evidence/resolved-directory-validation.json",
-      "disposition": "Recorded existing missing replacement and module identity differences; not repaired in CG-00; do not substitute narrow current-module PASS."
+      "detail": "IoT legacy github.com/go-kit/kit replace points to third_party/yunka/compat/go-kit-kit-log, absent in fixed 057ebcf; not repaired or promoted to PASS by CG-00."
     }
   ],
-  "source_transports": [
-    {
-      "repo": "hvritual/yunka.io",
-      "run": 34453922826,
-      "artifact": 10142647814,
-      "purpose": "framework_reference full bundle; transport only",
-      "zip_sha256": "0171450f14ba078996cae0d12ffe7789c51a752cd725337101a206c87eccd60b"
-    },
-    {
-      "repo": "hvritual/biz",
-      "run": 34468480316,
-      "artifact": 10148627380,
-      "purpose": "complete Biz tree archive; original signed commit restored with verified identity and explicit shallow boundary; historical tests not reused",
-      "zip_sha256": "16f448a3fae07616c7da34c1cd1d13a5fdb25198086a1c61a55580f7e0dfef57"
-    },
-    {
-      "repo": "hvritual/iot-delivery-system",
-      "run": 34218374924,
-      "artifact": 10052720173,
-      "purpose": "historical base bundle for transport, not target baseline",
-      "zip_sha256": "b7abbb0fdaaa0645b3b65bc590bdba704b3771d200e0dcf429560b4f07208798"
-    },
-    {
-      "repo": "hvritual/iot-delivery-system",
-      "run": 34224052206,
-      "artifact": 10055167536,
-      "purpose": "delta bundle restores exact frozen bcd20632; historical tests not reused",
-      "zip_sha256": "7b66ceab8aa0031de13124cdb48422b2881c69eb3eca5aa104c6b92fc6fc2e79"
-    },
-    {
-      "repo": "hvritual/iot-delivery-system",
-      "run": 33969592332,
-      "attempt": 2,
-      "artifact": 10177088907,
-      "purpose": "fresh source export; framework 057ebcf exact; old consumer export is not target",
-      "zip_sha256": "e57d49f5f668947e2f7544965796c6e98bd193ae7428d2e102142747c1e1f37f"
-    }
-  ],
-  "biz_framework_restoration": {
-    "parent": "6ba99c1440dc6c9416f6afd08f3282e35fa5a3fb",
-    "original_commit": "33b98ceba57494abda2299e4f0290a5651dab4bc",
-    "original_commit_sha_verified": true,
-    "tree_verified": true,
-    "source": "GitHub original commit metadata and exact published two-hunk delta; not a new product change"
-  },
-  "evidence_publication": "Only four documents and Issue summary; raw logs/source/tool bytes remain session artifacts; after-write main/tree recorded in separate receipt."
+  "blockers": []
 }
