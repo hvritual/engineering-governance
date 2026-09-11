@@ -1,0 +1,219 @@
+name: CG-14 controlled local commit packaging qualification
+
+on:
+  push:
+    branches:
+      - cg14/controlled-commit-packaging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: qualify-controlled-local-commit-boundary
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact CG-13 source authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:prevention/cg13/protocol.json)" = "6c91cf3300e63f3092c744f3db45f5063757267f"
+          test "$(git rev-parse HEAD:prevention/cg13/cases.json)" = "775d8706b83c8a1e46f932bf03090f3c0a9e0961"
+          test "$(git rev-parse HEAD:prevention/cg13/execute_patch.py)" = "f8bb4c8446563389b0434d3828416442598b41a3"
+          test "$(git rev-parse HEAD:prevention/cg13/verify_execution.py)" = "513b65498cd293edd35dfacf96e144b78035a70a"
+          python3 - <<'PY'
+          import json
+          p=json.load(open('prevention/cg13/protocol.json'))
+          assert p['status']=='QUALIFIED', p
+          PY
+          echo 'CG14_CG13_SOURCE_AUTHORITIES=PASS'
+
+      - name: Qualify real refusal and isolated local commit lanes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import copy
+          import hashlib
+          import importlib.util
+          import json
+          import subprocess
+          import tempfile
+          from pathlib import Path
+
+          def loadmod(name, path):
+              spec=importlib.util.spec_from_file_location(name, path)
+              module=importlib.util.module_from_spec(spec)
+              spec.loader.exec_module(module)
+              return module
+
+          cg13exec=loadmod('cg13_execute', 'prevention/cg13/execute_patch.py')
+          cg13verify=loadmod('cg13_verify', 'prevention/cg13/verify_execution.py')
+          cg14pack=loadmod('cg14_pack', 'prevention/cg14/package_commit.py')
+          cg14verify=loadmod('cg14_verify', 'prevention/cg14/verify_commit.py')
+          p13=json.load(open('prevention/cg13/protocol.json'))
+          c13=json.load(open('prevention/cg13/cases.json'))
+          p14=json.load(open('prevention/cg14/protocol.json'))
+          c14=json.load(open('prevention/cg14/cases.json'))
+          assert p14['status'] in ('CANDIDATE','QUALIFIED')
+          assert c14['qualificationFixture']['qualificationOnly'] is True
+          assert c14['qualificationFixture']['consumerEvidence'] is False
+
+          current={x['caseId']:x['receipt']['disposition'] for x in c13['realCurrentStateRefusals']}
+          for case in c14['realCurrentStateRefusals']:
+              assert current[case['caseId']]==case['currentDisposition'], (case,current)
+              try:
+                  cg14pack.validate_source_attestation(p14, case['sourceAttestation'])
+              except cg14pack.CommitPackagingError as exc:
+                  assert exc.reason==case['expectedReason'], (case['caseId'],exc.reason)
+              else:
+                  raise AssertionError('real current-state case unexpectedly commit-eligible: '+case['caseId'])
+          print('CG14_REAL_CURRENT_STATE_REFUSAL=PASS')
+
+          def git(repo, *args, check=True):
+              cp=subprocess.run(['git','-C',str(repo),*args], capture_output=True, text=True)
+              if check and cp.returncode:
+                  raise AssertionError((args, cp.stderr))
+              return cp
+
+          def init_attested_fixture(root):
+              fixture=c13['qualificationFixture']
+              repo=Path(root)/'repo'
+              repo.mkdir()
+              git(repo,'init','-q','-b','main')
+              git(repo,'config','user.email','cg14@example.invalid')
+              git(repo,'config','user.name','CG14 Qualification')
+              git(repo,'config','commit.gpgsign','false')
+              git(repo,'remote','add','origin','https://github.com/hvritual/cg13-fixture.git')
+              for rel,content in fixture['initialFiles'].items():
+                  path=repo/rel
+                  path.parent.mkdir(parents=True,exist_ok=True)
+                  path.write_text(content)
+              git(repo,'add','.')
+              git(repo,'commit','-qm','base')
+              base=git(repo,'rev-parse','HEAD').stdout.strip()
+              git(repo,'switch','-qc',fixture['workBranch'])
+              for rel,content in fixture['patchedFiles'].items():
+                  (repo/rel).write_text(content)
+              patch=Path(root)/'patch.diff'
+              patch.write_bytes(subprocess.check_output(['git','-C',str(repo),'diff']))
+              git(repo,'checkout','--','.')
+              receipt={
+                  'caseId':fixture['caseId'],
+                  'authorizationStatus':'AUTHORIZED',
+                  'repository':fixture['repository'],
+                  'baseSha':base,
+                  'workBranch':fixture['workBranch'],
+                  'allowedPaths':fixture['allowedPaths'],
+                  'preservedVerificationClasses':fixture['preservedVerificationClasses'],
+                  'disposition':'PATCH_REQUIRED_ON_AUTHORIZED_BRANCH_ONLY',
+                  'patchRequired':True,
+                  'consumerMutation':False,
+                  'directMainUpdate':False,
+                  'mergeAuthorization':False,
+                  'repositoryAdministration':False,
+                  'consumerAdoption':False,
+              }
+              execution=cg13exec.execute(p13,receipt,repo,patch)
+              verification={
+                  'schemaVersion':1,
+                  'caseId':receipt['caseId'],
+                  'repository':receipt['repository'],
+                  'baseSha':receipt['baseSha'],
+                  'workBranch':receipt['workBranch'],
+                  'changedPaths':execution['changedPaths'],
+                  'diffSha256':execution['diffSha256'],
+                  'checks':[
+                      {'class':'FIXTURE_BEHAVIOR_CHECK','outcome':'PASS','evidenceSha256':hashlib.sha256(b'cg14-behavior').hexdigest()},
+                      {'class':'FIXTURE_STATIC_CHECK','outcome':'PASS','evidenceSha256':hashlib.sha256(b'cg14-static').hexdigest()},
+                  ],
+              }
+              att=cg13verify.verify(p13,receipt,execution,verification,repo)
+              assert att['status']=='PATCH_EXECUTION_ATTESTED'
+              return repo,att
+
+          message=c14['qualificationFixture']['commitMessage']
+          with tempfile.TemporaryDirectory() as root:
+              repo,att=init_attested_fixture(root)
+              receipt=cg14pack.package_commit(p14,att,repo,message)
+              verified=cg14verify.verify(p14,att,receipt,repo)
+              assert verified['status']=='LOCAL_COMMIT_ATTESTED', verified
+              assert verified['decision']=='CONTROLLED_LOCAL_COMMIT_VERIFIED', verified
+              assert verified['changedPaths']==c14['qualificationFixture']['expectedChangedPaths'], verified
+              print('CG14_FIXTURE_COMMIT_ATTESTATION_ID='+verified['commitAttestationId'])
+              print('CG14_ISOLATED_LOCAL_COMMIT=PASS')
+
+          def expect_pack(reason, mutate_att=None, prepare=None, msg=None):
+              with tempfile.TemporaryDirectory() as root:
+                  repo,att=init_attested_fixture(root)
+                  if mutate_att:
+                      mutate_att(att)
+                  if prepare:
+                      prepare(repo,att)
+                  try:
+                      cg14pack.package_commit(p14,att,repo,message if msg is None else msg)
+                  except cg14pack.CommitPackagingError as exc:
+                      assert exc.reason==reason, (reason,exc.reason,exc.detail)
+                      return
+                  raise AssertionError('expected packaging rejection '+reason)
+
+          expect_pack('CG13_ATTESTATION_ID_MISMATCH', lambda a:a.__setitem__('attestationId','0'*64))
+          expect_pack('CG13_SOURCE_AUTHORITY_INVALID', lambda a:a.__setitem__('commitAuthorization','GRANTED'))
+          expect_pack('WORK_BRANCH_MISMATCH', prepare=lambda repo,a:git(repo,'switch','-q','main'))
+          expect_pack('BASE_MOVED_BEFORE_COMMIT', prepare=lambda repo,a:git(repo,'commit','--allow-empty','-qm','unexpected move'))
+          expect_pack('STAGED_CONTENT_PRESENT_AT_START', prepare=lambda repo,a:git(repo,'add','--',*a['changedPaths']))
+          expect_pack('ATTESTED_DIFF_DIGEST_MISMATCH', prepare=lambda repo,a:(repo/a['changedPaths'][0]).write_text('tampered\n'))
+          expect_pack('COMMIT_MESSAGE_INVALID', msg='')
+
+          def expect_verify(reason, mutate_receipt=None, mutate_source=None, mutate_repo=None):
+              with tempfile.TemporaryDirectory() as root:
+                  repo,att=init_attested_fixture(root)
+                  receipt=cg14pack.package_commit(p14,att,repo,message)
+                  if mutate_receipt:
+                      mutate_receipt(receipt)
+                  if mutate_source:
+                      mutate_source(att)
+                  if mutate_repo:
+                      mutate_repo(repo,receipt)
+                  try:
+                      cg14verify.verify(p14,att,receipt,repo)
+                  except cg14verify.CommitAttestationError as exc:
+                      assert exc.reason==reason, (reason,exc.reason,exc.detail)
+                      return
+                  raise AssertionError('expected verification rejection '+reason)
+
+          expect_verify('PUSH_AUTHORIZATION_FORBIDDEN', mutate_receipt=lambda r:r.__setitem__('pushAuthorization','GRANTED'))
+          expect_verify('PULL_REQUEST_AUTHORIZATION_FORBIDDEN', mutate_receipt=lambda r:r.__setitem__('pullRequestAuthorization','GRANTED'))
+          expect_verify('MERGE_AUTHORIZATION_FORBIDDEN', mutate_receipt=lambda r:r.__setitem__('mergeAuthorization','GRANTED'))
+          expect_verify('SOURCE_ATTESTATION_DIGEST_MISMATCH', mutate_source=lambda a:a.__setitem__('decision','TAMPERED'))
+          expect_verify('HEAD_COMMIT_MISMATCH', mutate_repo=lambda repo,r:git(repo,'commit','--allow-empty','-qm','extra commit'))
+          expect_verify('WORKTREE_NOT_CLEAN_AFTER_COMMIT', mutate_repo=lambda repo,r:(repo/'src/other.txt').write_text('dirty\n'))
+          print('CG14_NEGATIVE_MATRIX=PASS')
+          PY
+
+      - name: Stable asset syntax and governance cleanliness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool prevention/cg14/protocol.json >/dev/null
+          python3 -m json.tool prevention/cg14/cases.json >/dev/null
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          for path in ['prevention/cg14/package_commit.py','prevention/cg14/verify_commit.py']:
+              ast.parse(Path(path).read_text(), filename=path)
+          PY
+          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=no)"
+          echo 'CG14_CONSUMER_MUTATION=NONE'
+          echo 'CG14_STABLE_ASSETS=PASS'
