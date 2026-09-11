@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG10-PREVENTION-PLAN-CONTRACT",
+  "cg09": {
+    "protocol": {
+      "path": "prevention/cg09/protocol.json",
+      "blob": "4f731903115ed2d787251ed4e0f82b6343cde457"
+    },
+    "cases": {
+      "path": "prevention/cg09/cases.json",
+      "blob": "770a136711a16e071c7dc2ec3f5da6a6a9a11d06"
+    },
+    "verifier": {
+      "path": "prevention/cg09/verify_strategy.py",
+      "blob": "4c86ef5198351f75a5c7df655c5a733f5eaa9216"
+    }
+  },
+  "planInputs": [
+    {
+      "caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER",
+      "cg09CaseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER",
+      "planningEvidence": {
+        "authoritativeBehavioralProof": {
+          "present": true,
+          "name": "CG-01 held-lock runtime regression",
+          "source": "prevention/cg03/iot-sqlite-startup/prevention.json authorityBoundary.authoritativeProof"
+        },
+        "recurrenceMutationControl": {
+          "present": true,
+          "variant": "M1_REINTRODUCE_PRAGMA_ORDER",
+          "source": "corpus/cg01/iot-sqlite-startup/case.json mutationVariants"
+        },
+        "advisoryStaticDetector": {
+          "present": true,
+          "engine": "ast-grep",
+          "authority": "ADVISORY",
+          "source": "prevention/cg03/iot-sqlite-startup/prevention.json"
+        }
+      },
+      "futureChangeIntent": [
+        "RETAIN_AUTHORITATIVE_BEHAVIORAL_REGRESSION",
+        "RETAIN_ADVISORY_RECURRENCE_GUARD",
+        "RETAIN_KNOWN_RECURRENCE_MUTATION_CONTROL"
+      ]
+    },
+    {
+      "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+      "cg09CaseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+      "planningEvidence": {
+        "authoritativeInventory": {
+          "present": true,
+          "identity": "contracts/generated/manifest.json services with declared application",
+          "source": "corpus/cg08/biz-runtime-gate/case.json fixedShape.authoritativeInventory"
+        },
+        "reconciliationSurfaces": [
+          ".yunka/dev.json process graphNodes",
+          "runtime status process graphNodes and readiness",
+          "runtime graph application nodes and runs edges",
+          "diagnostics generated HTTP route inventory and readiness"
+        ],
+        "negativeIntegrityControls": [
+          "OMISSION",
+          "EXTRA",
+          "DUPLICATE",
+          "NOT_READY"
+        ],
+        "validGrowthControl": {
+          "present": true,
+          "name": "test_future_declared_application_is_not_rejected_by_fixed_count",
+          "source": "corpus/cg08/biz-runtime-gate/case.json freshReplay.futureDeclaredApplicationGrowth"
+        }
+      },
+      "futureChangeIntent": [
+        "DERIVE_EXPECTED_TOPOLOGY_FROM_AUTHORITY",
+        "RECONCILE_DECLARED_AND_OBSERVED_SURFACES",
+        "RETAIN_NEGATIVE_INTEGRITY_MATRIX",
+        "RETAIN_VALID_GROWTH_CONTROL"
+      ]
+    },
+    {
+      "caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL",
+      "inlineCg09Case": {
+        "caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL",
+        "qualifiedRealCase": false,
+        "sourceRefs": [],
+        "mechanism": "UNQUALIFIED_NEW_MECHANISM",
+        "evidence": {
+          "authoritativeProof": "UNKNOWN",
+          "recurrenceShape": false,
+          "authoritativeInventory": false,
+          "validGrowthControl": false
+        },
+        "control": {
+          "staticDetector": {
+            "present": false,
+            "authority": "NONE",
+            "engine": null
+          },
+          "deriveFromAuthority": false,
+          "fixedReplacementCardinality": false,
+          "copiedLiteralInventory": false
+        },
+        "scope": {
+          "qualified": "unqualified control fixture",
+          "proposed": "unqualified control fixture"
+        },
+        "consumerAdoption": "NOT_ADOPTED",
+        "expectedStrategy": "NO_AUTOMATIC_CONTROL"
+      },
+      "planningEvidence": {
+        "missingEvidence": [
+          "qualified failure mechanism",
+          "authoritative proof",
+          "bounded applicability"
+        ]
+      },
+      "futureChangeIntent": []
+    }
+  ]
+}
