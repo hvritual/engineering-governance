@@ -42,7 +42,13 @@
           }
         }
       },
-      "expectedDisposition": "NO_CHANGE_REQUIRED"
+      "knownVerificationBlocker": {
+        "class": "LEGACY_MISSING_REPLACE_TARGET",
+        "module": "github.com/go-kit/kit@v0.10.0",
+        "replacePath": "third_party/yunka/compat/go-kit-kit-log",
+        "expectedLogContains": "third_party/yunka/compat/go-kit-kit-log/go.mod: no such file or directory"
+      },
+      "expectedDisposition": "STOP_AND_INVESTIGATE"
     },
     {
       "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
