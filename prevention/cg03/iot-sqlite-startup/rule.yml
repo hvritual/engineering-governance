@@ -1,0 +1,14 @@
+id: cg03-sqlite-busy-timeout-before-wal
+language: Go
+message: install PRAGMA busy_timeout before PRAGMA journal_mode = WAL in SQLite startup Exec loop
+severity: error
+rule:
+  pattern: |
+    for _, $STMT := range []string{$$$A, "PRAGMA journal_mode = WAL", "PRAGMA busy_timeout = 5000", $$$B} {
+      if _, $ERR := $DB.Exec($STMT); $ERR != nil {
+        $$$BODY
+      }
+    }
+note: >-
+  This rule is an advisory recurrence guard for the CG-01 SQLite startup defect.
+  Runtime repair is proven only by the CG-01 held-lock behavior regression.
