@@ -1,0 +1,9 @@
+for _, $STMT := range []string{
+  "PRAGMA journal_mode = WAL",
+  "PRAGMA busy_timeout = 5000",
+  "PRAGMA foreign_keys = ON",
+} {
+  if _, $ERR := $DB.Exec($STMT); $ERR != nil {
+    $$$BODY
+  }
+}
