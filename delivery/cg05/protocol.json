@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "CG05-TRUSTED-SHADOW-DELIVERY-PROTOCOL",
+  "status": "CANDIDATE",
+  "principle": "A delivery decision is valid only when the exact required-check identity set has fresh PASS receipts bound to the same candidate source SHA, active adoption profile, immutable lock and required-check plan.",
+  "candidateBinding": {
+    "repository": "hvritual/iot-delivery-system",
+    "targetRef": "main",
+    "sourceIdentity": "EXACT_GIT_COMMIT_SHA",
+    "floatingSourceAcceptedInReceipt": false
+  },
+  "requiredCheckSemantics": {
+    "identityModel": "EXACT_SET_NOT_COUNT",
+    "missingCheck": "REJECT",
+    "unknownOrSubstitutedCheck": "REJECT",
+    "duplicateCheck": "REJECT",
+    "failedCheck": "REJECT",
+    "sourceMismatch": "REJECT",
+    "profileOrLockMismatch": "REJECT",
+    "planIdentityMismatch": "REJECT",
+    "evidenceDigestMismatch": "REJECT"
+  },
+  "receiptBinding": {
+    "required": [
+      "candidate repository",
+      "candidate source commit",
+      "profile id and blob",
+      "lock id and blob",
+      "required-check plan id and blob",
+      "check id",
+      "PASS/FAIL outcome",
+      "run and job identity",
+      "evidence path and SHA-256"
+    ]
+  },
+  "authorityBoundary": {
+    "staticRecurrenceGuard": "REQUIRED_DELIVERY_CHECK_BUT_NOT_RUNTIME_REPAIR_PROOF",
+    "behaviorRegression": "AUTHORITATIVE_FUNCTIONAL_PROOF",
+    "aggregateReceipt": "TRUSTED_SHADOW_DELIVERY_DECISION"
+  },
+  "enforcement": {
+    "state": "SHADOW_ONLY",
+    "repositoryBlocking": false,
+    "observedConsumerBranchProtection": false,
+    "observedRequiredStatusChecks": [],
+    "observedRepositoryRulesets": [],
+    "reason": "At CG-05 start, consumer main was unprotected and no repository rulesets or required status checks existed. This protocol does not claim unbypassable merge enforcement."
+  },
+  "repositoryBlockingPrerequisites": [
+    "consumer main branch or repository ruleset enforces a required trusted delivery check",
+    "the required check is emitted only by the trusted delivery entrypoint for the exact candidate SHA",
+    "candidate code cannot self-authorize or replace the trusted check implementation",
+    "branch/ruleset configuration prevents bypass by the normal delivery actor",
+    "post-merge/readback verifies the merged SHA is the SHA that passed the trusted gate"
+  ]
+}
