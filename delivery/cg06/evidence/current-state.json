@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-09-11T06:28:00Z",
+  "capturedAt": "2026-09-11T08:27:00Z",
   "repository": "hvritual/iot-delivery-system",
   "branch": "main",
-  "mainSha": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+  "mainSha": "2d022a3ee2d83e1cf261e57e8f04f0228d9b7334",
   "branchObservation": {
     "protected": false,
     "protectionEnabled": false,
@@ -14,7 +14,25 @@
     }
   },
   "rulesets": [],
-  "commitStatuses": [],
+  "trustedPublisherObservation": {
+    "workflowPath": ".github/workflows/cg06-trusted-delivery.yml",
+    "workflowMainCommit": "2d022a3ee2d83e1cf261e57e8f04f0228d9b7334",
+    "workflowBlob": "3247b10de936bd847fd4f94a4e475a647a557242",
+    "probePullRequest": 9,
+    "probeSha": "fd72b4c0394f96909bf6478bbd08498f84bd6762",
+    "run": 34579085328,
+    "job": 103198217790,
+    "status": {
+      "id": 53972508441,
+      "context": "engineering-governance/trusted-delivery",
+      "state": "success",
+      "description": "CG-05 exact required-check set reconciled for this candidate SHA",
+      "creator": "github-actions[bot]",
+      "integrationId": 15368,
+      "createdAt": "2026-09-11T08:26:29Z"
+    },
+    "conclusion": "QUALIFIED_EXACT_SHA_SUCCESS"
+  },
   "accountPermission": {
     "user": "hvritual",
     "permission": "admin"
@@ -24,10 +42,23 @@
       "status": 403,
       "message": "Resource not accessible by integration"
     },
+    "rulesetReadActionExposed": true,
     "rulesetMutationActionExposed": false,
     "branchProtectionMutationActionExposed": false,
+    "commitStatusReadActionExposed": true,
     "commitStatusPublisherActionExposed": false,
     "checkRunPublisherActionExposed": false
   },
-  "conclusion": "Human/account administration authority exists, but the connected automation principal used by this task cannot perform the repository administration/status publication actions required to activate CG-06."
+  "resolved": [
+    "Trusted exact-SHA status publisher: GitHub Actions App 15368",
+    "Default-branch trusted workflow performs CG-05 exact required-check reconciliation",
+    "Credential-free read-only behavior container executes authoritative held-lock regression successfully"
+  ],
+  "remaining": [
+    "Activate repository ruleset through an Administration:write-capable principal",
+    "Verify normal admin/write actors cannot bypass the active ruleset",
+    "Live-qualify exact-SHA trusted integration using GitHub Actions App 15368 as the selected bypass principal",
+    "Read back main and active ruleset after integration"
+  ],
+  "conclusion": "Publisher qualification is complete. Repository blocking is still inactive because main is unprotected and repository rulesets are empty; the connected task integration cannot perform Administration:write mutation."
 }
