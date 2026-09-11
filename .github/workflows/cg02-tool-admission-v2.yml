@@ -1,0 +1,224 @@
+name: CG-02 External Tool Admission v2
+
+on:
+  push:
+    branches: [cg-02/external-tool-admission]
+    paths:
+      - .github/workflows/cg02-tool-admission-v2.yml
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GOTOOLCHAIN: local
+      GOPROXY: https://proxy.golang.org,direct
+      GOSUMDB: sum.golang.org
+      BUGGY_SHA: f190fe237fa1efb738b4866275804093a209de5b
+      FIXED_SHA: bcd20632b666405c3f7a8fe8d53f591c78450087
+      YUNKA_SHA: 057ebcf88a87303eb633eb6e604d306f633dfac0
+      CG01_BLOB: 5cba82314a027f4ee6284741518a45238b2b6fdc
+      AST_GREP_VERSION: 0.45.3
+      AST_GREP_ASSET_SHA256: f8ac830881339d1edee6b2652f54798c0f4da5a827f2db38a08ee31117783ce8
+      RULEGUARD_VERSION: v0.4.5
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          path: governance
+          persist-credentials: false
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: hvritual/iot-delivery-system
+          ref: ${{ env.BUGGY_SHA }}
+          path: buggy
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: hvritual/iot-delivery-system
+          ref: ${{ env.FIXED_SHA }}
+          path: fixed
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+        with:
+          go-version: '1.25.13'
+          check-latest: false
+          cache: false
+
+      - name: Freeze inputs and install exact candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg02v2"
+          mkdir -p "$out/logs" "$out/tools/ast-grep" "$out/tools/bin" "$out/snapshots"
+          test "$(git -C buggy rev-parse HEAD)" = "$BUGGY_SHA"
+          test "$(git -C fixed rev-parse HEAD)" = "$FIXED_SHA"
+          test "$(git -C buggy rev-parse HEAD:third_party/yunka)" = "$YUNKA_SHA"
+          test "$(git -C fixed rev-parse HEAD:third_party/yunka)" = "$YUNKA_SHA"
+          test "$(git -C governance rev-parse HEAD:corpus/cg01/iot-sqlite-startup/case.json)" = "$CG01_BLOB"
+          find buggy fixed -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-before.sha256"
+
+          curl -fsSL "https://github.com/ast-grep/ast-grep/releases/download/${AST_GREP_VERSION}/app-x86_64-unknown-linux-gnu.zip" -o "$out/tools/ast-grep.zip"
+          echo "$AST_GREP_ASSET_SHA256  $out/tools/ast-grep.zip" | sha256sum -c -
+          unzip -q "$out/tools/ast-grep.zip" -d "$out/tools/ast-grep"
+          sg="$out/tools/ast-grep/ast-grep"
+          test -x "$sg"
+          "$sg" --version | tee "$out/logs/ast-grep.version.txt"
+          sha256sum "$sg" > "$out/logs/ast-grep.binary.sha256"
+
+          env GOWORK=off GOFLAGS= go mod download -json "github.com/quasilyte/go-ruleguard@${RULEGUARD_VERSION}" > "$out/logs/ruleguard.module.json"
+          env GOWORK=off GOFLAGS= GOBIN="$out/tools/bin" go install "github.com/quasilyte/go-ruleguard/cmd/ruleguard@${RULEGUARD_VERSION}"
+          rg="$out/tools/bin/ruleguard"
+          test -x "$rg"
+          go version -m "$rg" | tee "$out/logs/ruleguard.buildinfo.txt"
+          grep -q $'mod\tgithub.com/quasilyte/go-ruleguard\tv0.4.5\t' "$out/logs/ruleguard.buildinfo.txt"
+          module_dir="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["Dir"])' "$out/logs/ruleguard.module.json")"
+          gopath="$(go env GOPATH)"
+          mkdir -p "$gopath/src/github.com/quasilyte"
+          ln -s "$module_dir" "$gopath/src/github.com/quasilyte/go-ruleguard"
+          test -f "$gopath/src/github.com/quasilyte/go-ruleguard/dsl/dsl.go"
+
+          cp buggy/backend-yunka/internal/delivery/sqlite_repository.go "$out/snapshots/buggy.go"
+          cp fixed/backend-yunka/internal/delivery/sqlite_repository.go "$out/snapshots/fixed.go"
+          {
+            printf 'governance\t%s\n' "$(git -C governance rev-parse HEAD)"
+            printf 'cg01\t%s\n' "$CG01_BLOB"
+            printf 'buggy\t%s\n' "$BUGGY_SHA"
+            printf 'fixed\t%s\n' "$FIXED_SHA"
+            printf 'yunka\t%s\n' "$YUNKA_SHA"
+            printf 'go\t%s\n' "$(go version)"
+          } > "$out/identity.tsv"
+
+      - name: Build isolated mutation and legal control
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg02v2"
+          mut="$RUNNER_TEMP/cg02-mutation"
+          rm -rf "$mut"
+          mkdir -p "$mut/third_party"
+          cp -a fixed/backend-yunka "$mut/backend-yunka"
+          cp -a fixed/third_party/yunka "$mut/third_party/yunka"
+          python3 - <<'PY'
+          import os,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'cg02-mutation/backend-yunka/internal/delivery/sqlite_repository.go'
+          t=p.read_text()
+          good='\t\t"PRAGMA busy_timeout = 5000",\n\t\t"PRAGMA journal_mode = WAL",'
+          bad='\t\t"PRAGMA journal_mode = WAL",\n\t\t"PRAGMA busy_timeout = 5000",'
+          assert t.count(good)==1
+          p.write_text(t.replace(good,bad,1))
+          PY
+          cp "$mut/backend-yunka/internal/delivery/sqlite_repository.go" "$out/snapshots/mutation.go"
+
+          ctrl="$RUNNER_TEMP/cg02-control"
+          rm -rf "$ctrl" && mkdir -p "$ctrl"
+          cat > "$ctrl/go.mod" <<'EOF'
+          module cg02control
+          go 1.25.0
+          EOF
+          cat > "$ctrl/control.go" <<'EOF'
+          package cg02control
+          func unrelated() {
+            for _, statement := range []string{
+              "PRAGMA journal_mode = WAL",
+              "PRAGMA busy_timeout = 5000",
+              "PRAGMA foreign_keys = ON",
+            } {
+              _ = statement // same ordered strings, deliberately no database.Exec
+            }
+          }
+          EOF
+          cp "$ctrl/control.go" "$out/snapshots/unrelated.go"
+
+      - name: Execute candidate matrix twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg02v2"
+          sg="$out/tools/ast-grep/ast-grep"
+          rg="$out/tools/bin/ruleguard"
+          mut="$RUNNER_TEMP/cg02-mutation"
+          ctrl="$RUNNER_TEMP/cg02-control"
+          ast_pattern='for _, $STMT := range []string{$$$A, "PRAGMA journal_mode = WAL", "PRAGMA busy_timeout = 5000", $$$B} { if _, $ERR := $DB.Exec($STMT); $ERR != nil { $$$BODY } }'
+          rg_expr='m.Match(`for _, $stmt := range []string{$*_, "PRAGMA journal_mode = WAL", $*_, "PRAGMA busy_timeout = 5000", $*_} { if _, $err := $db.Exec($stmt); $err != nil { $*_ } }`)'
+          capture() {
+            name="$1"; shift
+            set +e; "$@" >"$out/logs/$name.stdout" 2>"$out/logs/$name.stderr"; code=$?; set -e
+            printf '%s\t%s\n' "$name" "$code" >> "$out/exit-codes.tsv"
+          }
+          for n in 1 2; do
+            capture "ast-buggy-$n" "$sg" run --pattern "$ast_pattern" --lang go --json=compact "$GITHUB_WORKSPACE/buggy/backend-yunka/internal/delivery/sqlite_repository.go"
+            capture "ast-fixed-$n" "$sg" run --pattern "$ast_pattern" --lang go --json=compact "$GITHUB_WORKSPACE/fixed/backend-yunka/internal/delivery/sqlite_repository.go"
+            capture "ast-mutation-$n" "$sg" run --pattern "$ast_pattern" --lang go --json=compact "$mut/backend-yunka/internal/delivery/sqlite_repository.go"
+            capture "ast-unrelated-$n" "$sg" run --pattern "$ast_pattern" --lang go --json=compact "$ctrl/control.go"
+
+            capture "rg-buggy-$n" bash -lc "cd '$GITHUB_WORKSPACE/buggy/backend-yunka' && GOWORK=off GOFLAGS=-mod=readonly '$rg' -json -e '$rg_expr' ./internal/delivery"
+            capture "rg-fixed-$n" bash -lc "cd '$GITHUB_WORKSPACE/fixed/backend-yunka' && GOWORK=off GOFLAGS=-mod=readonly '$rg' -json -e '$rg_expr' ./internal/delivery"
+            capture "rg-mutation-$n" bash -lc "cd '$mut/backend-yunka' && GOWORK=off GOFLAGS=-mod=readonly '$rg' -json -e '$rg_expr' ./internal/delivery"
+            capture "rg-unrelated-$n" bash -lc "cd '$ctrl' && GOWORK=off GOFLAGS=-mod=readonly '$rg' -json -e '$rg_expr' ."
+          done
+
+      - name: Qualify semantic determinism and read-only contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg02v2"
+          python3 - <<'PY'
+          import json,os,pathlib
+          r=pathlib.Path(os.environ['RUNNER_TEMP'])/'cg02v2'; logs=r/'logs'
+          def load(name):
+            t=(logs/f'{name}.stdout').read_text().strip()
+            return json.loads(t) if t else []
+          def canon(v): return json.dumps(v,sort_keys=True,separators=(',',':'))
+          def diag_count(v):
+            if isinstance(v,list): return len(v)
+            if isinstance(v,dict):
+              n=0
+              for k,x in v.items():
+                if k=='diagnostics' and isinstance(x,list): n+=len(x)
+                else: n+=diag_count(x)
+              return n
+            return 0
+          # ast-grep map serialization order may differ; semantic JSON must be identical.
+          for s in ('buggy','fixed','mutation','unrelated'):
+            assert canon(load(f'ast-{s}-1'))==canon(load(f'ast-{s}-2')), s
+            assert canon(load(f'rg-{s}-1'))==canon(load(f'rg-{s}-2')), s
+          ast={s:len(load(f'ast-{s}-1')) for s in ('buggy','fixed','mutation','unrelated')}
+          rg={s:diag_count(load(f'rg-{s}-1')) for s in ('buggy','fixed','mutation','unrelated')}
+          assert ast=={'buggy':1,'fixed':0,'mutation':1,'unrelated':0}, ast
+          assert rg=={'buggy':1,'fixed':0,'mutation':1,'unrelated':0}, rg
+          mod=json.loads((logs/'ruleguard.module.json').read_text())
+          assert mod['Version']==os.environ['RULEGUARD_VERSION']
+          assert mod['Sum'].startswith('h1:') and mod['GoModSum'].startswith('h1:')
+          result={
+            'schemaVersion':1,'status':'PASS','task':'CG-02','caseId':'CG01-IOT-SQLITE-STARTUP-LOCK-ORDER',
+            'authorityBoundary':{'externalTools':'ADVISORY_STATIC_DETECTOR_ONLY','authoritativeProof':'CG-01 held-lock runtime regression'},
+            'ast-grep':{'version':os.environ['AST_GREP_VERSION'],'counts':ast,'semanticDeterminism':True},
+            'go-ruleguard':{'version':os.environ['RULEGUARD_VERSION'],'counts':rg,'semanticDeterminism':True,'moduleSum':mod['Sum'],'goModSum':mod['GoModSum']},
+            'consumerTrackedSourceMutated':False,'consumerDependencyLocksMutated':False
+          }
+          (r/'qualification.json').write_text(json.dumps(result,indent=2)+'\n')
+          PY
+          find buggy fixed -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-after.sha256"
+          diff -u "$out/dependency-before.sha256" "$out/dependency-after.sha256" > "$out/dependency-diff.txt"
+          test -z "$(git -C buggy status --porcelain --untracked-files=all)"
+          test -z "$(git -C fixed status --porcelain --untracked-files=all)"
+          test -z "$(git -C governance status --porcelain --untracked-files=all)"
+          rm -rf "$out/tools"
+          (cd "$out" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cg02-tool-admission-v2-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/cg02v2
+          retention-days: 30
+          if-no-files-found: error
