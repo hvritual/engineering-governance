@@ -1,0 +1,209 @@
+name: CG-05 Trusted Shadow Delivery Qualification v2
+
+on:
+  push:
+    branches: [cg-05/trusted-shadow-delivery]
+    paths:
+      - .github/workflows/cg05-trusted-shadow-delivery-v2.yml
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CONSUMER_SHA: bcd20632b666405c3f7a8fe8d53f591c78450087
+      YUNKA_SHA: 057ebcf88a87303eb633eb6e604d306f633dfac0
+      AST_GREP_VERSION: 0.45.3
+      AST_GREP_ASSET_SHA256: f8ac830881339d1edee6b2652f54798c0f4da5a827f2db38a08ee31117783ce8
+      PROTOCOL: delivery/cg05/protocol.json
+      PLAN: delivery/cg05/hvritual/iot-delivery-system/required-checks.json
+      PROFILE: adoption/cg04/hvritual/iot-delivery-system/profile.json
+      LOCK: adoption/cg04/hvritual/iot-delivery-system/lock.json
+      RECONCILER: delivery/cg05/reconcile.py
+      RULE: prevention/cg03/iot-sqlite-startup/rule.yml
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          path: governance
+          persist-credentials: false
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: hvritual/iot-delivery-system
+          ref: ${{ env.CONSUMER_SHA }}
+          path: consumer
+          submodules: recursive
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+        with:
+          go-version: '1.25.13'
+          check-latest: false
+          cache: false
+
+      - name: Freeze exact identities and read-only baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg05v2"
+          mkdir -p "$out/evidence" "$out/receipts" "$out/negative" "$out/tools" "$out/logs" "$out/snapshots"
+          test "$(git -C consumer rev-parse HEAD)" = "$CONSUMER_SHA"
+          test "$(git -C consumer rev-parse HEAD:third_party/yunka)" = "$YUNKA_SHA"
+          for name in PROTOCOL PLAN PROFILE LOCK RECONCILER RULE; do
+            path="${!name}"
+            blob="$(git -C governance rev-parse "HEAD:$path")"
+            echo "CG05_${name}_BLOB=$blob" >> "$GITHUB_ENV"
+            cp "governance/$path" "$out/snapshots/${name,,}"
+          done
+          test "$(git -C governance rev-parse "HEAD:$PROFILE")" = cd772ffff980036024880c3dd691adcdbbb29915
+          test "$(git -C governance rev-parse "HEAD:$LOCK")" = f6261ed9799780a62cd8ffce76002235d7737dee
+          test "$(git -C governance rev-parse "HEAD:$RULE")" = 0a5d293d8d3571d9cbf9e7dee2f4dbc20eed1d05
+          python3 -m py_compile "governance/$RECONCILER"
+          find consumer -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-before.sha256"
+          test -z "$(git -C consumer status --porcelain --untracked-files=all)"
+          test -z "$(git -C governance status --porcelain --untracked-files=all)"
+          {
+            printf 'governance\t%s\n' "$(git -C governance rev-parse HEAD)"
+            printf 'consumer\t%s\n' "$CONSUMER_SHA"
+            printf 'yunka\t%s\n' "$YUNKA_SHA"
+            printf 'protocol\t%s\n' "$(git -C governance rev-parse "HEAD:$PROTOCOL")"
+            printf 'plan\t%s\n' "$(git -C governance rev-parse "HEAD:$PLAN")"
+            printf 'profile\t%s\n' "$(git -C governance rev-parse "HEAD:$PROFILE")"
+            printf 'lock\t%s\n' "$(git -C governance rev-parse "HEAD:$LOCK")"
+            printf 'reconciler\t%s\n' "$(git -C governance rev-parse "HEAD:$RECONCILER")"
+          } > "$out/identity.tsv"
+
+      - name: Execute exact required checks and emit component receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg05v2"
+          curl -fsSL "https://github.com/ast-grep/ast-grep/releases/download/${AST_GREP_VERSION}/app-x86_64-unknown-linux-gnu.zip" -o "$out/tools/ast-grep.zip"
+          echo "$AST_GREP_ASSET_SHA256  $out/tools/ast-grep.zip" | sha256sum -c -
+          unzip -q "$out/tools/ast-grep.zip" -d "$out/tools/bin"
+          sg="$out/tools/bin/ast-grep"
+          "$sg" --version > "$out/logs/ast-grep.version.txt"
+
+          cat > "$out/candidate.json" <<EOF
+          {"repository":"hvritual/iot-delivery-system","sourceCommit":"$CONSUMER_SHA"}
+          EOF
+
+          "$sg" scan -r "$GITHUB_WORKSPACE/governance/$RULE" --json=compact "$GITHUB_WORKSPACE/consumer/backend-yunka/internal/delivery/sqlite_repository.go" > "$out/logs/static.raw.json"
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,subprocess
+          out=pathlib.Path(os.environ['RUNNER_TEMP'],'cg05v2')
+          data=json.loads((out/'logs/static.raw.json').read_text() or '[]')
+          rid='cg03-sqlite-busy-timeout-before-wal'
+          def hits(v):
+            if isinstance(v,dict): return (1 if v.get('ruleId')==rid else 0)+sum(hits(x) for x in v.values())
+            if isinstance(v,list): return sum(hits(x) for x in v)
+            return 0
+          n=hits(data); assert n==0, n
+          target_blob=subprocess.check_output(['git','-C','consumer','rev-parse','HEAD:backend-yunka/internal/delivery/sqlite_repository.go'],text=True).strip()
+          e={'schemaVersion':1,'checkId':'CG05_STATIC_RECURRENCE_GUARD','status':'PASS','findings':n,'ruleId':rid,'ruleBlob':os.environ['CG05_RULE_BLOB'],'targetBlob':target_blob,'sourceCommit':os.environ['CONSUMER_SHA']}
+          (out/'evidence/static.json').write_text(json.dumps(e,indent=2,sort_keys=True)+'\n')
+          PY
+
+          (cd consumer/backend-yunka && GOWORK=off GOFLAGS=-mod=readonly go test -mod=readonly -json -count=1 -run '^TestAG03SQLiteStartupWaitsForExternalLock$' ./internal/delivery) > "$out/logs/behavior.raw.jsonl"
+          python3 - <<'PY'
+          import json,os,pathlib,subprocess
+          out=pathlib.Path(os.environ['RUNNER_TEMP'],'cg05v2'); name='TestAG03SQLiteStartupWaitsForExternalLock'
+          seen=passed=package_pass=False
+          for line in (out/'logs/behavior.raw.jsonl').read_text().splitlines():
+            try: e=json.loads(line)
+            except json.JSONDecodeError: continue
+            if e.get('Test')==name:
+              seen=True
+              if e.get('Action')=='pass': passed=True
+            if e.get('Action')=='pass' and not e.get('Test'): package_pass=True
+          assert seen and passed and package_pass, (seen,passed,package_pass)
+          test_blob=subprocess.check_output(['git','-C','consumer','rev-parse','HEAD:backend-yunka/internal/delivery/ag03_sqlite_startup_test.go'],text=True).strip()
+          e={'schemaVersion':1,'checkId':'CG05_AUTHORITATIVE_HELD_LOCK_REGRESSION','status':'PASS','test':name,'executed':seen,'passed':passed,'packagePassed':package_pass,'testBlob':test_blob,'sourceCommit':os.environ['CONSUMER_SHA'],'go':'1.25.13'}
+          (out/'evidence/behavior.json').write_text(json.dumps(e,indent=2,sort_keys=True)+'\n')
+          PY
+
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          out=pathlib.Path(os.environ['RUNNER_TEMP'],'cg05v2')
+          common={'schemaVersion':1,'status':'PASS','candidate':{'repository':'hvritual/iot-delivery-system','sourceCommit':os.environ['CONSUMER_SHA']},'profile':{'id':'ADOPT-CG04-HVRITUAL-IOT-DELIVERY','blob':os.environ['CG05_PROFILE_BLOB']},'lock':{'id':'LOCK-CG04-HVRITUAL-IOT-DELIVERY-0001','blob':os.environ['CG05_LOCK_BLOB']},'plan':{'id':'CG05-IOT-DELIVERY-REQUIRED-CHECKS','blob':os.environ['CG05_PLAN_BLOB']},'execution':{'run':int(os.environ['GITHUB_RUN_ID']),'job':os.environ['GITHUB_JOB'],'attempt':int(os.environ['GITHUB_RUN_ATTEMPT']),'workflowHead':os.environ['GITHUB_SHA']}}
+          for check_id,name in [('CG05_STATIC_RECURRENCE_GUARD','static.json'),('CG05_AUTHORITATIVE_HELD_LOCK_REGRESSION','behavior.json')]:
+            r=dict(common); r['checkId']=check_id; p=out/'evidence'/name
+            r['evidence']={'path':'../evidence/'+name,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+            (out/'receipts'/(check_id+'.json')).write_text(json.dumps(r,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Reconcile valid and fail-closed negative cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg05v2"
+          recon="$GITHUB_WORKSPACE/governance/$RECONCILER"
+          run_recon() {
+            python3 "$recon" --protocol "$GITHUB_WORKSPACE/governance/$PROTOCOL" --plan "$GITHUB_WORKSPACE/governance/$PLAN" --profile "$GITHUB_WORKSPACE/governance/$PROFILE" --lock "$GITHUB_WORKSPACE/governance/$LOCK" --candidate "$out/candidate.json" --protocol-blob "$CG05_PROTOCOL_BLOB" --plan-blob "$CG05_PLAN_BLOB" --profile-blob "$CG05_PROFILE_BLOB" --lock-blob "$CG05_LOCK_BLOB" "$@"
+          }
+          static="$out/receipts/CG05_STATIC_RECURRENCE_GUARD.json"
+          behavior="$out/receipts/CG05_AUTHORITATIVE_HELD_LOCK_REGRESSION.json"
+          run_recon --receipt "$static" --receipt "$behavior" --output "$out/aggregate-valid.json"
+
+          python3 - <<'PY'
+          import copy,json,os,pathlib
+          out=pathlib.Path(os.environ['RUNNER_TEMP'],'cg05v2'); s=json.loads((out/'receipts/CG05_STATIC_RECURRENCE_GUARD.json').read_text()); b=json.loads((out/'receipts/CG05_AUTHORITATIVE_HELD_LOCK_REGRESSION.json').read_text())
+          cases={}
+          x=copy.deepcopy(b); x['candidate']['sourceCommit']='0'*40; cases['stale-source']=x
+          x=copy.deepcopy(b); x['lock']['id']='LOCK-CG04-WRONG'; cases['wrong-lock']=x
+          x=copy.deepcopy(b); x['status']='FAIL'; cases['failed-check']=x
+          x=copy.deepcopy(s); x['evidence']['sha256']='0'*64; cases['bad-digest']=x
+          x=copy.deepcopy(b); x['checkId']='CG05_UNKNOWN_SUBSTITUTE'; cases['substituted-check']=x
+          x=copy.deepcopy(b); x['plan']['blob']='0'*40; cases['wrong-plan']=x
+          for name,v in cases.items(): (out/'negative'/(name+'.json')).write_text(json.dumps(v,indent=2,sort_keys=True)+'\n')
+          PY
+
+          expect_reject() {
+            name="$1" expected="$2"; shift 2
+            set +e; run_recon "$@" --output "$out/negative/$name.result.json" > "$out/negative/$name.stdout" 2> "$out/negative/$name.stderr"; code=$?; set -e
+            test "$code" -eq 2
+            python3 - "$out/negative/$name.result.json" "$expected" <<'PY'
+          import json,sys
+          v=json.load(open(sys.argv[1])); assert v['status']=='REJECTED',v; assert v['reason']==sys.argv[2],v
+          PY
+          }
+          expect_reject missing-check REQUIRED_CHECK_SET_MISMATCH --receipt "$static"
+          expect_reject stale-source RECEIPT_SOURCE_MISMATCH --receipt "$static" --receipt "$out/negative/stale-source.json"
+          expect_reject wrong-lock RECEIPT_LOCK_MISMATCH --receipt "$static" --receipt "$out/negative/wrong-lock.json"
+          expect_reject duplicate-check DUPLICATE_CHECK_RECEIPT --receipt "$static" --receipt "$behavior" --receipt "$static"
+          expect_reject failed-check REQUIRED_CHECK_FAILED --receipt "$static" --receipt "$out/negative/failed-check.json"
+          expect_reject bad-digest EVIDENCE_DIGEST_MISMATCH --receipt "$out/negative/bad-digest.json" --receipt "$behavior"
+          expect_reject substituted-check UNKNOWN_OR_SUBSTITUTED_CHECK --receipt "$static" --receipt "$out/negative/substituted-check.json"
+          expect_reject wrong-plan RECEIPT_PLAN_MISMATCH --receipt "$static" --receipt "$out/negative/wrong-plan.json"
+
+      - name: Reconcile read-only state and emit qualification
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg05v2"
+          find consumer -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-after.sha256"
+          diff -u "$out/dependency-before.sha256" "$out/dependency-after.sha256" > "$out/dependency-diff.txt"
+          test -z "$(git -C consumer status --porcelain --untracked-files=all)"
+          test -z "$(git -C governance status --porcelain --untracked-files=all)"
+          python3 - <<'PY'
+          import json,os,pathlib
+          out=pathlib.Path(os.environ['RUNNER_TEMP'],'cg05v2'); neg={}
+          for p in sorted((out/'negative').glob('*.result.json')): neg[p.name.replace('.result.json','')]=json.loads(p.read_text())['reason']
+          q={'schemaVersion':1,'task':'CG-05','status':'PASS','gateState':'QUALIFIED_TRUSTED_SHADOW_GATE','repositoryBlocking':False,'consumer':{'repository':'hvritual/iot-delivery-system','sourceCommit':os.environ['CONSUMER_SHA'],'yunkaPin':os.environ['YUNKA_SHA']},'protocolBlob':os.environ['CG05_PROTOCOL_BLOB'],'planBlob':os.environ['CG05_PLAN_BLOB'],'profileBlob':os.environ['CG05_PROFILE_BLOB'],'lockBlob':os.environ['CG05_LOCK_BLOB'],'reconcilerBlob':os.environ['CG05_RECONCILER_BLOB'],'validAggregate':json.loads((out/'aggregate-valid.json').read_text()),'negativeCases':neg,'consumerTrackedSourceMutated':False,'consumerDependencyLocksMutated':False,'consumerScaffoldModified':False,'yunkaPinChanged':False}
+          (out/'qualification.json').write_text(json.dumps(q,indent=2,sort_keys=True)+'\n')
+          PY
+          rm -rf "$out/tools"
+          (cd "$out" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cg05-trusted-shadow-delivery-v2-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/cg05v2
+          retention-days: 30
+          if-no-files-found: error
