@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "CG14-CONTROLLED-LOCAL-COMMIT-PACKAGING",
+  "status": "CANDIDATE",
+  "sourceAuthorities": [
+    {"path": "prevention/cg13/protocol.json", "blob": "6c91cf3300e63f3092c744f3db45f5063757267f"},
+    {"path": "prevention/cg13/cases.json", "blob": "775d8706b83c8a1e46f932bf03090f3c0a9e0961"},
+    {"path": "prevention/cg13/execute_patch.py", "blob": "f8bb4c8446563389b0434d3828416442598b41a3"},
+    {"path": "prevention/cg13/verify_execution.py", "blob": "513b65498cd293edd35dfacf96e144b78035a70a"}
+  ],
+  "principle": "Only a CG-13-attested patch may be packaged into one local commit, and the commit must preserve the exact attested content and lineage.",
+  "packaging": {
+    "requiredSourceProtocol": "CG13-CONTROLLED-PATCH-EXECUTION",
+    "requiredSourceStatus": "PATCH_EXECUTION_ATTESTED",
+    "requiredSourceDecision": "CONTROLLED_PATCH_EXECUTION_VERIFIED",
+    "commitAuthority": "SINGLE_LOCAL_COMMIT_ONLY",
+    "requireExactRepository": true,
+    "requireExactBaseSha": true,
+    "requireExactWorkBranch": true,
+    "requireNonMainWorkBranch": true,
+    "requireNoStagedContentAtStart": true,
+    "requireExactAttestedWorktreeDiff": true,
+    "requireExactStagedPathSet": true,
+    "requireExactStagedDiffDigest": true,
+    "requireSingleNewCommit": true,
+    "requireSingleParent": true,
+    "requireParentEqualsAttestedBase": true,
+    "requireExactCommittedPathSet": true,
+    "requireExactCommittedDiffDigest": true,
+    "requireCleanWorktreeAfterCommit": true,
+    "pushAuthorization": "NOT_GRANTED",
+    "pullRequestAuthorization": "NOT_GRANTED",
+    "mergeAuthorization": "NOT_GRANTED"
+  },
+  "authorityCeiling": {
+    "createsConsumerBranch": false,
+    "createsSingleLocalCommit": true,
+    "pushesConsumerBranch": false,
+    "opensConsumerPullRequest": false,
+    "mergesConsumerChange": false,
+    "directMainUpdate": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "requireCurrentRealSubjectsRejectedWithoutCg13Attestation": true,
+    "requireIsolatedCommitFixture": true,
+    "fixtureIsNotConsumerEvidence": true,
+    "requireExactCommitAttestation": true,
+    "requireNegativeMatrix": true,
+    "requireNoConsumerMutation": true,
+    "requireExactCg13SourceBlobs": true
+  }
+}
