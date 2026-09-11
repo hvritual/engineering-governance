@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "id": "CG07-POST-MERGE-INTEGRITY-RECOVERY",
+  "status": "CANDIDATE",
+  "authorityCeiling": {
+    "repositoryBlocking": false,
+    "changesCg06TrustSemantics": false,
+    "automaticDestructiveRecovery": false,
+    "note": "CG-07 verifies post-merge identity and selects a bounded recovery disposition. It does not activate or substitute for CG-06 repository blocking."
+  },
+  "supportedDelivery": {
+    "mergeMethods": [
+      "squash"
+    ],
+    "requiredBaseBranch": "main",
+    "reviewedHeadMustMatchFinalPullRequestHead": true,
+    "postMergeCommitMustMatchRecordedMergeResult": true,
+    "squashCommitMustHaveExactPreMainParent": true,
+    "reviewedPathsMustMatchPullRequestPathsExactly": true,
+    "historicalProofSurvivesLaterMainAdvancement": true,
+    "laterMainMustContainQualifiedMergeCommit": true
+  },
+  "requiredIdentities": [
+    "repository",
+    "pullRequest",
+    "baseBranch",
+    "reviewedHeadSha",
+    "preMainSha",
+    "mergeMethod",
+    "postMergeSha",
+    "reviewedPaths"
+  ],
+  "recovery": {
+    "allowedDispositions": [
+      "NO_ACTION",
+      "STOP_AND_INVESTIGATE",
+      "FORWARD_REPAIR_REQUIRED",
+      "REVERT_CANDIDATE_REQUIRES_APPROVAL"
+    ],
+    "automaticForcePushAllowed": false,
+    "automaticResetAllowed": false,
+    "automaticRevertAllowed": false,
+    "integrityPassDisposition": "NO_ACTION",
+    "integrityFailureDisposition": "STOP_AND_INVESTIGATE"
+  },
+  "qualificationCase": {
+    "repository": "hvritual/iot-delivery-system",
+    "pullRequest": 12,
+    "baseBranch": "main",
+    "reviewedHeadSha": "28f31d3e81bd54f2a6f4b3b6535ec38ea10d740b",
+    "preMainSha": "2d022a3ee2d83e1cf261e57e8f04f0228d9b7334",
+    "mergeMethod": "squash",
+    "postMergeSha": "c38ce0efcbe11d8ef9201381f895c7e9a85ddbc0",
+    "reviewedPaths": [
+      ".github/workflows/cg06-trusted-integrate.yml"
+    ],
+    "cg06State": "BLOCKED_ADMIN_ACTIVATION"
+  }
+}
