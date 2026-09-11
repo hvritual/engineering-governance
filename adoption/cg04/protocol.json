@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "id": "CG04-CONSUMER-ADOPTION-UPGRADE-PROTOCOL",
+  "status": "CANDIDATE",
+  "principle": "Consumer adoption is external to the consumer scaffold. The governance repository owns selection and immutable lock state; an execution receipt binds that lock to an exact consumer source SHA.",
+  "states": [
+    "SELECTED",
+    "LOCKED",
+    "QUALIFIED",
+    "ADOPTED_EXTERNAL_SHADOW",
+    "UPGRADE_CANDIDATE",
+    "PREVIEWED",
+    "ACTIVATED",
+    "REJECTED",
+    "ROLLED_BACK"
+  ],
+  "selection": {
+    "versionPolicy": "EXACT_ONLY",
+    "floatingRangesAllowed": false,
+    "requirements": [
+      "asset id and requested version are explicit",
+      "asset is already QUALIFIED in governance main",
+      "consumer path scope is explicit",
+      "consumer scaffold and Yunka version are not implicit dependencies of adoption"
+    ]
+  },
+  "lock": {
+    "mustResolve": [
+      "prevention manifest git blob",
+      "problem record git blob",
+      "rule git blob",
+      "external tool version",
+      "external tool release digest"
+    ],
+    "rule": "Every execution uses exact immutable identities from the active lock; path names alone are not authority."
+  },
+  "verification": {
+    "sourceBinding": "Every receipt records the exact consumer commit that was checked.",
+    "required": [
+      "active lock resolves without identity drift",
+      "static recurrence guard executes on declared consumer paths",
+      "authoritative behavior regression executes when the prevention asset declares one",
+      "consumer tracked source and dependency locks remain unchanged"
+    ]
+  },
+  "upgrade": {
+    "activationModel": "TWO_PHASE_PREVIEW_THEN_ACTIVATE",
+    "activeLockRemainsAuthoritativeUntilCandidatePasses": true,
+    "policyDelta": "difference between old and candidate governance asset/tool identities on the same consumer source",
+    "codeDelta": "difference between base and head consumer source under the same governance lock",
+    "rules": [
+      "a no-op candidate is NO_CHANGE, never reported as an upgrade",
+      "a candidate with nonexistent/unqualified version or mismatched immutable blob is REJECTED",
+      "tool version changes require their own admitted tool identity",
+      "a version-changing upgrade is not claimed until a distinct qualified asset version exists",
+      "activation is an explicit lock replacement after candidate verification"
+    ]
+  },
+  "rollback": {
+    "rule": "Rollback can select only a previously qualified immutable lock identity.",
+    "floatingRollbackAllowed": false,
+    "behavior": "A rejected candidate leaves the active lock unchanged; explicit rollback resolves the prior lock before activation."
+  },
+  "enforcementBoundary": {
+    "thisProtocol": "ADOPTION_AND_VERIFICATION",
+    "notClaimed": [
+      "repository-level unbypassable merge enforcement",
+      "consumer scaffold integration",
+      "Yunka runtime or generator upgrade"
+    ]
+  }
+}
