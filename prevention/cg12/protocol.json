@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG12-AUTHORIZED-IMPLEMENTATION-RECONCILIATION",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "sourceAuthorities": [
     {"path": "prevention/cg11/protocol.json", "blob": "d73c764bb1a6748971ea2df97c45cb6596e8b458"},
     {"path": "prevention/cg11/requests.json", "blob": "23d0b8cb6750423e7f02da2de1ada85034f6a627"},
@@ -54,6 +54,48 @@
     "requireNoPatchRequiredInQualification": true,
     "requireNegativeMatrix": true,
     "requireConsumerWorktreesClean": true,
-    "requireExactCg11SourceBlobs": true
+    "requireExactCg11SourceBlobs": true,
+    "discovery": {
+      "head": "404316034abd84a3632466e8da18d89ab49cca5c",
+      "run": 34608469679,
+      "result": "EXPECTED_DISCOVERY_FAILURE",
+      "finding": "IoT fresh behavior replay is blocked by the pre-existing missing github.com/go-kit/kit replacement target under third_party/yunka/compat/go-kit-kit-log; CG-12 therefore must not infer a patch from missing behavioral evidence."
+    },
+    "primary": {
+      "head": "0408ad2b30865fa2a3e153f5e379ffcb5b9e7e30",
+      "run": 34609088704,
+      "job": 103294736589,
+      "result": "SUCCESS",
+      "decision": "AUTHORIZED_IMPLEMENTATION_RECONCILIATION_VERIFIED",
+      "realSubjectCount": 2,
+      "noChangeRequiredCount": 1,
+      "investigationRequiredCount": 1,
+      "patchRequiredCount": 0,
+      "fallbackNoActionCount": 1,
+      "consumerMutation": false,
+      "negativeMatrix": "PASS"
+    },
+    "subjects": {
+      "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER": {
+        "disposition": "STOP_AND_INVESTIGATE",
+        "identityDrift": false,
+        "verificationBlocker": "LEGACY_MISSING_REPLACE_TARGET",
+        "freshBehavior": "BLOCKED_KNOWN_MODULE_REPLACE",
+        "freshMutation": "BLOCKED_KNOWN_MODULE_REPLACE",
+        "staticDetectorMatrixIdentity": "PASS"
+      },
+      "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT": {
+        "disposition": "NO_CHANGE_REQUIRED",
+        "identityDrift": false,
+        "checkerTestCount": 25,
+        "semanticReconciliation": "PASS",
+        "negativeIntegrityMatrix": "PASS",
+        "validGrowthControl": "PASS"
+      },
+      "CG10-INCOMPLETE-EVIDENCE-CONTROL": {
+        "disposition": "NO_ACTION",
+        "authorization": "NOT_AUTHORIZED"
+      }
+    }
   }
 }
