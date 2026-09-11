@@ -1,0 +1,175 @@
+name: CG-01 IoT SQLite startup replay
+
+on:
+  push:
+    branches: [cg-01/iot-sqlite-startup-corpus]
+    paths:
+      - corpus/cg01/iot-sqlite-startup/**
+      - .github/workflows/cg01-iot-sqlite-replay.yml
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GOTOOLCHAIN: local
+      GOPROXY: https://proxy.golang.org,direct
+      GOSUMDB: sum.golang.org
+      GOFLAGS: -mod=readonly
+      BUGGY_SHA: f190fe237fa1efb738b4866275804093a209de5b
+      FIXED_SHA: bcd20632b666405c3f7a8fe8d53f591c78450087
+      YUNKA_SHA: 057ebcf88a87303eb633eb6e604d306f633dfac0
+      BUGGY_REPO_BLOB: 8e4784d76021e0b7eca8c61e6ef353eaa359fea7
+      FIXED_REPO_BLOB: 6ccf2a6f39bd5f3695533584fb2c710de3f56054
+      REGRESSION_BLOB: 9f025a225a030abe35ba31c831fcc4804ad72d20
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: hvritual/iot-delivery-system
+          ref: ${{ env.BUGGY_SHA }}
+          path: buggy
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: hvritual/iot-delivery-system
+          ref: ${{ env.FIXED_SHA }}
+          path: fixed
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+        with:
+          go-version: '1.25.13'
+          check-latest: false
+          cache: false
+
+      - name: Freeze exact source identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg01-replay"
+          mkdir -p "$out/logs" "$out/overlay"
+          test "$(git -C buggy rev-parse HEAD)" = "$BUGGY_SHA"
+          test "$(git -C fixed rev-parse HEAD)" = "$FIXED_SHA"
+          test "$(git -C buggy rev-parse HEAD:third_party/yunka)" = "$YUNKA_SHA"
+          test "$(git -C fixed rev-parse HEAD:third_party/yunka)" = "$YUNKA_SHA"
+          test "$(git -C buggy rev-parse HEAD:backend-yunka/internal/delivery/sqlite_repository.go)" = "$BUGGY_REPO_BLOB"
+          test "$(git -C fixed rev-parse HEAD:backend-yunka/internal/delivery/sqlite_repository.go)" = "$FIXED_REPO_BLOB"
+          test "$(git -C fixed rev-parse HEAD:backend-yunka/internal/delivery/ag03_sqlite_startup_test.go)" = "$REGRESSION_BLOB"
+          {
+            printf 'buggy\t%s\t%s\n' "$(git -C buggy rev-parse HEAD)" "$(git -C buggy rev-parse 'HEAD^{tree}')"
+            printf 'fixed\t%s\t%s\n' "$(git -C fixed rev-parse HEAD)" "$(git -C fixed rev-parse 'HEAD^{tree}')"
+            printf 'buggy-yunka\t%s\n' "$(git -C buggy rev-parse HEAD:third_party/yunka)"
+            printf 'fixed-yunka\t%s\n' "$(git -C fixed rev-parse HEAD:third_party/yunka)"
+            printf 'go\t%s\n' "$(go version)"
+          } | tee "$out/identity.tsv"
+          find buggy fixed -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-before.sha256"
+
+      - name: Build read-only overlays
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, pathlib
+          w = pathlib.Path(os.environ['GITHUB_WORKSPACE']).resolve()
+          out = pathlib.Path(os.environ['RUNNER_TEMP'])/'cg01-replay'/'overlay'
+          out.mkdir(parents=True, exist_ok=True)
+          regression = w/'fixed/backend-yunka/internal/delivery/ag03_sqlite_startup_test.go'
+          buggy_virtual = w/'buggy/backend-yunka/internal/delivery/ag03_sqlite_startup_test.go'
+          (out/'buggy.json').write_text(json.dumps({'Replace': {str(buggy_virtual): str(regression)}}, indent=2)+'\n')
+
+          fixed_repo = w/'fixed/backend-yunka/internal/delivery/sqlite_repository.go'
+          text = fixed_repo.read_text()
+          old = '\t\t"PRAGMA busy_timeout = 5000",\n\t\t"PRAGMA journal_mode = WAL",'
+          new = '\t\t"PRAGMA journal_mode = WAL",\n\t\t"PRAGMA busy_timeout = 5000",'
+          assert text.count(old) == 1, text.count(old)
+          mutated = text.replace(old, new, 1)
+          backing = out/'sqlite_repository_mutated.go'
+          backing.write_text(mutated)
+          (out/'mutation.json').write_text(json.dumps({'Replace': {str(fixed_repo): str(backing)}}, indent=2)+'\n')
+          PY
+
+      - name: Fresh RED GREEN control replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg01-replay"
+          capture() {
+            name="$1"; shift
+            printf '%q ' "$@" > "$out/logs/$name.command.txt"; printf '\n' >> "$out/logs/$name.command.txt"
+            set +e
+            "$@" >"$out/logs/$name.stdout" 2>"$out/logs/$name.stderr"
+            code=$?
+            set -e
+            printf '%s\t%s\n' "$name" "$code" | tee -a "$out/exit-codes.tsv"
+          }
+
+          capture original-red env GOWORK=off go -C "$GITHUB_WORKSPACE/buggy/backend-yunka" test -mod=readonly -overlay="$out/overlay/buggy.json" ./internal/delivery -run '^TestAG03SQLiteStartupWaitsForExternalLock$' -count=1 -timeout=30s -v
+          capture fixed-green env GOWORK=off go -C "$GITHUB_WORKSPACE/fixed/backend-yunka" test -mod=readonly ./internal/delivery -run '^TestAG03SQLiteStartupWaitsForExternalLock$' -count=1 -timeout=30s -v
+          capture mutation-red env GOWORK=off go -C "$GITHUB_WORKSPACE/fixed/backend-yunka" test -mod=readonly -overlay="$out/overlay/mutation.json" ./internal/delivery -run '^TestAG03SQLiteStartupWaitsForExternalLock$' -count=1 -timeout=30s -v
+          capture bootstrap-control env GOWORK=off go -C "$GITHUB_WORKSPACE/fixed/backend-yunka" test -mod=readonly . -run '^TestBootstrapSeedStagesCommittedOutboxEventsThenProjectsExactlyOnce$' -count=1 -timeout=2m -v
+
+      - name: Qualify exact outcomes and read-only state
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/cg01-replay"
+          python3 - <<'PY'
+          import json, os, pathlib, re
+          root = pathlib.Path(os.environ['RUNNER_TEMP'])/'cg01-replay'
+          rows = {}
+          for line in (root/'exit-codes.tsv').read_text().splitlines():
+              k, v = line.split('\t'); rows[k] = int(v)
+          assert set(rows) == {'original-red','fixed-green','mutation-red','bootstrap-control'}, rows
+          assert rows['original-red'] != 0, rows
+          assert rows['mutation-red'] != 0, rows
+          assert rows['fixed-green'] == 0, rows
+          assert rows['bootstrap-control'] == 0, rows
+          for name in ('original-red','mutation-red'):
+              text = (root/'logs'/f'{name}.stdout').read_text() + (root/'logs'/f'{name}.stderr').read_text()
+              assert 'AG03_STARTUP_BUSY_BEFORE_RELEASE' in text, name
+              assert ('database is locked' in text.lower()) or ('SQLITE_BUSY' in text), name
+              assert '--- FAIL: TestAG03SQLiteStartupWaitsForExternalLock' in text, name
+          fixed = (root/'logs'/'fixed-green.stdout').read_text() + (root/'logs'/'fixed-green.stderr').read_text()
+          control = (root/'logs'/'bootstrap-control.stdout').read_text() + (root/'logs'/'bootstrap-control.stderr').read_text()
+          assert '--- PASS: TestAG03SQLiteStartupWaitsForExternalLock' in fixed
+          assert '--- PASS: TestBootstrapSeedStagesCommittedOutboxEventsThenProjectsExactlyOnce' in control
+          result = {
+            'schemaVersion': 1,
+            'status': 'PASS',
+            'caseId': 'CG01-IOT-SQLITE-STARTUP-LOCK-ORDER',
+            'outcomes': {
+              'originalBuggy': 'RED_EXPECTED_SQLITE_BUSY',
+              'fixed': 'GREEN',
+              'mutationReintroduction': 'RED_EXPECTED_SQLITE_BUSY',
+              'validBootstrapControl': 'GREEN'
+            },
+            'commands': rows,
+            'toolchain': 'go1.25.13',
+            'consumerSourceMutated': False,
+            'dependencyLocksMutated': False
+          }
+          (root/'qualification.json').write_text(json.dumps(result, indent=2)+'\n')
+          PY
+          find buggy fixed -type f \( -name go.mod -o -name go.sum -o -name go.work -o -name go.work.sum \) -print0 | sort -z | xargs -0 sha256sum > "$out/dependency-after.sha256"
+          diff -u "$out/dependency-before.sha256" "$out/dependency-after.sha256" > "$out/dependency-diff.txt"
+          for repo in buggy fixed buggy/third_party/yunka fixed/third_party/yunka; do
+            test -z "$(git -C "$repo" status --porcelain --untracked-files=all)"
+          done
+          find "$out" -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > "$out/SHA256SUMS"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cg01-iot-sqlite-replay-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/cg01-replay
+          retention-days: 30
+          if-no-files-found: error
