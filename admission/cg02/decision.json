@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "task": "CG-02",
+  "status": "QUALIFIED",
+  "caseId": "CG01-IOT-SQLITE-STARTUP-LOCK-ORDER",
+  "source": {
+    "governanceBase": "ebd497d3b2beff02bed5df60a26fdb3dd120a64b",
+    "cg01CorpusBlob": "5cba82314a027f4ee6284741518a45238b2b6fdc",
+    "buggyConsumer": "f190fe237fa1efb738b4866275804093a209de5b",
+    "fixedConsumer": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+    "yunkaPin": "057ebcf88a87303eb633eb6e604d306f633dfac0",
+    "go": "1.25.13"
+  },
+  "evidence": {
+    "run": 34557750571,
+    "job": 103133935337,
+    "workflowHead": "f065a7e94a8e17945a04772d44f885c69627eec5",
+    "artifact": 10183203042,
+    "artifactSha256": "c49bce878405c451c52e3553577bacb6760b55a16d794870056961faa66fcc22",
+    "artifactManifestReplay": "PASS"
+  },
+  "authorityBoundary": {
+    "externalTools": "ADVISORY_STATIC_DETECTOR_ONLY",
+    "authoritativeProof": "CG-01 held-lock runtime regression",
+    "rule": "A static match may block or warn according to policy, but it may not claim the SQLite runtime defect repaired without the behavior regression."
+  },
+  "expectedMatrix": {
+    "buggy": 1,
+    "fixed": 0,
+    "mutation": 1,
+    "unrelated": 0
+  },
+  "admissions": {
+    "ast-grep": {
+      "status": "QUALIFIED_DEFAULT_ADVISORY_STATIC_DETECTOR",
+      "version": "0.45.3",
+      "tagCommit": "979c143639e3588c31f563091e69398683ed34f0",
+      "linuxAmd64Asset": "app-x86_64-unknown-linux-gnu.zip",
+      "linuxAmd64AssetSha256": "f8ac830881339d1edee6b2652f54798c0f4da5a827f2db38a08ee31117783ce8",
+      "license": "MIT",
+      "matrix": {
+        "buggy": 1,
+        "fixed": 0,
+        "mutation": 1,
+        "unrelated": 0
+      },
+      "semanticDeterminism": true,
+      "integrationNotes": [
+        "Use the real ast-grep binary, not the deprecated sg wrapper.",
+        "Compare normalized JSON semantics; object key serialization order is not an instability signal.",
+        "No consumer dependency or source mutation is required."
+      ]
+    },
+    "go-ruleguard": {
+      "status": "QUALIFIED_CONDITIONAL_GO_SPECIFIC_STATIC_DETECTOR",
+      "version": "v0.4.5",
+      "tagCommit": "53ee6ef0c75c144ddf76c8a9be430ac32e206d3a",
+      "moduleSum": "h1:AGY0tiOT5hJX9BTdx/xBdoCubQUAE2grkqY2lSwvZcA=",
+      "goModSum": "h1:Vl05zJ538vcEEwu16V/Hdu7IYZWyKSwIy4c88Ro1kRE=",
+      "dslVersion": "v0.3.22",
+      "dslTagCommit": "5158b610fa6934a95c0402604e28f2ab00dab094",
+      "dslSum": "h1:wd8zkOhSNr+I+8Qeciml08ivDt1pSXe60+5DqOpCjPE=",
+      "dslGoModSum": "h1:KeCP03KrjuSO0H1kTuZQCWlQPulDV6YMIXmpQss17rU=",
+      "license": "BSD-3-Clause",
+      "matrix": {
+        "buggy": 1,
+        "fixed": 0,
+        "mutation": 1,
+        "unrelated": 0
+      },
+      "semanticDeterminism": true,
+      "integrationConstraints": [
+        "Run against a complete Go package/type environment rather than treating a single file as authoritative package analysis.",
+        "Dynamic rule loading for this pinned release requires the separately pinned DSL module and a legacy GOPATH package archive bootstrap.",
+        "Package/test-package duplicate diagnostics must be normalized by position and message before evidence comparison.",
+        "No consumer dependency or source mutation is required."
+      ]
+    }
+  },
+  "selectionPolicy": {
+    "default": "ast-grep",
+    "reason": "For structural source guards that both tools can prove, ast-grep has the smaller integration and dependency surface.",
+    "useGoRuleguardWhen": "The rule materially benefits from Go-specific package/type-aware matching and its additional bootstrap/runtime cost is justified."
+  },
+  "readOnlyQualification": {
+    "consumerTrackedSourceMutated": false,
+    "consumerDependencyLocksMutated": false
+  }
+}
