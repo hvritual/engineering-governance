@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG11-CONTROLLED-IMPLEMENTATION-AUTHORIZATION",
+  "cg10": {
+    "protocol": {
+      "path": "prevention/cg10/protocol.json",
+      "blob": "843b4d02f9ef0e286a16a894eeb5455a5d1ded59"
+    },
+    "inputs": {
+      "path": "prevention/cg10/inputs.json",
+      "blob": "830731814b90205ab23303767507aaf63a7d8479"
+    },
+    "builder": {
+      "path": "prevention/cg10/build_plan.py",
+      "blob": "4f351f3c61c738ad53a67efa2a7c94dfcf4eed78"
+    },
+    "verifier": {
+      "path": "prevention/cg10/verify_plan.py",
+      "blob": "f0a0f94f43f769fb42412c749be92ccc93110e3c"
+    }
+  },
+  "authorizationRequests": [
+    {
+      "caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER",
+      "target": {
+        "repository": "hvritual/iot-delivery-system",
+        "baseBranch": "main",
+        "baseSha": "c38ce0efcbe11d8ef9201381f895c7e9a85ddbc0",
+        "workBranch": "cg11/iot-sqlite-prevention-control"
+      },
+      "requestedChangeClasses": [
+        "CONSUMER_OWNED_TEST_OR_CHECKER"
+      ],
+      "allowedPaths": [
+        "backend-yunka/internal/delivery/ag03_sqlite_startup_test.go"
+      ],
+      "requiredVerificationClasses": [
+        "AUTHORITATIVE_BEHAVIOR_REGRESSION",
+        "KNOWN_RECURRENCE_MUTATION",
+        "STATIC_DETECTOR_MATRIX"
+      ]
+    },
+    {
+      "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+      "target": {
+        "repository": "hvritual/biz",
+        "baseBranch": "main",
+        "baseSha": "a08602975266668d4a1c5e784f0b3cf43ff92185",
+        "workBranch": "cg11/biz-runtime-gate-control"
+      },
+      "requestedChangeClasses": [
+        "CONSUMER_OWNED_ACCEPTANCE_GATE",
+        "CONSUMER_OWNED_TEST_OR_CHECKER"
+      ],
+      "allowedPaths": [
+        ".github/workflows/b12-7-runtime-qualification.yml",
+        "scripts/ce04_runtime_closure.py",
+        "scripts/test_ce04_runtime_closure.py"
+      ],
+      "requiredVerificationClasses": [
+        "AUTHORITATIVE_INVENTORY_BINDING",
+        "SEMANTIC_RECONCILIATION",
+        "NEGATIVE_INTEGRITY_MATRIX",
+        "VALID_GROWTH_CONTROL"
+      ]
+    },
+    {
+      "caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL",
+      "target": null,
+      "requestedChangeClasses": [],
+      "allowedPaths": [],
+      "requiredVerificationClasses": []
+    }
+  ]
+}
