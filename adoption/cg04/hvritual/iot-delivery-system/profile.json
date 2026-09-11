@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "ADOPT-CG04-HVRITUAL-IOT-DELIVERY",
-  "status": "CANDIDATE",
+  "status": "ADOPTED_EXTERNAL_SHADOW",
   "consumer": {
     "repository": "hvritual/iot-delivery-system",
     "targetRef": "main",
@@ -33,5 +33,18 @@
   "enforcement": {
     "state": "NOT_REPOSITORY_BLOCKING",
     "reason": "CG-04 proves selection, lock, upgrade preview, rollback and verification. Unbypassable delivery enforcement is a later control-plane task."
+  },
+  "qualificationEvidence": {
+    "run": 34561483769,
+    "job": 103144940418,
+    "head": "cf45a35d0af43de780031af8a7225ab23e12205f",
+    "artifact": 10184468547,
+    "artifactSha256": "34730e507bac731d1a7d58cc037107f2612658135b31d6d2822e1f2d28e2a020",
+    "artifactManifestReplay": "PASS",
+    "consumerSourceCommit": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+    "staticFindings": 0,
+    "behaviorTestExecuted": true,
+    "behaviorTestPassed": true,
+    "actualVersionChangingUpgrade": "NOT_APPLICABLE_NO_SECOND_QUALIFIED_VERSION"
   }
 }
