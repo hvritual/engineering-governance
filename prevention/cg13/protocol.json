@@ -4,19 +4,29 @@
   "status": "CANDIDATE",
   "sourceAuthorities": [
     {"path": "prevention/cg12/protocol.json", "blob": "42de586a1c4d78d36736b11292e5cabcfab515c2"},
-    {"path": "prevention/cg12/subjects.json", "blob": "45f87bc2bea33758079d8cc2dc9518b1e617b4a5"}
+    {"path": "prevention/cg12/subjects.json", "blob": "45f87bc2bea33758079d8cc2dc9518b1e617b4a5"},
+    {"path": "prevention/cg12/reconcile_state.py", "blob": "1fd3a4b2e13affdc1abfbd2bde807c7caf40a541"},
+    {"path": "prevention/cg12/verify_reconciliation.py", "blob": "85b2364c33bf59570c808d0eeec7e87208a6259a"}
   ],
   "principle": "A patch may execute only when CG-12 explicitly requires a patch, and the actual diff must remain inside the exact authorization envelope.",
   "execution": {
     "requiredDisposition": "PATCH_REQUIRED_ON_AUTHORIZED_BRANCH_ONLY",
     "requirePatchRequiredTrue": true,
     "requireExactBaseSha": true,
+    "requireRepositoryIdentity": true,
     "requireNonMainWorkBranch": true,
     "requireCleanStart": true,
+    "requireExistingAuthorizedPaths": true,
     "requireNonEmptyDiff": true,
     "changedPathsMustBeSubsetOfAllowedPaths": true,
     "forbidPathTraversal": true,
+    "forbidRename": true,
+    "forbidCopy": true,
+    "forbidCreateFile": true,
+    "forbidSymlink": true,
+    "forbidGitlink": true,
     "requirePostApplyDiffReadback": true,
+    "requireUnstagedUncommittedPatch": true,
     "requireVerificationReceipt": true,
     "requireExactVerificationClassSet": true,
     "requireAllVerificationPass": true,
@@ -38,6 +48,7 @@
   "authorityCeiling": {
     "createsConsumerBranch": false,
     "commitsConsumerChanges": false,
+    "pushesConsumerBranch": false,
     "opensConsumerPullRequest": false,
     "mergesConsumerChange": false,
     "directMainUpdate": false,
@@ -48,6 +59,7 @@
   "qualification": {
     "requireCurrentRealSubjectsRejected": true,
     "requireIsolatedPatchApplyFixture": true,
+    "fixtureIsNotConsumerEvidence": true,
     "requireExactDiffAttestation": true,
     "requireNegativeMatrix": true,
     "requireNoConsumerMutation": true,
