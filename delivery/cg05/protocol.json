@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG05-TRUSTED-SHADOW-DELIVERY-PROTOCOL",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED_TRUSTED_SHADOW_GATE",
   "principle": "A delivery decision is valid only when the exact required-check identity set has fresh PASS receipts bound to the same candidate source SHA, active adoption profile, immutable lock and required-check plan.",
   "candidateBinding": {
     "repository": "hvritual/iot-delivery-system",
@@ -52,5 +52,28 @@
     "candidate code cannot self-authorize or replace the trusted check implementation",
     "branch/ruleset configuration prevents bypass by the normal delivery actor",
     "post-merge/readback verifies the merged SHA is the SHA that passed the trusted gate"
-  ]
+  ],
+  "qualificationEvidence": {
+    "primaryRun": 34566552609,
+    "primaryJob": 103159750499,
+    "primaryHead": "42315d25294c15208f31573cb63a26f45e1f220a",
+    "primaryArtifact": 10186227702,
+    "primaryArtifactSha256": "da0d707163c5edb6cdb0287b554308baa2b09e443ac5e31cedc12f68c24c19d6",
+    "artifactManifestReplay": "PASS",
+    "consumerSource": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+    "validAggregate": "PASS",
+    "negativeCases": {
+      "missingCheck": "REQUIRED_CHECK_SET_MISMATCH",
+      "staleSource": "RECEIPT_SOURCE_MISMATCH",
+      "wrongLock": "RECEIPT_LOCK_MISMATCH",
+      "duplicateCheck": "DUPLICATE_CHECK_RECEIPT",
+      "failedCheck": "REQUIRED_CHECK_FAILED",
+      "badEvidenceDigest": "EVIDENCE_DIGEST_MISMATCH",
+      "substitutedCheck": "UNKNOWN_OR_SUBSTITUTED_CHECK",
+      "wrongPlan": "RECEIPT_PLAN_MISMATCH"
+    },
+    "consumerSourceMutated": false,
+    "consumerDependencyLocksMutated": false,
+    "yunkaPinChanged": false
+  }
 }
