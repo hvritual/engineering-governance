@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "ADOPT-CG04-HVRITUAL-IOT-DELIVERY",
+  "status": "CANDIDATE",
+  "consumer": {
+    "repository": "hvritual/iot-delivery-system",
+    "targetRef": "main",
+    "headAtSelection": "bcd20632b666405c3f7a8fe8d53f591c78450087",
+    "sourceBinding": "FLOATING_REF_WITH_EXACT_EXECUTION_RECEIPT",
+    "integrationMode": "OUT_OF_REPO_CENTRAL_GOVERNANCE",
+    "requiresConsumerRepositoryChange": false,
+    "requiresConsumerScaffoldUpgrade": false,
+    "requiresYunkaUpgrade": false,
+    "yunkaPinAtSelection": "057ebcf88a87303eb633eb6e604d306f633dfac0"
+  },
+  "selection": {
+    "assetId": "PV-CG03-IOT-SQLITE-BUSY-TIMEOUT-BEFORE-WAL",
+    "requestedVersion": "1.0.0",
+    "versionPolicy": "EXACT_ONLY",
+    "lockPath": "adoption/cg04/hvritual/iot-delivery-system/lock.json"
+  },
+  "scope": {
+    "staticTargets": [
+      "backend-yunka/internal/delivery/sqlite_repository.go"
+    ],
+    "authoritativeBehavior": {
+      "workdir": "backend-yunka",
+      "command": "go test -mod=readonly -count=1 -run '^TestAG03SQLiteStartupWaitsForExternalLock$' ./internal/delivery",
+      "requiredTest": "TestAG03SQLiteStartupWaitsForExternalLock"
+    }
+  },
+  "adoptionMode": "EXTERNAL_SHADOW",
+  "enforcement": {
+    "state": "NOT_REPOSITORY_BLOCKING",
+    "reason": "CG-04 proves selection, lock, upgrade preview, rollback and verification. Unbypassable delivery enforcement is a later control-plane task."
+  }
+}
