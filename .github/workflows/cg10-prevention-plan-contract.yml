@@ -1,0 +1,246 @@
+name: CG-10 prevention plan contract qualification
+
+on:
+  push:
+    branches:
+      - cg10/prevention-plan-contract
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: qualify-strategy-to-plan-contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact CG-09 and real-case source authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:prevention/cg09/protocol.json)" = "4f731903115ed2d787251ed4e0f82b6343cde457"
+          test "$(git rev-parse HEAD:prevention/cg09/cases.json)" = "770a136711a16e071c7dc2ec3f5da6a6a9a11d06"
+          test "$(git rev-parse HEAD:prevention/cg09/verify_strategy.py)" = "4c86ef5198351f75a5c7df655c5a733f5eaa9216"
+          test "$(git rev-parse HEAD:corpus/cg01/iot-sqlite-startup/case.json)" = "5cba82314a027f4ee6284741518a45238b2b6fdc"
+          test "$(git rev-parse HEAD:prevention/cg03/iot-sqlite-startup/prevention.json)" = "5604caf97f0d0c5b4fafe3bd071e8b41d0cf51a5"
+          test "$(git rev-parse HEAD:corpus/cg08/biz-runtime-gate/case.json)" = "4ffd9d9e5dabb296a6169d80cf159ccc3d82e498"
+          echo 'CG10_SOURCE_AUTHORITIES=PASS'
+
+      - name: Ground CG-10 planning inputs in qualified source facts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          inputs = json.loads(Path('prevention/cg10/inputs.json').read_text())
+          by_id = {item['caseId']: item for item in inputs['planInputs']}
+
+          cg01 = json.loads(Path('corpus/cg01/iot-sqlite-startup/case.json').read_text())
+          cg03 = json.loads(Path('prevention/cg03/iot-sqlite-startup/prevention.json').read_text())
+          iot = by_id['CG03-IOT-SQLITE-STARTUP-LOCK-ORDER']['planningEvidence']
+          assert cg03['authorityBoundary']['staticRule'] == 'ADVISORY_RECURRENCE_GUARD'
+          assert 'held-lock' in cg03['authorityBoundary']['authoritativeProof']
+          assert any(v['id'] == 'M1_REINTRODUCE_PRAGMA_ORDER' for v in cg01['mutationVariants'])
+          assert iot['authoritativeBehavioralProof']['present'] is True
+          assert iot['recurrenceMutationControl']['variant'] == 'M1_REINTRODUCE_PRAGMA_ORDER'
+          assert iot['advisoryStaticDetector']['authority'] == 'ADVISORY'
+          assert iot['advisoryStaticDetector']['engine'] == cg03['rule']['engine']
+
+          cg08 = json.loads(Path('corpus/cg08/biz-runtime-gate/case.json').read_text())
+          biz = by_id['CG08-BIZ-RUNTIME-GATE-SOT-DRIFT']['planningEvidence']
+          assert biz['authoritativeInventory']['identity'] == cg08['fixedShape']['authoritativeInventory']
+          assert biz['reconciliationSurfaces'] == cg08['fixedShape']['reconciledSurfaces']
+          assert cg08['fixedShape']['fixedCardinality'] is False
+          assert cg08['fixedShape']['validGrowthAllowed'] is True
+          assert cg08['freshReplay']['futureDeclaredApplicationGrowth'] == 'PASS'
+          required = cg08['freshReplayTarget']['requiredOutcomes']
+          assert 'fixed checker negative matrix rejects omissions/extras/duplicates/not-ready evidence' in required
+          assert sorted(biz['negativeIntegrityControls']) == ['DUPLICATE', 'EXTRA', 'NOT_READY', 'OMISSION']
+          assert biz['validGrowthControl']['present'] is True
+
+          print('CG10_INPUT_GROUNDING=PASS')
+          PY
+
+      - name: Re-prove CG-09 source strategy decisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 prevention/cg09/verify_strategy.py \
+            --protocol prevention/cg09/protocol.json \
+            --cases prevention/cg09/cases.json \
+            > "$RUNNER_TEMP/cg09-selection.json"
+          python3 - <<'PY'
+          import json, os
+          value = json.load(open(os.environ['RUNNER_TEMP'] + '/cg09-selection.json'))
+          assert value['status'] == 'PASS', value
+          decisions = {item['caseId']: item['strategy'] for item in value['decisions']}
+          assert decisions['CG03-IOT-SQLITE-STARTUP-LOCK-ORDER'] == 'HYBRID_RECURRENCE_GUARD'
+          assert decisions['CG08-BIZ-RUNTIME-GATE-SOT-DRIFT'] == 'AUTHORITY_RECONCILIATION'
+          print('CG10_CG09_SELECTION_REPLAY=PASS')
+          PY
+
+      - name: Build bounded prevention plans
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 prevention/cg10/build_plan.py \
+            --protocol prevention/cg10/protocol.json \
+            --inputs prevention/cg10/inputs.json \
+            --cg09-protocol prevention/cg09/protocol.json \
+            --cg09-cases prevention/cg09/cases.json \
+            --cg09-verifier prevention/cg09/verify_strategy.py \
+            > "$RUNNER_TEMP/cg10-plans.json"
+          python3 -m json.tool "$RUNNER_TEMP/cg10-plans.json" >/dev/null
+          cat "$RUNNER_TEMP/cg10-plans.json"
+
+      - name: Positive plan verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 prevention/cg10/verify_plan.py \
+            --protocol prevention/cg10/protocol.json \
+            --inputs prevention/cg10/inputs.json \
+            --cg09-cases prevention/cg09/cases.json \
+            --plans "$RUNNER_TEMP/cg10-plans.json" \
+            | tee "$RUNNER_TEMP/cg10-positive.json"
+          python3 - <<'PY'
+          import json, os
+          value = json.load(open(os.environ['RUNNER_TEMP'] + '/cg10-positive.json'))
+          assert value['status'] == 'PASS', value
+          assert value['decision'] == 'BOUNDED_PREVENTION_PLANS_VERIFIED', value
+          assert value['qualifiedRealPlanCount'] == 2, value
+          assert value['fallbackPlanCount'] == 1, value
+          assert value['executionAuthorized'] is False, value
+          assert value['consumerAdoption'] is False, value
+          assert value['repositoryBlocking'] is False, value
+          print('CG10_POSITIVE_MATRIX=PASS')
+          PY
+
+      - name: Fail-closed plan mutation matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import copy
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, 'prevention/cg10')
+          from verify_plan import VerificationError, verify_document
+
+          protocol = json.loads(Path('prevention/cg10/protocol.json').read_text())
+          inputs = json.loads(Path('prevention/cg10/inputs.json').read_text())
+          cg09_cases = json.loads(Path('prevention/cg09/cases.json').read_text())
+          base = json.load(open(os.environ['RUNNER_TEMP'] + '/cg10-plans.json'))
+
+          def mutate_plan(doc, case_id, mutator):
+              for plan in doc['plans']:
+                  if plan['caseId'] == case_id:
+                      mutator(plan)
+                      return
+              raise AssertionError(case_id)
+
+          def expect_reject(name, case_id, mutator, reason):
+              doc = copy.deepcopy(base)
+              mutate_plan(doc, case_id, mutator)
+              try:
+                  verify_document(protocol, inputs, cg09_cases, doc)
+              except VerificationError as exc:
+                  if exc.reason != reason:
+                      raise SystemExit(f'{name}: expected {reason}, got {exc.reason}: {exc.detail}')
+                  print(f'{name}: PASS ({reason})')
+                  return
+              raise SystemExit(f'{name}: expected rejection {reason}')
+
+          expect_reject(
+              'hybrid-static-authority',
+              'CG03-IOT-SQLITE-STARTUP-LOCK-ORDER',
+              lambda p: p['controls']['staticDetector'].__setitem__('authority', 'AUTHORITATIVE'),
+              'STATIC_RULE_PROMOTED_TO_AUTHORITY',
+          )
+          expect_reject(
+              'hybrid-drop-behavioral-proof',
+              'CG03-IOT-SQLITE-STARTUP-LOCK-ORDER',
+              lambda p: p['controls']['authoritativeProof'].__setitem__('required', False),
+              'AUTHORITATIVE_BEHAVIORAL_PROOF_DROPPED',
+          )
+          expect_reject(
+              'authority-fixed-replacement-count',
+              'CG08-BIZ-RUNTIME-GATE-SOT-DRIFT',
+              lambda p: p['controls'].__setitem__('fixedReplacementCardinality', True),
+              'FIXED_REPLACEMENT_CARDINALITY_FORBIDDEN',
+          )
+          expect_reject(
+              'authority-copied-inventory',
+              'CG08-BIZ-RUNTIME-GATE-SOT-DRIFT',
+              lambda p: p['controls'].__setitem__('copiedLiteralInventory', True),
+              'COPIED_LITERAL_INVENTORY_FORBIDDEN',
+          )
+          expect_reject(
+              'authority-drop-valid-growth',
+              'CG08-BIZ-RUNTIME-GATE-SOT-DRIFT',
+              lambda p: p['controls'].__setitem__('validGrowthControl', False),
+              'VALID_GROWTH_CONTROL_REQUIRED',
+          )
+          expect_reject(
+              'scope-broadening',
+              'CG08-BIZ-RUNTIME-GATE-SOT-DRIFT',
+              lambda p: p['scope'].__setitem__('proposed', 'all repositories and all literals'),
+              'APPLICABILITY_SCOPE_EXCEEDED',
+          )
+          expect_reject(
+              'implicit-consumer-adoption',
+              'CG03-IOT-SQLITE-STARTUP-LOCK-ORDER',
+              lambda p: p.__setitem__('consumerAdoption', 'AUTO_ADOPT'),
+              'CONSUMER_ADOPTION_IMPLICIT',
+          )
+          expect_reject(
+              'forbidden-yunka-mutation',
+              'CG03-IOT-SQLITE-STARTUP-LOCK-ORDER',
+              lambda p: p['requestedMutationClasses'].append('YUNKA_SOURCE'),
+              'CG10_FORBIDDEN_MUTATION_CLASS',
+          )
+          expect_reject(
+              'fallback-executable-target',
+              'CG10-INCOMPLETE-EVIDENCE-CONTROL',
+              lambda p: p['automaticChangeTargets'].append('some/path'),
+              'CG10_AUTOMATIC_CHANGE_TARGET_FORBIDDEN',
+          )
+          expect_reject(
+              'execution-authorized',
+              'CG03-IOT-SQLITE-STARTUP-LOCK-ORDER',
+              lambda p: p.__setitem__('executionAuthorized', True),
+              'CG10_EXECUTION_AUTHORIZATION_FORBIDDEN',
+          )
+          print('CG10_NEGATIVE_MATRIX=PASS')
+          PY
+
+      - name: Stable asset syntax and clean worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool prevention/cg10/protocol.json >/dev/null
+          python3 -m json.tool prevention/cg10/inputs.json >/dev/null
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          for path in ['prevention/cg10/build_plan.py', 'prevention/cg10/verify_plan.py']:
+              ast.parse(Path(path).read_text(), filename=path)
+          print('CG10_PYTHON_SYNTAX=PASS')
+          PY
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
+          echo 'CG10_STABLE_ASSETS=PASS'
