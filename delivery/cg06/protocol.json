@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "id": "CG06-REPOSITORY-BLOCKING-TRUSTED-DELIVERY",
+  "status": "BLOCKED_ADMIN_ACTIVATION",
+  "consumer": {
+    "repository": "hvritual/iot-delivery-system",
+    "targetBranch": "main",
+    "baselineCommit": "bcd20632b666405c3f7a8fe8d53f591c78450087"
+  },
+  "upstreamAuthority": {
+    "cg05Protocol": {
+      "path": "delivery/cg05/protocol.json",
+      "blob": "0cf5d2b79eaab72bbd52195de19ec602dff508c6"
+    },
+    "cg05RequiredChecks": {
+      "path": "delivery/cg05/hvritual/iot-delivery-system/required-checks.json",
+      "blob": "174d23688ffeb9afc15d9cb1390b38a35853b19c"
+    },
+    "cg05Reconciler": {
+      "path": "delivery/cg05/reconcile.py",
+      "blob": "939069aa9d821e3f228885b546f90268b795a562"
+    },
+    "cg04ProfileBlob": "cd772ffff980036024880c3dd691adcdbbb29915",
+    "cg04LockBlob": "f6261ed9799780a62cd8ffce76002235d7737dee"
+  },
+  "trustedDelivery": {
+    "statusContext": "engineering-governance/trusted-delivery",
+    "publisherModel": "EXTERNAL_GITHUB_APP",
+    "publisherMustBeOutsideCandidateControlledSource": true,
+    "publisherRequiredRepositoryPermissions": [
+      "metadata:read",
+      "statuses:write"
+    ],
+    "publisherIntegrationId": null,
+    "publisherState": "UNRESOLVED",
+    "aggregateAuthority": "CG05_VALID_AGGREGATE_FOR_EXACT_CANDIDATE_SHA"
+  },
+  "integration": {
+    "mode": "TRUSTED_FAST_FORWARD_TO_QUALIFIED_SHA",
+    "normalHumanDirectUpdateAllowed": false,
+    "trustedIntegrator": "SAME_TRUSTED_GITHUB_APP_AS_STATUS_PUBLISHER",
+    "candidateMustBeDescendantOfCurrentMain": true,
+    "forceUpdateAllowed": false,
+    "postUpdateMainMustEqualQualifiedCandidateSha": true
+  },
+  "repositoryRuleset": {
+    "name": "cg06-trusted-delivery-main",
+    "target": "branch",
+    "enforcement": "active",
+    "refInclude": [
+      "~DEFAULT_BRANCH"
+    ],
+    "requiredRules": [
+      "update",
+      "deletion",
+      "non_fast_forward",
+      "required_status_checks"
+    ],
+    "requiredStatusChecks": [
+      {
+        "context": "engineering-governance/trusted-delivery",
+        "integrationId": null,
+        "sourceMustBePinned": true
+      }
+    ],
+    "strictRequiredStatusChecksPolicy": true,
+    "doNotEnforceOnCreate": false,
+    "bypass": {
+      "normalRepositoryAdmins": false,
+      "normalWriteActors": false,
+      "trustedIntegrationOnly": true,
+      "trustedIntegrationId": null,
+      "mode": "always"
+    }
+  },
+  "receiptAndStatusContract": {
+    "publisherMayEmitSuccessOnlyWhen": [
+      "CG05 aggregate decision is PASS",
+      "aggregate candidate repository matches the consumer",
+      "aggregate candidate source SHA equals the status target SHA",
+      "aggregate profile/lock/plan blobs equal the active immutable identities",
+      "all component evidence digests reconcile"
+    ],
+    "failureOrMissingEvidence": "NO_SUCCESS_STATUS",
+    "staleAggregate": "NO_SUCCESS_STATUS"
+  },
+  "postIntegrationReadback": {
+    "required": true,
+    "assertions": [
+      "main ref resolves to the exact qualified candidate SHA",
+      "active ruleset remains active",
+      "required trusted status check remains source-pinned",
+      "trusted integration remains the only update bypass actor"
+    ]
+  },
+  "readinessQualification": {
+    "status": "PASS_WITH_EXTERNAL_ADMIN_ACTIVATION_BLOCKER",
+    "run": 34570239644,
+    "job": 103170598724,
+    "head": "af6f5877d419612521f0645a996827df9f1600dc",
+    "artifact": 10187483748,
+    "artifactSha256": "3eb5c9d3e258084c5fa86d04a920d048593a929a75cddfa9474986c59a14920d",
+    "artifactManifestReplay": "PASS",
+    "currentLiveDecision": "REJECTED / BRANCH_NOT_PROTECTED",
+    "syntheticContractOnly": "PASS",
+    "syntheticFixtureIsProductionProof": false,
+    "negativeContractCases": {
+      "extraBypass": "LIVE_BYPASS_SET_NOT_MINIMAL",
+      "wrongStatusApp": "LIVE_STATUS_SOURCE_NOT_PINNED_TO_BYPASS_APP",
+      "candidateControlledPublisher": "TRUSTED_PUBLISHER_CANDIDATE_CONTROLLED",
+      "wrongMainReadback": "POST_INTEGRATION_MAIN_SHA_MISMATCH"
+    }
+  },
+  "currentBlockers": [
+    {
+      "id": "B1_ADMIN_MUTATION_SURFACE",
+      "status": "BLOCKING",
+      "detail": "The connected GitHub integration exposes repository/ruleset reads but no Administration:write mutation action; direct branch-protection read returned 403 Resource not accessible by integration."
+    },
+    {
+      "id": "B2_TRUSTED_STATUS_PUBLISHER",
+      "status": "BLOCKING",
+      "detail": "No source-pinned GitHub App principal with statuses:write has been resolved for the trusted status context."
+    },
+    {
+      "id": "B3_RULESET_NOT_ACTIVE",
+      "status": "BLOCKING",
+      "detail": "Consumer main is currently unprotected and repository rulesets are empty."
+    }
+  ],
+  "completionState": "REPOSITORY_BLOCKING may be claimed only after live activation, negative bypass proof, positive integration proof, and post-integration main readback."
+}
