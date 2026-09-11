@@ -69,6 +69,18 @@
       "fixtureCommitAttestationId": "a6033199d32192b75371d37a2cb1d931109fe9970c742c9891a2e9851f13c4bf",
       "negativeMatrix": "PASS",
       "consumerMutation": false
+    },
+    "finalReplay": {
+      "head": "277f431fc16a103e784027eb44dd2b80392cf991",
+      "run": 34625806650,
+      "job": 103350482197,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "realCurrentStateRefusalCount": 3,
+      "isolatedFixture": "PASS",
+      "fixtureCommitAttestationId": "aaa32798f48ea28ca981cd6b16a274d74a60fbab7a53208345df73e204f71ac1",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
     }
   }
 }
