@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "CG17-PROVIDER-DIFF-READBACK",
+  "status": "CANDIDATE",
+  "sourceProtocol": "CG16-CONTROLLED-PULL-REQUEST-CREATION",
+  "requiredSourceStatus": "PULL_REQUEST_ATTESTED",
+  "requiredSourceDecision": "CONTROLLED_PULL_REQUEST_CREATION_VERIFIED",
+  "principle": "Only a valid CG-16 pull-request attestation may be provider-diff qualified. GitHub provider diff bytes and exact local base..head Git diff are independently normalized and reconciled before downstream qualification.",
+  "identity": {
+    "provider": "GITHUB",
+    "requireExactRepository": true,
+    "requireExactPullRequestNumber": true,
+    "requireExactBaseSha": true,
+    "requireExactHeadSha": true,
+    "requireExactChangedPaths": true,
+    "requireProviderDiffReadback": true,
+    "requireLocalGitDiffReadback": true,
+    "requireCanonicalSemanticEquality": true,
+    "requireIndependentDigests": true
+  },
+  "authorityCeiling": {
+    "readOnly": true,
+    "updatesPullRequest": false,
+    "submitsReview": false,
+    "enablesAutoMerge": false,
+    "mergesPullRequest": false,
+    "modifiesRemoteBranch": false,
+    "modifiesLocalCommit": false,
+    "directMainUpdate": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "qualificationOnly": true,
+    "consumerEvidence": false,
+    "temporaryPullRequestRequired": true,
+    "temporaryBranchCleanupRequired": true,
+    "temporaryPullRequestCloseUnmergedRequired": true,
+    "negativeMatrixRequired": true,
+    "consumerMutation": false
+  }
+}
