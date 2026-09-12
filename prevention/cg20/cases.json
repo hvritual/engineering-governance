@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG20-CONTROLLED-MERGE-EXECUTION",
+  "realCurrentStateRefusals": [
+    {"caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER", "sourceMergeAuthorization": null, "expectedReason": "CG19_MERGE_AUTHORIZATION_REQUIRED"},
+    {"caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT", "sourceMergeAuthorization": null, "expectedReason": "CG19_MERGE_AUTHORIZATION_REQUIRED"},
+    {"caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL", "sourceMergeAuthorization": null, "expectedReason": "CG19_MERGE_AUTHORIZATION_REQUIRED"}
+  ],
+  "qualificationFixture": {
+    "qualificationOnly": true,
+    "consumerEvidence": false,
+    "repository": "hvritual/engineering-governance",
+    "pullRequestNumber": 43,
+    "baseBranch": "cg20-qualification/base",
+    "baseSha": "916b33608d6cc0dc2eb48549e82b072b114473a2",
+    "headBranch": "cg20-qualification/head",
+    "headSha": "c47666a5cd695dd26773bef527129c35666153aa",
+    "changedPaths": ["prevention/cg20-qualification-fixture.txt"],
+    "humanDecision": {
+      "decisionOrigin": "EXPLICIT_HUMAN_INPUT",
+      "action": "AUTHORIZE_MERGE_EXACT_PR",
+      "authorizer": "CG20_QUALIFICATION_HUMAN",
+      "mergeMethod": "squash",
+      "nonce": "1e9b17cda0d1d39177cdf64256ff67461def27b31cd4a53350b79ba9fd454ec2"
+    }
+  }
+}
