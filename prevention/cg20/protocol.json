@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG20-CONTROLLED-MERGE-EXECUTION",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "sourceAuthorities": [
     {"path": "prevention/cg19/protocol.json", "blob": "8fd1d6eadafe538f962b80c261949b3f8203428c"},
     {"path": "prevention/cg19/cases.json", "blob": "1bc98fa38934c7c52ac58a7d1df562b1ece3a6bf"},
@@ -72,6 +72,50 @@
     "temporaryBranchesCleanupRequired": true,
     "negativeMatrixRequired": true,
     "consumerMutation": false,
-    "mainMutation": false
+    "mainMutation": false,
+    "preparation": {
+      "head": "b3f5e22de35865cc9bc88a4de6100c2c0f7b8f47",
+      "run": 34688374556,
+      "job": 103539252706,
+      "result": "SUCCESS",
+      "authorizationId": "3ef32b902a4823164ae6d9da06774e14b3c629cdd8f0c13c5239c3460a72bdba",
+      "requestId": "ab8ec1df1c1c4bc0f0df6b55766dc7219f5092b9d0abd3588ff4692231a2bc74",
+      "expectedHeadSha": "c47666a5cd695dd26773bef527129c35666153aa",
+      "realCurrentStateRefusal": "PASS",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false,
+      "mainMutation": false
+    },
+    "providerExecution": {
+      "executor": "TRUSTED_GITHUB_CONNECTOR",
+      "pullRequest": 43,
+      "mergeMethod": "squash",
+      "expectedHeadSha": "c47666a5cd695dd26773bef527129c35666153aa",
+      "mergeSha": "079a14ecfb40574c25b182118428c33b82da7082",
+      "merged": true
+    },
+    "initialPostMergeReplay": {
+      "run": 34688507692,
+      "job": 103539596203,
+      "result": "FAIL_AFTER_POST_MERGE_ATTESTATION",
+      "executionAttestationId": "f52a9118d229fb4c3a6aea390fecf323acb3591a884e33bb0f13f991a0c11620",
+      "mergeTreeSha": "0641540d442c7b08b8e832ba913fd8f9a7b0caa8",
+      "postMergeVerify": "PASS",
+      "finding": "REPLAY_CHECK_ORDERED_MERGEABILITY_BEFORE_MERGED_STATE"
+    },
+    "correctedPostMerge": {
+      "head": "fc32331083723394ed06b8e632ed736171892f9b",
+      "run": 34688594428,
+      "job": 103539824490,
+      "result": "SUCCESS",
+      "executionAttestationId": "f52a9118d229fb4c3a6aea390fecf323acb3591a884e33bb0f13f991a0c11620",
+      "mergeSha": "079a14ecfb40574c25b182118428c33b82da7082",
+      "mergeTreeSha": "0641540d442c7b08b8e832ba913fd8f9a7b0caa8",
+      "authorizationConsumption": "CONSUMED_BY_SUCCESSFUL_MERGE",
+      "replayFailClosed": "PASS",
+      "postMergeNegativeMatrix": "PASS",
+      "mainUnchanged": "PASS",
+      "consumerMutation": false
+    }
   }
 }
