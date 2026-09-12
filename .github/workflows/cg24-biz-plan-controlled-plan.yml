@@ -34,8 +34,8 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD:corpus/cg23/biz-plan-catalog/case.json)" = "2bc4cfb7494b45e245de736843ba0019212ab848"
-          test "$(git rev-parse HEAD:corpus/cg23/biz-plan-catalog/qualify.py)" = "dc13907bb0eee6109091468783379827f9e16b0a"
-          test "$(git rev-parse HEAD:corpus/cg23/biz-plan-catalog/README.md)" = "bf3f1c1bc8a550db840aff3c8794b21199784608"
+          test "$(git rev-parse HEAD:corpus/cg23/biz-plan-catalog/qualify.py)" = "c727b544a89d217870382e3fd00a6dcbf182bef0"
+          test "$(git rev-parse HEAD:corpus/cg23/biz-plan-catalog/README.md)" = "e399a7d0944092a7a11f910927240c3155b6f07e"
           python3 - <<'PY'
           import json
           case=json.load(open('corpus/cg23/biz-plan-catalog/case.json'))
@@ -99,8 +99,7 @@ jobs:
           issue=json.load(open('/tmp/biz-issue-62.json'))
           root=Path('_consumer/biz')
 
-          def replan(x):
-              x['planId']=v.digest(v.plan_core(x))
+          def replan(x): x['planId']=v.digest(v.plan_core(x))
           def expect(pr,pl,iss,reason):
               try: v.verify(pr,pl,case,root,iss)
               except v.PlanVerificationError as exc: assert exc.reason==reason,(reason,exc.reason)
@@ -108,28 +107,20 @@ jobs:
 
           badp=copy.deepcopy(protocol); badp['consumer']['baseSha']='0'*40
           expect(badp,plan,issue,'CONSUMER_BASE_SHA_MISMATCH')
-
           badi=copy.deepcopy(issue); badi['state']='closed'
           expect(protocol,plan,badi,'SOURCE_ISSUE_NOT_OPEN')
-
           bad=copy.deepcopy(plan); bad['projection']['newAuthoritativeStore']=True; replan(bad)
           expect(protocol,bad,issue,'SECOND_CATALOG_SOT_FORBIDDEN')
-
           bad=copy.deepcopy(plan); bad['generatedPolicy']['handEdit']=True; replan(bad)
           expect(protocol,bad,issue,'GENERATED_HAND_EDIT_FORBIDDEN')
-
           bad=copy.deepcopy(plan); bad['authority']['authorizesPatch']=True; replan(bad)
           expect(protocol,bad,issue,'PLAN_AUTHORITY_ESCALATION')
-
           bad=copy.deepcopy(plan); bad['authority']['modifiesFramework']=True; replan(bad)
           expect(protocol,bad,issue,'PLAN_AUTHORITY_ESCALATION')
-
           bad=copy.deepcopy(plan); bad['verificationClasses'].remove('CG24_PAGINATION_DETERMINISM'); replan(bad)
           expect(protocol,bad,issue,'VERIFICATION_CLASS_SET_MISMATCH')
-
           bad=copy.deepcopy(plan); bad['surface']['permissions']=['platform.plan.manage']; replan(bad)
           expect(protocol,bad,issue,'CATALOG_PERMISSION_MISMATCH')
-
           print('CG24_NEGATIVE_MATRIX=PASS')
           PY
 
