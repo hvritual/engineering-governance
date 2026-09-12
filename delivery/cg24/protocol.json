@@ -5,8 +5,8 @@
   "sourceCase": "CG23-BIZ-PLAN-CATALOG-DISCOVERABILITY",
   "sourceAuthorities": [
     {"path": "corpus/cg23/biz-plan-catalog/case.json", "blob": "2bc4cfb7494b45e245de736843ba0019212ab848"},
-    {"path": "corpus/cg23/biz-plan-catalog/qualify.py", "blob": "dc13907bb0eee6109091468783379827f9e16b0a"},
-    {"path": "corpus/cg23/biz-plan-catalog/README.md", "blob": "bf3f1c1bc8a550db840aff3c8794b21199784608"}
+    {"path": "corpus/cg23/biz-plan-catalog/qualify.py", "blob": "c727b544a89d217870382e3fd00a6dcbf182bef0"},
+    {"path": "corpus/cg23/biz-plan-catalog/README.md", "blob": "e399a7d0944092a7a11f910927240c3155b6f07e"}
   ],
   "consumer": {
     "repository": "hvritual/biz",
