@@ -1,0 +1,3 @@
+qualificationOnly=true
+consumerEvidence=false
+cg19 controlled merge authorization qualification
