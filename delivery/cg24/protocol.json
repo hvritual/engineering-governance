@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "id": "CG24-REAL-CONSUMER-CONTROLLED-PLAN",
+  "status": "CANDIDATE",
+  "sourceCase": "CG23-BIZ-PLAN-CATALOG-DISCOVERABILITY",
+  "sourceAuthorities": [
+    {"path": "corpus/cg23/biz-plan-catalog/case.json", "blob": "2bc4cfb7494b45e245de736843ba0019212ab848"},
+    {"path": "corpus/cg23/biz-plan-catalog/qualify.py", "blob": "dc13907bb0eee6109091468783379827f9e16b0a"},
+    {"path": "corpus/cg23/biz-plan-catalog/README.md", "blob": "bf3f1c1bc8a550db840aff3c8794b21199784608"}
+  ],
+  "consumer": {
+    "repository": "hvritual/biz",
+    "branch": "main",
+    "baseSha": "bd4a155b6fc27b3a0c2b2ee03a40bdb1ba59e2c9",
+    "baseTree": "bb1908d9235845f6694fdae9277bb7f81726cfad",
+    "sourceIssue": 62,
+    "requiredIssueState": "open"
+  },
+  "consumerAuthorities": [
+    {"path": "contracts/proto/commercial/v1/plan.proto", "blob": "16fe2514ad293310a9d3ef5b14fe861be2eb03e4"},
+    {"path": "contracts/generated/operation-plans.json", "blob": "27738cc17acc981b3f71c76d86da727cef380543"},
+    {"path": "internal/commercial/ports/plan.go", "blob": "d9cce5c59548ed78b739f082b768486a6715a202"},
+    {"path": "internal/commercial/infrastructure/persistence/plan.go", "blob": "aaf06b7d0676b5b255d5a2ab16f2f955a749412b"},
+    {"path": "internal/commercial/application/planmanagement/internal/usecase/service.go", "blob": "d19f34e7fe2e55df192a76f7caccb6958c6a3053"},
+    {"path": "internal/commercial/application/planmanagement/internal/usecase/dto.go", "blob": "2a5c08bbbb1e0e72e6f9c50b74a6d067022ca3a4"}
+  ],
+  "principle": "A qualified real-consumer problem may be converted into a bounded implementation plan, but planning does not authorize execution. The Biz plan catalog must remain a read projection over existing plan authority rather than a second catalog source of truth.",
+  "requiredDecision": "PLAN_READY_FOR_CONTROLLED_IMPLEMENTATION",
+  "planningPolicy": {
+    "requiredHttpMethod": "GET",
+    "requiredHttpPath": "/v1/platform/plans",
+    "requiredOperationId": "commercial.plan.catalog",
+    "requiredUseCase": "list_plan_catalog",
+    "requiredPermission": "platform.plan.read",
+    "requiredAuthentication": ["api-key", "web-session"],
+    "tenantRequired": false,
+    "transaction": "read_only",
+    "idempotency": "none",
+    "requiredPaginationKey": "plan_code",
+    "maximumPageSize": 100,
+    "defaultPageSize": 20,
+    "authoritativeTables": ["biz_commercial_plans", "biz_commercial_plan_versions"],
+    "newAuthoritativeStoreAllowed": false,
+    "browserCatalogAllowed": false,
+    "subscriptionInferenceAllowed": false,
+    "generatedHandEditAllowed": false,
+    "frameworkModificationAllowed": false
+  },
+  "requiredVerificationClasses": [
+    "CG24_SOURCE_EVIDENCE_FRESHNESS",
+    "CG24_CONTRACT_CATALOG_SURFACE",
+    "CG24_GENERATION_DETERMINISM",
+    "CG24_YUNKA_CHECK_READ_ONLY",
+    "CG24_GENERATED_OPERATION_IDENTITY",
+    "CG24_USECASE_CATALOG_BEHAVIOR",
+    "CG24_MYSQL84_AUTHORITATIVE_CATALOG_QUERY",
+    "CG24_PLATFORM_WEB_SESSION_AUTHORIZATION",
+    "CG24_PLATFORM_PERMISSION_DENIAL",
+    "CG24_TENANT_SESSION_DENIAL",
+    "CG24_API_KEY_REGRESSION",
+    "CG24_PAGINATION_DETERMINISM",
+    "CG24_NO_SECOND_CATALOG_SOT",
+    "CG24_EXISTING_PLAN_VERSION_REGRESSION",
+    "CG24_PUBLISHED_VERSION_IMMUTABILITY_REGRESSION",
+    "CG24_CANONICAL_EXECUTOR_RUNTIME"
+  ],
+  "authorityCeiling": {
+    "planningOnly": true,
+    "executionAuthorized": false,
+    "createsConsumerBranch": false,
+    "modifiesConsumer": false,
+    "authorizesPatch": false,
+    "authorizesCommit": false,
+    "authorizesPush": false,
+    "authorizesPullRequest": false,
+    "authorizesMerge": false,
+    "modifiesFramework": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "consumerMutation": false,
+    "governanceMainMutationDuringQualification": false,
+    "negativeMatrixRequired": true
+  }
+}
