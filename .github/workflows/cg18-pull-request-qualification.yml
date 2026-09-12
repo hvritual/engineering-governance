@@ -1,0 +1,213 @@
+name: CG-18 pull request qualification decision
+
+on:
+  push:
+    branches:
+      - cg18/pull-request-qualification
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+  checks: read
+  statuses: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  qualify:
+    name: qualify-pull-request-decision
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact CG-17 source authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:prevention/cg17/protocol.json)" = "265ef99a51bfc52af09c98ffa7e70543d6d7081e"
+          test "$(git rev-parse HEAD:prevention/cg17/cases.json)" = "b8f744fe9cf1b7b389fcf3828c6de7df02219364"
+          test "$(git rev-parse HEAD:prevention/cg17/diff_identity.py)" = "878dd144fa8f60838f342cdad208e7ba1e4d3c93"
+          test "$(git rev-parse HEAD:prevention/cg17/verify_provider_diff.py)" = "8690bd665683df5b03a543341f3491f5a24a33f8"
+          python3 - <<'PY'
+          import json
+          assert json.load(open('prevention/cg17/protocol.json'))['status']=='QUALIFIED'
+          PY
+          echo 'CG18_CG17_SOURCE_AUTHORITIES=PASS'
+
+      - name: Qualify exact PR review and check state
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          QUALIFICATION_REPOSITORY: hvritual/engineering-governance
+          QUALIFICATION_PR: '37'
+          QUALIFICATION_BASE_SHA: 29cfd59e6c45c17baca4159c9ce97bdfb0baa7b9
+          QUALIFICATION_HEAD_SHA: 90b8c3badd8e2d27e61bb48ef80e5fa172d55664
+          QUALIFICATION_HEAD_BRANCH: cg18-qualification/merge-review
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, copy, hashlib, importlib.util, json, os, subprocess, sys, tempfile
+          from pathlib import Path
+
+          sys.path.insert(0,str(Path('prevention/cg17').resolve()))
+          sys.path.insert(0,str(Path('prevention/cg18').resolve()))
+
+          def loadmod(name,path):
+              spec=importlib.util.spec_from_file_location(name,path)
+              mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod); return mod
+
+          v17=loadmod('v17','prevention/cg17/verify_provider_diff.py')
+          q18=loadmod('q18','prevention/cg18/qualify_pull_request.py')
+          r18=loadmod('r18','prevention/cg18/review_state.py')
+          p17=json.load(open('prevention/cg17/protocol.json'))
+          p18=json.load(open('prevention/cg18/protocol.json'))
+          c18=json.load(open('prevention/cg18/cases.json'))
+          assert p18['status'] in ('CANDIDATE','QUALIFIED')
+
+          for case in c18['realCurrentStateRefusals']:
+              try: q18.validate_source(p18,case['sourceProviderDiffAttestation'])
+              except q18.PullRequestQualificationError as exc: assert exc.reason==case['expectedReason'],(case,exc.reason)
+              else: raise AssertionError('real subject unexpectedly CG18-eligible')
+          print('CG18_REAL_CURRENT_STATE_REFUSAL=PASS')
+
+          token=os.environ['GITHUB_TOKEN']
+          repository=os.environ['QUALIFICATION_REPOSITORY']
+          pr_number=int(os.environ['QUALIFICATION_PR'])
+          base_sha=os.environ['QUALIFICATION_BASE_SHA']
+          head_sha=os.environ['QUALIFICATION_HEAD_SHA']
+          head_branch=os.environ['QUALIFICATION_HEAD_BRANCH']
+          clean_url='https://github.com/'+repository+'.git'
+          basic=base64.b64encode(('x-access-token:'+token).encode()).decode()
+          os.environ['GIT_CONFIG_COUNT']='1'
+          os.environ['GIT_CONFIG_KEY_0']='http.https://github.com/.extraheader'
+          os.environ['GIT_CONFIG_VALUE_0']='AUTHORIZATION: basic '+basic
+
+          def git(repo,*args,check=True):
+              cp=subprocess.run(['git','-C',str(repo),*args],capture_output=True,text=True)
+              if check and cp.returncode: raise AssertionError((args,cp.stdout,cp.stderr))
+              return cp
+
+          def digest(value):
+              return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+
+          def reattest17(att):
+              core={k:v for k,v in att.items() if k not in {'status','decision','providerDiffAttestationId'}}
+              att['providerDiffAttestationId']=digest(core)
+
+          with tempfile.TemporaryDirectory() as root:
+              repo=Path(root)/'repo'
+              subprocess.run(['git','clone','-q','--no-hardlinks','.',str(repo)],check=True)
+              git(repo,'remote','set-url','origin',clean_url)
+              git(repo,'fetch','-q','origin','main',head_branch)
+              git(repo,'checkout','-q','-B',head_branch,head_sha)
+              assert git(repo,'status','--porcelain','--untracked-files=all').stdout==''
+              assert git(repo,'ls-remote','--refs','origin','refs/heads/main').stdout.split()[0]==base_sha
+              assert git(repo,'ls-remote','--refs','origin','refs/heads/'+head_branch).stdout.split()[0]==head_sha
+
+              paths=sorted(x for x in git(repo,'diff','--name-only','-z',base_sha,head_sha,'--').stdout.split('\0') if x)
+              assert paths==c18['qualificationFixture']['changedPaths'],paths
+              diff_bytes=subprocess.check_output(['git','-C',str(repo),'diff','--binary','--full-index','--no-ext-diff',base_sha,head_sha,'--'])
+              diff_sha=hashlib.sha256(diff_bytes).hexdigest()
+              fixture_sha=lambda s: hashlib.sha256(s.encode()).hexdigest()
+
+              cg16_core={
+                  'schemaVersion':1,'protocolId':'CG16-CONTROLLED-PULL-REQUEST-CREATION','caseId':'CG18-PR-QUALIFICATION-FIXTURE',
+                  'repository':repository,'provider':'GITHUB','externalExecutor':'TRUSTED_GITHUB_CONNECTOR',
+                  'sourceRemotePublicationAttestationId':fixture_sha('cg18-pub-id'),'sourceRemotePublicationAttestationSha256':fixture_sha('cg18-pub-sha'),
+                  'pullRequestRequestId':fixture_sha('cg18-request-id'),'pullRequestRequestSha256':fixture_sha('cg18-request-sha'),
+                  'externalExecutionReceiptSha256':fixture_sha('cg18-external-receipt'),'pullRequestNumber':pr_number,
+                  'pullRequestNodeId':'qualification-only','pullRequestUrl':'https://github.com/'+repository+'/pull/'+str(pr_number),
+                  'baseBranch':'main','baseSha':base_sha,'headBranch':head_branch,'headSha':head_sha,'changedPaths':paths,
+                  'diffSha256':diff_sha,'verificationClasses':['FIXTURE_PROVIDER_DIFF_CHECK'],'title':'CG-18 qualification fixture',
+                  'bodySha256':fixture_sha('qualificationOnly=true\nconsumerEvidence=false\nCG-18 pull request qualification decision only.'),
+                  'pullRequestUpdateAuthorization':'NOT_GRANTED','reviewSubmissionAuthorization':'NOT_GRANTED','autoMergeAuthorization':'NOT_GRANTED',
+                  'mergeAuthorization':'NOT_GRANTED','directMainUpdate':False,'repositoryAdministration':False,'consumerAdoption':False
+              }
+              cg16={**cg16_core,'status':'PULL_REQUEST_ATTESTED','decision':'CONTROLLED_PULL_REQUEST_CREATION_VERIFIED','pullRequestAttestationId':digest(cg16_core)}
+              cg17=v17.verify(p17,cg16,repo,token)
+              assert cg17['status']=='PROVIDER_DIFF_ATTESTED'
+
+              out=q18.qualify(p18,cg17,token)
+              assert out['status']=='PULL_REQUEST_QUALIFIED' and out['decision']=='PR_QUALIFIED_FOR_HUMAN_MERGE_REVIEW',out
+              assert out['mergeAuthorization']=='NOT_GRANTED'
+              assert out['qualificationReasons']==[]
+              print('CG18_QUALIFICATION_ATTESTATION_ID='+out['qualificationAttestationId'])
+              print('CG18_APPROVAL_COUNT='+str(out['reviewSummary']['approvalCount']))
+              print('CG18_UNRESOLVED_THREADS='+str(out['unresolvedReviewThreads']))
+              print('CG18_CHECK_RUN_COUNT='+str(out['checkSummary']['checkRunCount']))
+              print('CG18_COMMIT_STATUS_COUNT='+str(out['checkSummary']['commitStatusCount']))
+              print('CG18_PR_QUALIFICATION=PASS')
+
+              bad=copy.deepcopy(cg17); bad['providerDiffAttestationId']='0'*64
+              try: q18.validate_source(p18,bad)
+              except q18.PullRequestQualificationError as exc: assert exc.reason=='CG17_PROVIDER_DIFF_ATTESTATION_ID_MISMATCH'
+              else: raise AssertionError('tampered CG17 attestation accepted')
+
+              bad=copy.deepcopy(cg17); bad['mergeAuthorization']='GRANTED'; reattest17(bad)
+              try: q18.validate_source(p18,bad)
+              except q18.PullRequestQualificationError as exc: assert exc.reason=='DOWNSTREAM_AUTHORITY_ESCALATION'
+              else: raise AssertionError('merge-authority escalation accepted')
+
+              bad=copy.deepcopy(cg17); bad['headSha']='0'*40; reattest17(bad)
+              try: q18.qualify(p18,bad,token)
+              except q18.PullRequestQualificationError as exc: assert exc.reason=='LIVE_HEAD_SHA_MISMATCH',(exc.reason,exc.detail)
+              else: raise AssertionError('live head drift accepted')
+
+              bad=copy.deepcopy(cg17); bad['changedPaths']=sorted(cg17['changedPaths']+['unexpected/path']); reattest17(bad)
+              try: q18.qualify(p18,bad,token)
+              except q18.PullRequestQualificationError as exc: assert exc.reason=='LIVE_CHANGED_PATHS_MISMATCH',(exc.reason,exc.detail)
+              else: raise AssertionError('changed-path drift accepted')
+
+              reader=q18.GitHubReader(token)
+              snapshot=q18.read_snapshot(p18,cg17,reader)
+
+              def expect_block(reason, mutate):
+                  s=copy.deepcopy(snapshot); mutate(s)
+                  decision=r18.qualify_snapshot(p18['qualificationPolicy'],s)
+                  assert decision['disposition']=='STOP_AND_INVESTIGATE',decision
+                  assert reason in decision['reasons'],(reason,decision)
+                  assert decision['mergeAuthorization']=='NOT_GRANTED'
+
+              expect_block('CHANGES_REQUESTED_BLOCKING',lambda s:s.__setitem__('reviewSummary',{**s['reviewSummary'],'changesRequestedCount':1,'changesRequestedLogins':['reviewer']}))
+              expect_block('UNRESOLVED_REVIEW_THREADS',lambda s:s.__setitem__('unresolvedReviewThreads',1))
+              expect_block('CHECKS_NOT_SUCCESSFUL',lambda s:s.__setitem__('checkSummary',{**s['checkSummary'],'blockingChecks':[{'name':'fixture-check','conclusion':'failure'}]}))
+              expect_block('CHECKS_NOT_TERMINAL',lambda s:s.__setitem__('checkSummary',{**s['checkSummary'],'pendingChecks':['fixture-check']}))
+              expect_block('PULL_REQUEST_NOT_MERGEABLE',lambda s:s.__setitem__('mergeable',False))
+
+              informative=copy.deepcopy(snapshot); informative['requestedReviewerLogins']=['pending-human-reviewer']
+              decision=r18.qualify_snapshot(p18['qualificationPolicy'],informative)
+              assert decision['disposition']=='PR_QUALIFIED_FOR_HUMAN_MERGE_REVIEW',decision
+              print('CG18_NEGATIVE_MATRIX=PASS')
+
+              if p18['status']=='QUALIFIED':
+                  deleted=git(repo,'push','-q','origin',':refs/heads/'+head_branch,check=False)
+                  assert deleted.returncode==0,(deleted.stdout,deleted.stderr)
+                  assert git(repo,'ls-remote','--refs','origin','refs/heads/'+head_branch).stdout.strip()==''
+                  assert git(repo,'ls-remote','--refs','origin','refs/heads/main').stdout.split()[0]==base_sha
+                  print('CG18_QUALIFICATION_BRANCH_CLEANUP=PASS')
+
+          print('CG18_CONSUMER_MUTATION=NONE')
+          PY
+
+      - name: Stable asset syntax and governance cleanliness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool prevention/cg18/protocol.json >/dev/null
+          python3 -m json.tool prevention/cg18/cases.json >/dev/null
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          for p in ['prevention/cg18/review_state.py','prevention/cg18/qualify_pull_request.py']:
+              ast.parse(Path(p).read_text(),filename=p)
+          PY
+          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=no)"
+          echo 'CG18_STABLE_ASSETS=PASS'
