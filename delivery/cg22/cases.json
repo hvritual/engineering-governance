@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG22-TERMINAL-PROOF-OF-CHANGE",
+  "realCurrentStateRefusals": [
+    {"caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER", "sourceCompletionAttestation": null, "sourceCompletionVerification": null, "expectedReason": "CG21_COMPLETION_ATTESTATION_REQUIRED"},
+    {"caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT", "sourceCompletionAttestation": null, "sourceCompletionVerification": null, "expectedReason": "CG21_COMPLETION_ATTESTATION_REQUIRED"},
+    {"caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL", "sourceCompletionAttestation": null, "sourceCompletionVerification": null, "expectedReason": "CG21_COMPLETION_ATTESTATION_REQUIRED"}
+  ],
+  "qualificationFixture": {
+    "qualificationOnly": true,
+    "consumerEvidence": false,
+    "source": "delivery/cg21/cases.json#qualificationFixture",
+    "expectedProofType": "TERMINAL_PROOF_OF_CHANGE",
+    "expectedTerminalState": "TERMINAL_COMPLETE_NO_ACTION",
+    "expectedCompletionState": "COMPLETE_NO_ACTION",
+    "expectedRecoveryDisposition": "NO_ACTION",
+    "expectedCompletionAuthority": "CG21",
+    "expectedIntegrityAuthority": "CG07"
+  }
+}
