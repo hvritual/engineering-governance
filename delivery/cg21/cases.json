@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG21-EXECUTION-INTEGRITY-COMPLETION",
+  "realCurrentStateRefusals": [
+    {"caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER", "sourceExecutionAttestation": null, "expectedReason": "CG20_MERGE_EXECUTION_ATTESTATION_REQUIRED"},
+    {"caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT", "sourceExecutionAttestation": null, "expectedReason": "CG20_MERGE_EXECUTION_ATTESTATION_REQUIRED"},
+    {"caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL", "sourceExecutionAttestation": null, "expectedReason": "CG20_MERGE_EXECUTION_ATTESTATION_REQUIRED"}
+  ],
+  "qualificationFixture": {
+    "qualificationOnly": true,
+    "consumerEvidence": false,
+    "sourceCore": {
+      "schemaVersion": 1,
+      "protocolId": "CG20-CONTROLLED-MERGE-EXECUTION",
+      "caseId": "CG21-EXECUTION-INTEGRITY-COMPLETION-FIXTURE",
+      "repository": "hvritual/cg21-fixture",
+      "provider": "GITHUB",
+      "externalExecutor": "TRUSTED_GITHUB_CONNECTOR",
+      "sourceAuthorizationId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceAuthorizationSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "mergeExecutionRequestId": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "mergeExecutionRequestSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "externalMergeReceiptSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "pullRequestNumber": 21,
+      "baseBranch": "main",
+      "authorizedBaseSha": "1111111111111111111111111111111111111111",
+      "headBranch": "cg21-fixture/head",
+      "headSha": "2222222222222222222222222222222222222222",
+      "expectedHeadSha": "2222222222222222222222222222222222222222",
+      "changedPaths": ["src/allowed.txt"],
+      "verificationClasses": ["FIXTURE_EXECUTION_INTEGRITY_COMPLETION_CHECK"],
+      "mergeMethod": "squash",
+      "mergeSha": "3333333333333333333333333333333333333333",
+      "mergeParentSha": "1111111111111111111111111111111111111111",
+      "mergeTreeSha": "4444444444444444444444444444444444444444",
+      "headTreeSha": "4444444444444444444444444444444444444444",
+      "postMergeBaseSha": "3333333333333333333333333333333333333333",
+      "authorizationConsumption": "CONSUMED_BY_SUCCESSFUL_MERGE",
+      "authorizationUseCount": 1,
+      "consumptionState": "CONSUMED",
+      "providerCompareAndSwap": "EXPECTED_HEAD_SHA",
+      "providerSingleUseBoundary": "PR_OPEN_UNMERGED_TO_MERGED_TRANSITION",
+      "secondConsumptionStateSource": "PROVIDER_PR_MERGED_STATE",
+      "autoMerge": false,
+      "directMainUpdate": false,
+      "repositoryAdministration": false,
+      "consumerAdoption": false
+    },
+    "observed": {
+      "schemaVersion": 1,
+      "repository": "hvritual/cg21-fixture",
+      "pullRequest": {
+        "number": 21,
+        "state": "closed",
+        "merged": true,
+        "baseBranch": "main",
+        "headSha": "2222222222222222222222222222222222222222",
+        "mergeCommitSha": "3333333333333333333333333333333333333333"
+      },
+      "postMergeCommit": {
+        "sha": "3333333333333333333333333333333333333333",
+        "parents": ["1111111111111111111111111111111111111111"]
+      },
+      "pullRequestPaths": ["src/allowed.txt"],
+      "currentMain": {
+        "sha": "3333333333333333333333333333333333333333",
+        "relationFromQualifiedMerge": "identical",
+        "containsQualifiedMerge": true
+      }
+    },
+    "expectedCompletionState": "COMPLETE_NO_ACTION",
+    "expectedRecoveryDisposition": "NO_ACTION"
+  }
+}
