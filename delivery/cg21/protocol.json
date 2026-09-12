@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG21-EXECUTION-INTEGRITY-COMPLETION",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "sourceAuthorities": [
     {"path": "prevention/cg20/protocol.json", "blob": "8448a06824577f552da072dee81b02bf7674fcc1"},
     {"path": "prevention/cg20/cases.json", "blob": "b4021d6bd3698ba19c22e0a7377e559c311dff3b"},
@@ -70,6 +70,21 @@
     "preservesCg07AsAuthority": true,
     "negativeMatrixRequired": true,
     "consumerMutation": false,
-    "mainMutation": false
+    "mainMutation": false,
+    "primary": {
+      "head": "dbd9b87fd94f0a1fc3a94a8a312ed5b6a18e353b",
+      "run": 34692192703,
+      "job": 103549303606,
+      "result": "SUCCESS",
+      "executionAttestationId": "83ad1fb913f9de3324dbfb50c8ccd1b417d8e44eb14f9239c9ef88e701936428",
+      "completionAttestationId": "680d420eac830359d6e2b038e04d7d63c58ab684634fdf8f1e0c5a995715c267",
+      "completionVerificationId": "18709dbf5f463ba0b78ce58c33eccd59cbbd2d29df38b6ab90e77d22ccf364ec",
+      "completionState": "COMPLETE_NO_ACTION",
+      "recoveryDisposition": "NO_ACTION",
+      "realCurrentStateRefusal": "PASS",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false,
+      "mainMutation": false
+    }
   }
 }
