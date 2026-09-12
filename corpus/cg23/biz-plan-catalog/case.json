@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "caseId": "CG23-BIZ-PLAN-CATALOG-DISCOVERABILITY",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "classification": "REAL_CONSUMER_MISSING_AUTHORITATIVE_DISCOVERY_SURFACE",
   "origin": {
     "repository": "hvritual/biz",
@@ -55,6 +55,16 @@
   },
   "qualification": {
     "required": true,
+    "head": "44a30e70129eb04980880ccc49a5094728eb2e96",
+    "run": 34697528734,
+    "job": 103563467263,
+    "result": "SUCCESS",
+    "issueOpen": "PASS",
+    "exactConsumerBase": "PASS",
+    "exactAuthoritativeBlobs": "PASS",
+    "existingVersionListSurface": "PASS",
+    "missingPlanCatalogSurface": "PROVEN",
+    "negativeMatrix": "PASS",
     "consumerMutation": false,
     "governanceMainMutationDuringQualification": false
   }
