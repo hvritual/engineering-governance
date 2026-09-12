@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "id": "CG19-CONTROLLED-MERGE-AUTHORIZATION",
+  "status": "CANDIDATE",
+  "sourceAuthorities": [
+    {"path": "prevention/cg18/protocol.json", "blob": "ea4a1099d54a6bafe1490b7d7fd52b4843f578c7"},
+    {"path": "prevention/cg18/cases.json", "blob": "2969352b6d7e91dc258e178e070ae8574329b25c"},
+    {"path": "prevention/cg18/review_state.py", "blob": "51ec0d59cca1faaa1402790582b172e20a8d30eb"},
+    {"path": "prevention/cg18/qualify_pull_request.py", "blob": "40e1cd6b30bf309ef64810df50223bdc589363a3"}
+  ],
+  "sourceProtocol": "CG18-PULL-REQUEST-QUALIFICATION-DECISION",
+  "requiredSourceStatus": "PULL_REQUEST_QUALIFIED",
+  "requiredSourceDecision": "PR_QUALIFIED_FOR_HUMAN_MERGE_REVIEW",
+  "principle": "Qualification is not authorization. A merge authorization may be created only from an exact CG-18 qualification that is still live-qualified and an explicit human decision bound to the same repository, PR, base, head and qualification attestation. CG-19 never executes the merge.",
+  "authorizationPolicy": {
+    "provider": "GITHUB",
+    "requiredHumanAction": "AUTHORIZE_MERGE_EXACT_PR",
+    "requiredDecisionOrigin": "EXPLICIT_HUMAN_INPUT",
+    "allowedMergeMethods": ["squash"],
+    "requireExactRepository": true,
+    "requireExactPullRequestNumber": true,
+    "requireExactBaseSha": true,
+    "requireExactHeadSha": true,
+    "requireExactChangedPaths": true,
+    "requireExactQualificationAttestationId": true,
+    "requireQualificationReasonsEmpty": true,
+    "requireLiveCg18Requalification": true,
+    "requireExplicitAuthorizer": true,
+    "requireUniqueDecisionNonce": true,
+    "decisionNoncePattern": "^[0-9a-f]{64}$",
+    "grant": "GRANTED_ONCE",
+    "authorizationUseLimit": 1,
+    "consumptionStateAtCreation": "NOT_CONSUMED",
+    "oneTimeEnforcementBoundary": "DOWNSTREAM_MERGE_EXECUTOR",
+    "autoMergeAuthorization": "NOT_GRANTED",
+    "directMainUpdate": false
+  },
+  "outputs": {
+    "status": "MERGE_AUTHORIZATION_ATTESTED",
+    "decision": "CONTROLLED_MERGE_AUTHORIZATION_VERIFIED",
+    "mergeAuthorization": "GRANTED_ONCE"
+  },
+  "authorityCeiling": {
+    "createsMergeAuthorizationAttestation": true,
+    "executesMerge": false,
+    "submitsReview": false,
+    "updatesPullRequest": false,
+    "enablesAutoMerge": false,
+    "modifiesRemoteBranch": false,
+    "modifiesLocalCommit": false,
+    "directMainUpdate": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "qualificationOnly": true,
+    "consumerEvidence": false,
+    "temporaryPullRequestRequired": true,
+    "temporaryBranchCleanupRequired": true,
+    "temporaryPullRequestCloseUnmergedRequired": true,
+    "explicitQualificationHumanDecisionRequired": true,
+    "negativeMatrixRequired": true,
+    "consumerMutation": false
+  }
+}
