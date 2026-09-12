@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "CG16-CONTROLLED-PULL-REQUEST-CREATION",
+  "status": "CANDIDATE",
+  "sourceAuthorities": [
+    {"path": "prevention/cg15/protocol.json", "blob": "0dfab6fd9d75ba2aefa21d23b0e3a53089458f5c"},
+    {"path": "prevention/cg15/cases.json", "blob": "61f34e01cbbfdeaf72d1eab433c4e08a5849d1fd"},
+    {"path": "prevention/cg15/publish_branch.py", "blob": "0b935fc0e748e5fbac75a0aac0ca4f2c6dd4d897"},
+    {"path": "prevention/cg15/verify_publication.py", "blob": "9aa3b0783c793ebe9d0409ce253533135347acd3"}
+  ],
+  "principle": "Only a CG-15-attested remote branch may create one exact open non-draft pull request to the attested base, and PR creation grants no merge authority.",
+  "pullRequest": {
+    "requiredSourceProtocol": "CG15-CONTROLLED-REMOTE-BRANCH-PUBLICATION",
+    "requiredSourceStatus": "REMOTE_BRANCH_PUBLICATION_ATTESTED",
+    "requiredSourceDecision": "CONTROLLED_REMOTE_BRANCH_PUBLICATION_VERIFIED",
+    "provider": "GITHUB",
+    "baseBranch": "main",
+    "pullRequestAuthority": "SINGLE_OPEN_PR_CREATE_ONLY",
+    "requireGitHubRepositorySlug": true,
+    "requireSameRepository": true,
+    "requireExactRemoteBase": true,
+    "requireExactRemoteHead": true,
+    "requireNonMainHead": true,
+    "requireDistinctBaseHead": true,
+    "requireNoExistingOpenMatch": true,
+    "requireOpenState": true,
+    "requireNonDraft": true,
+    "requireMaintainerCanModifyFalse": true,
+    "requireAutoMergeDisabled": true,
+    "requireSingleCommit": true,
+    "requireExactChangedPathSet": true,
+    "pullRequestUpdateAuthorization": "NOT_GRANTED",
+    "reviewSubmissionAuthorization": "NOT_GRANTED",
+    "autoMergeAuthorization": "NOT_GRANTED",
+    "mergeAuthorization": "NOT_GRANTED"
+  },
+  "authorityCeiling": {
+    "createsOneOpenPullRequest": true,
+    "updatesExistingPullRequest": false,
+    "submitsReview": false,
+    "enablesAutoMerge": false,
+    "mergesPullRequest": false,
+    "modifiesRemoteBranch": false,
+    "modifiesLocalCommit": false,
+    "directMainUpdate": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "requireCurrentRealSubjectsRejectedWithoutCg15Attestation": true,
+    "requireQualificationOnlyRealGithubPullRequest": true,
+    "fixtureIsNotConsumerEvidence": true,
+    "requireQualificationPullRequestCleanup": true,
+    "requireQualificationBranchCleanup": true,
+    "requireExactPrIdentityReadback": true,
+    "requireNegativeMatrix": true,
+    "requireNoConsumerMutation": true,
+    "requireExactCg15SourceBlobs": true
+  }
+}
