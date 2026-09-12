@@ -90,6 +90,22 @@
       "realGithubPullRequestReadback": "PASS",
       "negativeMatrix": "PASS",
       "consumerMutation": false
+    },
+    "finalReplay": {
+      "head": "b062b1c5db578529c18e41c2aca98fb131811b26",
+      "run": 34661643831,
+      "job": 103465192908,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "qualificationPullRequest": 31,
+      "qualificationPullRequestClosed": true,
+      "qualificationPullRequestMerged": false,
+      "fixturePullRequestAttestationId": "b56aa4140a35b5dc77251d5a1724cc987a05657c0923165739e824ce2bcdf749",
+      "realCurrentStateRefusal": "PASS",
+      "realGithubPullRequestReadback": "PASS",
+      "negativeMatrix": "PASS",
+      "qualificationBranchCleanup": "PASS",
+      "consumerMutation": false
     }
   }
 }
