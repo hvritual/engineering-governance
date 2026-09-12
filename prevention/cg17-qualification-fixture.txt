@@ -1,0 +1,3 @@
+qualificationOnly=true
+consumerEvidence=false
+cg17 provider diff readback qualification
