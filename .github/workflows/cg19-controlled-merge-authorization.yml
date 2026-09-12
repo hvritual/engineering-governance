@@ -1,0 +1,227 @@
+name: CG-19 controlled merge authorization qualification
+
+on:
+  push:
+    branches:
+      - cg19/controlled-merge-authorization
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+  checks: read
+  statuses: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  qualify:
+    name: qualify-controlled-merge-authorization
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact CG-18 source authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:prevention/cg18/protocol.json)" = "ea4a1099d54a6bafe1490b7d7fd52b4843f578c7"
+          test "$(git rev-parse HEAD:prevention/cg18/cases.json)" = "2969352b6d7e91dc258e178e070ae8574329b25c"
+          test "$(git rev-parse HEAD:prevention/cg18/review_state.py)" = "51ec0d59cca1faaa1402790582b172e20a8d30eb"
+          test "$(git rev-parse HEAD:prevention/cg18/qualify_pull_request.py)" = "40e1cd6b30bf309ef64810df50223bdc589363a3"
+          python3 - <<'PY'
+          import json
+          assert json.load(open('prevention/cg18/protocol.json'))['status']=='QUALIFIED'
+          PY
+          echo 'CG19_CG18_SOURCE_AUTHORITIES=PASS'
+
+      - name: Qualify exact human-bound merge authorization
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          QUALIFICATION_REPOSITORY: hvritual/engineering-governance
+          QUALIFICATION_PR: '40'
+          QUALIFICATION_BASE_SHA: 3861af38d52a9420d7c6d9039f4605c2861ecb42
+          QUALIFICATION_HEAD_SHA: cb3b1b65c184c7e74a80ba3604e7d2d982465583
+          QUALIFICATION_HEAD_BRANCH: cg19-qualification/merge-authorization
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import copy, hashlib, importlib.util, json, os, subprocess, sys, tempfile
+          from pathlib import Path
+
+          for p in ['prevention/cg17','prevention/cg18','prevention/cg19']:
+              sys.path.insert(0,str(Path(p).resolve()))
+          def loadmod(name,path):
+              spec=importlib.util.spec_from_file_location(name,path)
+              mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod); return mod
+
+          v17=loadmod('v17','prevention/cg17/verify_provider_diff.py')
+          q18=loadmod('q18','prevention/cg18/qualify_pull_request.py')
+          a19=loadmod('a19','prevention/cg19/authorize_merge.py')
+          v19=loadmod('v19','prevention/cg19/verify_authorization.py')
+          p17=json.load(open('prevention/cg17/protocol.json'))
+          p18=json.load(open('prevention/cg18/protocol.json'))
+          p19=json.load(open('prevention/cg19/protocol.json'))
+          c19=json.load(open('prevention/cg19/cases.json'))
+          assert p19['status'] in ('CANDIDATE','QUALIFIED')
+
+          for case in c19['realCurrentStateRefusals']:
+              try: a19.validate_source(p19,case['sourceQualificationAttestation'])
+              except a19.MergeAuthorizationError as exc: assert exc.reason==case['expectedReason'],(case,exc.reason)
+              else: raise AssertionError('real subject unexpectedly CG19-eligible')
+          print('CG19_REAL_CURRENT_STATE_REFUSAL=PASS')
+
+          token=os.environ['GITHUB_TOKEN']
+          repository=os.environ['QUALIFICATION_REPOSITORY']
+          pr_number=int(os.environ['QUALIFICATION_PR'])
+          base_sha=os.environ['QUALIFICATION_BASE_SHA']
+          head_sha=os.environ['QUALIFICATION_HEAD_SHA']
+          head_branch=os.environ['QUALIFICATION_HEAD_BRANCH']
+          clean_url='https://github.com/'+repository+'.git'
+
+          def git(repo,*args,check=True):
+              cp=subprocess.run(['git','-C',str(repo),*args],capture_output=True,text=True)
+              if check and cp.returncode: raise AssertionError((args,cp.stdout,cp.stderr))
+              return cp
+          def digest(value):
+              return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+          def reattest18(att):
+              core={k:v for k,v in att.items() if k not in {'status','decision','qualificationAttestationId'}}
+              att['qualificationAttestationId']=digest(core)
+          def redecision(decision):
+              decision['decisionId']=digest({k:v for k,v in decision.items() if k!='decisionId'})
+
+          with tempfile.TemporaryDirectory() as root:
+              repo=Path(root)/'repo'
+              subprocess.run(['git','clone','-q','--no-hardlinks','.',str(repo)],check=True)
+              git(repo,'remote','set-url','origin',clean_url)
+              git(repo,'fetch','-q','origin','main',head_branch)
+              git(repo,'checkout','-q','-B',head_branch,head_sha)
+              assert git(repo,'status','--porcelain','--untracked-files=all').stdout==''
+              assert git(repo,'ls-remote','--refs','origin','refs/heads/main').stdout.split()[0]==base_sha
+              assert git(repo,'ls-remote','--refs','origin','refs/heads/'+head_branch).stdout.split()[0]==head_sha
+
+              paths=sorted(x for x in git(repo,'diff','--name-only','-z',base_sha,head_sha,'--').stdout.split('\0') if x)
+              assert paths==c19['qualificationFixture']['changedPaths'],paths
+              diff_bytes=subprocess.check_output(['git','-C',str(repo),'diff','--binary','--full-index','--no-ext-diff',base_sha,head_sha,'--'])
+              diff_sha=hashlib.sha256(diff_bytes).hexdigest()
+              fixture_sha=lambda s: hashlib.sha256(s.encode()).hexdigest()
+
+              cg16_core={
+                  'schemaVersion':1,'protocolId':'CG16-CONTROLLED-PULL-REQUEST-CREATION','caseId':'CG19-MERGE-AUTHORIZATION-FIXTURE',
+                  'repository':repository,'provider':'GITHUB','externalExecutor':'TRUSTED_GITHUB_CONNECTOR',
+                  'sourceRemotePublicationAttestationId':fixture_sha('cg19-pub-id'),'sourceRemotePublicationAttestationSha256':fixture_sha('cg19-pub-sha'),
+                  'pullRequestRequestId':fixture_sha('cg19-request-id'),'pullRequestRequestSha256':fixture_sha('cg19-request-sha'),
+                  'externalExecutionReceiptSha256':fixture_sha('cg19-external-receipt'),'pullRequestNumber':pr_number,
+                  'pullRequestNodeId':'qualification-only','pullRequestUrl':'https://github.com/'+repository+'/pull/'+str(pr_number),
+                  'baseBranch':'main','baseSha':base_sha,'headBranch':head_branch,'headSha':head_sha,'changedPaths':paths,
+                  'diffSha256':diff_sha,'verificationClasses':['FIXTURE_MERGE_AUTHORIZATION_CHECK'],'title':'CG-19 qualification fixture',
+                  'bodySha256':fixture_sha('qualificationOnly=true\nconsumerEvidence=false\nCG-19 controlled merge authorization qualification only.'),
+                  'pullRequestUpdateAuthorization':'NOT_GRANTED','reviewSubmissionAuthorization':'NOT_GRANTED','autoMergeAuthorization':'NOT_GRANTED',
+                  'mergeAuthorization':'NOT_GRANTED','directMainUpdate':False,'repositoryAdministration':False,'consumerAdoption':False
+              }
+              cg16={**cg16_core,'status':'PULL_REQUEST_ATTESTED','decision':'CONTROLLED_PULL_REQUEST_CREATION_VERIFIED','pullRequestAttestationId':digest(cg16_core)}
+              cg17=v17.verify(p17,cg16,repo,token)
+              assert cg17['status']=='PROVIDER_DIFF_ATTESTED'
+              cg18=q18.qualify(p18,cg17,token)
+              assert cg18['status']=='PULL_REQUEST_QUALIFIED' and cg18['decision']=='PR_QUALIFIED_FOR_HUMAN_MERGE_REVIEW'
+              assert cg18['qualificationReasons']==[] and cg18['mergeAuthorization']=='NOT_GRANTED'
+
+              human=c19['qualificationFixture']['humanDecision']
+              dcore={
+                  'schemaVersion':1,'decisionType':'HUMAN_MERGE_DECISION','decisionOrigin':human['decisionOrigin'],'action':human['action'],
+                  'authorizer':human['authorizer'],'repository':repository,'pullRequestNumber':pr_number,'baseSha':base_sha,'headSha':head_sha,
+                  'sourceQualificationAttestationId':cg18['qualificationAttestationId'],'mergeMethod':human['mergeMethod'],'nonce':human['nonce'],
+                  'mergeAuthorizationRequested':'GRANTED_ONCE','autoMerge':False,'directMainUpdate':False
+              }
+              decision={**dcore,'decisionId':digest(dcore)}
+              auth=a19.authorize(p19,p18,cg18,decision,token)
+              assert auth['status']=='MERGE_AUTHORIZATION_ATTESTED'
+              assert auth['decision']=='CONTROLLED_MERGE_AUTHORIZATION_VERIFIED'
+              assert auth['mergeAuthorization']=='GRANTED_ONCE' and auth['authorizationUseLimit']==1 and auth['consumptionState']=='NOT_CONSUMED'
+              assert auth['executesMerge'] is False
+              receipt=v19.verify(p19,p18,cg18,decision,auth,token)
+              assert receipt['status']=='MERGE_AUTHORIZATION_VERIFIED'
+              print('CG19_AUTHORIZATION_ID='+auth['authorizationId'])
+              print('CG19_VERIFICATION_ID='+receipt['verificationId'])
+              print('CG19_AUTHORIZER='+auth['authorizer'])
+              print('CG19_MERGE_METHOD='+auth['mergeMethod'])
+              print('CG19_CONTROLLED_AUTHORIZATION=PASS')
+
+              bad=copy.deepcopy(cg18); bad['qualificationAttestationId']='0'*64
+              try: a19.validate_source(p19,bad)
+              except a19.MergeAuthorizationError as exc: assert exc.reason=='CG18_QUALIFICATION_ATTESTATION_ID_MISMATCH'
+              else: raise AssertionError('tampered qualification accepted')
+
+              bad=copy.deepcopy(decision); bad['action']='MERGE_NOW'; redecision(bad)
+              try: a19.authorize(p19,p18,cg18,bad,token)
+              except a19.MergeAuthorizationError as exc: assert exc.reason=='HUMAN_DECISION_ACTION_INVALID'
+              else: raise AssertionError('non-explicit human action accepted')
+
+              bad=copy.deepcopy(decision); bad['headSha']='0'*40; redecision(bad)
+              try: a19.authorize(p19,p18,cg18,bad,token)
+              except a19.MergeAuthorizationError as exc: assert exc.reason=='HUMAN_DECISION_BINDING_MISMATCH'
+              else: raise AssertionError('wrong head binding accepted')
+
+              bad=copy.deepcopy(decision); bad['authorizer']=''; redecision(bad)
+              try: a19.authorize(p19,p18,cg18,bad,token)
+              except a19.MergeAuthorizationError as exc: assert exc.reason=='HUMAN_AUTHORIZER_INVALID'
+              else: raise AssertionError('missing authorizer accepted')
+
+              bad=copy.deepcopy(decision); bad['nonce']='not-a-valid-nonce'; redecision(bad)
+              try: a19.authorize(p19,p18,cg18,bad,token)
+              except a19.MergeAuthorizationError as exc: assert exc.reason=='HUMAN_DECISION_NONCE_INVALID'
+              else: raise AssertionError('invalid nonce accepted')
+
+              bad=copy.deepcopy(decision); bad['mergeMethod']='merge'; redecision(bad)
+              try: a19.authorize(p19,p18,cg18,bad,token)
+              except a19.MergeAuthorizationError as exc: assert exc.reason=='MERGE_METHOD_NOT_ALLOWED'
+              else: raise AssertionError('unauthorized merge method accepted')
+
+              bad=copy.deepcopy(cg18); bad['mergeAuthorization']='GRANTED_ONCE'; reattest18(bad)
+              try: a19.validate_source(p19,bad)
+              except a19.MergeAuthorizationError as exc: assert exc.reason=='SOURCE_MERGE_AUTHORITY_INVALID'
+              else: raise AssertionError('source authority escalation accepted')
+
+              bad=copy.deepcopy(cg18); bad['headSha']='0'*40; reattest18(bad)
+              try: a19.authorize(p19,p18,bad,decision,token)
+              except a19.MergeAuthorizationError as exc: assert exc.reason in {'HUMAN_DECISION_BINDING_MISMATCH','LIVE_HEAD_SHA_MISMATCH'}
+              else: raise AssertionError('live head drift accepted')
+
+              bad=copy.deepcopy(auth); bad['executesMerge']=True; bad['authorizationId']=digest({k:v for k,v in bad.items() if k not in {'status','decision','authorizationId'}})
+              try: v19.verify(p19,p18,cg18,decision,bad,token)
+              except v19.MergeAuthorizationVerificationError as exc: assert exc.reason=='MERGE_EXECUTION_AUTHORITY_FORBIDDEN'
+              else: raise AssertionError('merge execution escalation accepted')
+              print('CG19_NEGATIVE_MATRIX=PASS')
+
+              if p19['status']=='QUALIFIED':
+                  deleted=git(repo,'push','-q','origin',':refs/heads/'+head_branch,check=False)
+                  assert deleted.returncode==0,(deleted.stdout,deleted.stderr)
+                  assert git(repo,'ls-remote','--refs','origin','refs/heads/'+head_branch).stdout.strip()==''
+                  assert git(repo,'ls-remote','--refs','origin','refs/heads/main').stdout.split()[0]==base_sha
+                  print('CG19_QUALIFICATION_BRANCH_CLEANUP=PASS')
+          print('CG19_CONSUMER_MUTATION=NONE')
+          PY
+
+      - name: Stable asset syntax and governance cleanliness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool prevention/cg19/protocol.json >/dev/null
+          python3 -m json.tool prevention/cg19/cases.json >/dev/null
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          for p in ['prevention/cg19/authorize_merge.py','prevention/cg19/verify_authorization.py']:
+              ast.parse(Path(p).read_text(),filename=p)
+          PY
+          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=no)"
+          echo 'CG19_STABLE_ASSETS=PASS'
