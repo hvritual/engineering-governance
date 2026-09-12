@@ -63,6 +63,23 @@
       "providerDiffReconciliation": "PASS",
       "negativeMatrix": "PASS",
       "consumerMutation": false
+    },
+    "finalReplay": {
+      "head": "c207aae6dc2c68177d9078e94e8b954584a1a546",
+      "run": 34677611794,
+      "job": 103510181995,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "providerDiffAttestationId": "aba8a5b1660faefae331545ebe54404b288f6a88804ad4f3e1ec534be8db9507",
+      "providerDiffSha256": "1afd73d4b0060227de73ff1655ffe403e984370109e3c023cdebe2cfcc7b26b6",
+      "localDiffSha256": "4928c5e291b5d918bc0db8d563d5147f349bbf4266d66a66e8f1ad89315028d1",
+      "semanticHeadTree": "454af6617a1a58809561efef75b66d69b0056714",
+      "providerDiffReconciliation": "PASS",
+      "negativeMatrix": "PASS",
+      "qualificationBranchCleanup": "PASS",
+      "qualificationPullRequestClosed": true,
+      "qualificationPullRequestMerged": false,
+      "consumerMutation": false
     }
   }
 }
