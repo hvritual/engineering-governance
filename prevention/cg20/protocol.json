@@ -116,6 +116,29 @@
       "postMergeNegativeMatrix": "PASS",
       "mainUnchanged": "PASS",
       "consumerMutation": false
+    },
+    "finalReplay": {
+      "head": "20659650d4cb254ccda659692d6b81d587dcebb8",
+      "run": 34688646572,
+      "job": 103539952642,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "executionAttestationId": "f52a9118d229fb4c3a6aea390fecf323acb3591a884e33bb0f13f991a0c11620",
+      "mergeSha": "079a14ecfb40574c25b182118428c33b82da7082",
+      "mergeTreeSha": "0641540d442c7b08b8e832ba913fd8f9a7b0caa8",
+      "authorizationConsumption": "CONSUMED_BY_SUCCESSFUL_MERGE",
+      "replayFailClosed": "PASS",
+      "postMergeNegativeMatrix": "PASS",
+      "mainUnchanged": "PASS",
+      "consumerMutation": false
+    },
+    "cleanup": {
+      "head": "65b4af8d72bf71f8fc5420e8346005fd65043d37",
+      "run": 34688702370,
+      "job": 103540098047,
+      "result": "SUCCESS",
+      "qualificationBranchesDeleted": true,
+      "mainUnchanged": "PASS"
     }
   }
 }
