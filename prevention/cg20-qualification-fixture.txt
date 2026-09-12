@@ -1,0 +1,3 @@
+qualificationOnly=true
+consumerEvidence=false
+CG-20 controlled merge execution qualification only.
