@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG16-CONTROLLED-PULL-REQUEST-CREATION",
+  "realCurrentStateRefusals": [
+    {
+      "caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER",
+      "sourcePublicationAttestation": null,
+      "currentDisposition": "STOP_AND_INVESTIGATE",
+      "expectedReason": "CG15_PUBLICATION_ATTESTATION_REQUIRED"
+    },
+    {
+      "caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT",
+      "sourcePublicationAttestation": null,
+      "currentDisposition": "NO_CHANGE_REQUIRED",
+      "expectedReason": "CG15_PUBLICATION_ATTESTATION_REQUIRED"
+    },
+    {
+      "caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL",
+      "sourcePublicationAttestation": null,
+      "currentDisposition": "NO_ACTION",
+      "expectedReason": "CG15_PUBLICATION_ATTESTATION_REQUIRED"
+    }
+  ],
+  "qualificationFixture": {
+    "qualificationOnly": true,
+    "consumerEvidence": false,
+    "provider": "GITHUB",
+    "repository": "hvritual/engineering-governance",
+    "baseBranch": "main",
+    "workBranchPrefix": "cg16-qualification/pr-",
+    "allowedPaths": ["prevention/cg15/cases.json"],
+    "verificationClasses": ["FIXTURE_BEHAVIOR_CHECK", "FIXTURE_STATIC_CHECK"],
+    "commitMessage": "cg16 fixture: package attested PR change",
+    "pullRequestTitlePrefix": "CG-16 qualification fixture",
+    "pullRequestBody": "qualificationOnly=true\nconsumerEvidence=false\nCG-16 real GitHub PR mechanics qualification only.",
+    "cleanupRequired": true
+  }
+}
