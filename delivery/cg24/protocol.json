@@ -96,6 +96,16 @@
       "negativeMatrix": "PASS",
       "consumerMutation": false
     },
+    "finalReplay": {
+      "head": "af19de3ee2db1f49624b649584bd009cf3c77737",
+      "run": 34703845697,
+      "job": 103580219546,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "planVerification": "PASS",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
+    },
     "harnessCorrections": [
       {"run": 34703755445, "result": "FAILURE", "reason": "qualification workflow referenced two pre-publication CG-23 blob identities; corrected to canonical main blob identities without changing plan semantics"},
       {"run": 34703795494, "result": "FAILURE", "reason": "protocol source authority metadata was corrected first, while the still-old workflow assertion failed before substantive plan verification; workflow then reconciled to the same canonical CG-23 identities"}
