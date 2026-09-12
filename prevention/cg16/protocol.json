@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG16-CONTROLLED-PULL-REQUEST-CREATION",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "sourceAuthorities": [
     {"path": "prevention/cg15/protocol.json", "blob": "0dfab6fd9d75ba2aefa21d23b0e3a53089458f5c"},
     {"path": "prevention/cg15/cases.json", "blob": "61f34e01cbbfdeaf72d1eab433c4e08a5849d1fd"},
@@ -68,6 +68,28 @@
       "job": 103463875842,
       "result": "PROVIDER_WRITE_BLOCKED",
       "finding": "GitHub Actions GITHUB_TOKEN had contents:write and pull-requests:write but POST /pulls returned HTTP 403. The qualification branch cleanup succeeded. CG-16 therefore separates side-effect-free request construction from the trusted external GitHub executor instead of weakening repository settings or embedding a broader credential."
+    },
+    "requestBuilder": {
+      "head": "3b816850086fa8ed55f1af7c12f9e4c337da7df6",
+      "run": 34661410967,
+      "job": 103464511714,
+      "result": "SUCCESS",
+      "requestBuilderSideEffectFree": "PASS",
+      "externalExecutor": "TRUSTED_GITHUB_CONNECTOR",
+      "consumerMutation": false
+    },
+    "primary": {
+      "head": "8b1fed94dbe134a2912e621a2feb5132bd591c4f",
+      "run": 34661583636,
+      "job": 103465017825,
+      "result": "SUCCESS",
+      "qualificationPullRequest": 31,
+      "decision": "CONTROLLED_PULL_REQUEST_CREATION_VERIFIED",
+      "fixturePullRequestAttestationId": "b56aa4140a35b5dc77251d5a1724cc987a05657c0923165739e824ce2bcdf749",
+      "realCurrentStateRefusal": "PASS",
+      "realGithubPullRequestReadback": "PASS",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
     }
   }
 }
