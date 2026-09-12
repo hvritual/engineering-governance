@@ -1,0 +1,108 @@
+name: CG-20 post-merge execution qualification
+
+on:
+  push:
+    branches:
+      - cg20/controlled-merge-execution
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+  CG20_AUTHORIZATION_B64: eyJhdXRob3JpemF0aW9uSWQiOiIzZWYzMmI5MDJhNDgyMzE2NGFlNmQ5ZGEwNjc3NGUxNGIzYzYyOWNkZDhmMGMxM2M1MjM5YzM0NjBhNzJiZGJhIiwiYXV0aG9yaXphdGlvblVzZUxpbWl0IjoxLCJhdXRob3JpemVyIjoiQ0cyMF9RVUFMSUZJQ0FUSU9OX0hVTUFOIiwiYXV0b01lcmdlQXV0aG9yaXphdGlvbiI6Ik5PVF9HUkFOVEVEIiwiYmFzZUJyYW5jaCI6ImNnMjAtcXVhbGlmaWNhdGlvbi9iYXNlIiwiYmFzZVNoYSI6IjkxNmIzMzYwOGQ2Y2MwZGMyZWI0ODU0OWU4MmIwNzJiMTE0NDczYTIiLCJjYXNlSWQiOiJDRzIwLU1FUkdFLUVYRUNVVElPTi1GSVhUVVJFIiwiY2hhbmdlZFBhdGhzIjpbInByZXZlbnRpb24vY2cyMC1xdWFsaWZpY2F0aW9uLWZpeHR1cmUudHh0Il0sImNvbnN1bWVyQWRvcHRpb24iOmZhbHNlLCJjb25zdW1wdGlvblN0YXRlIjoiTk9UX0NPTlNVTUVEIiwiZGVjaXNpb24iOiJDT05UUk9MTEVEX01FUkdFX0FVVEhPUklaQVRJT05fVkVSSUZJRUQiLCJkZWNpc2lvbk5vbmNlIjoiMWU5YjE3Y2RhMGQxZDM5MTc3Y2RmNjQyNTZmZjY3NDYxZGVmMjdiMzFjZDRhNTMzNTBiNzliYTlmZDQ1NGVjMiIsImRpcmVjdE1haW5VcGRhdGUiOmZhbHNlLCJleGVjdXRlc01lcmdlIjpmYWxzZSwiZXhwZWN0ZWRIZWFkU2hhIjoiYzQ3NjY2YTVjZDY5NWRkMjY3NzNiZWY1MjcxMjljMzU2NjYxNTNhYSIsImhlYWRCcmFuY2giOiJjZzIwLXF1YWxpZmljYXRpb24vaGVhZCIsImhlYWRTaGEiOiJjNDc2NjZhNWNkNjk1ZGQyNjc3M2JlZjUyNzEyOWMzNTY2NjE1M2FhIiwiaHVtYW5EZWNpc2lvbklkIjoiZTllNmRiMjdkOWJiZmNjMDZhOTczZDBhYTExOGUzZTM4NDQ0Nzk2ZDk5YzQ1YWRiZjE5YzM3N2M3ZmZhNjM2NSIsImh1bWFuRGVjaXNpb25TaGEyNTYiOiJmYzMzYTc4MDNjZmZiYTkzMTEwMTE5N2Y0OTRkN2M0ZGEyNWJkODFlMDAxNGJjMzVmMjBjZDgxNTM0ZWNjNmJiIiwibGl2ZVF1YWxpZmljYXRpb25TbmFwc2hvdFNoYTI1NiI6IjAwNDBiODlmNGUxZTFhNTFjZjNiOGZlZGUwMDZmOTU5OTJkMzNmNzZhNGVmZTFjNzc5OTEwODg5NjNlNmRiN2YiLCJtZXJnZUF1dGhvcml6YXRpb24iOiJHUkFOVEVEX09OQ0UiLCJtZXJnZU1ldGhvZCI6InNxdWFzaCIsIm9uZVRpbWVFbmZvcmNlbWVudEJvdW5kYXJ5IjoiRE9XTlNUUkVBTV9NRVJHRV9FWEVDVVRPUiIsInByb3RvY29sSWQiOiJDRzE5LUNPTlRST0xMRUQtTUVSR0UtQVVUSE9SSVpBVElPTiIsInByb3ZpZGVyIjoiR0lUSFVCIiwicHVsbFJlcXVlc3ROdW1iZXIiOjQzLCJwdWxsUmVxdWVzdFVwZGF0ZUF1dGhvcml6YXRpb24iOiJOT1RfR1JBTlRFRCIsInJlcG9zaXRvcnkiOiJodnJpdHVhbC9lbmdpbmVlcmluZy1nb3Zlcm5hbmNlIiwicmVwb3NpdG9yeUFkbWluaXN0cmF0aW9uIjpmYWxzZSwicmVwb3NpdG9yeUJsb2NraW5nIjpmYWxzZSwicmV2aWV3U3VibWlzc2lvbkF1dGhvcml6YXRpb24iOiJOT1RfR1JBTlRFRCIsInNjaGVtYVZlcnNpb24iOjEsInNvdXJjZVF1YWxpZmljYXRpb25BdHRlc3RhdGlvbklkIjoiY2U4MGJmOGMzMzBlZWI5MTFmMTlmMDFhODViZTU4ZTBkYjFkODkwNDBkNWE3ZTVkYTE1MzY3YzVmNzg1OTc5NiIsInNvdXJjZVF1YWxpZmljYXRpb25BdHRlc3RhdGlvblNoYTI1NiI6ImU0OTRhN2ZlNjk5NWIyNDI0NTYzMzNiMjkxOTU1NzYzOWJkZmEzY2Q3ZWQyMGFlOTE0ZjQ1YjM4MzE0NjAxYTkiLCJzdGF0dXMiOiJNRVJHRV9BVVRIT1JJWkFUSU9OX0FUVEVTVEVEIiwidmVyaWZpY2F0aW9uQ2xhc3NlcyI6WyJGSVhUVVJFX01FUkdFX0VYRUNVVElPTl9DSEVDSyJdfQ==
+  CG20_REQUEST_B64: eyJhdXRob3JpemF0aW9uVXNlTGltaXQiOjEsImF1dG9NZXJnZSI6ZmFsc2UsImJhc2VCcmFuY2giOiJjZzIwLXF1YWxpZmljYXRpb24vYmFzZSIsImJhc2VTaGEiOiI5MTZiMzM2MDhkNmNjMGRjMmViNDg1NDllODJiMDcyYjExNDQ3M2EyIiwiY2FzZUlkIjoiQ0cyMC1NRVJHRS1FWEVDVVRJT04tRklYVFVSRSIsImNoYW5nZWRQYXRocyI6WyJwcmV2ZW50aW9uL2NnMjAtcXVhbGlmaWNhdGlvbi1maXh0dXJlLnR4dCJdLCJjb25zdW1lckFkb3B0aW9uIjpmYWxzZSwiZGVjaXNpb24iOiJDT05UUk9MTEVEX01FUkdFX0VYRUNVVElPTl9SRVFVRVNUX1ZFUklGSUVEIiwiZGlyZWN0TWFpblVwZGF0ZSI6ZmFsc2UsImV4cGVjdGVkSGVhZFNoYSI6ImM0NzY2NmE1Y2Q2OTVkZDI2NzczYmVmNTI3MTI5YzM1NjY2MTUzYWEiLCJleHRlcm5hbEV4ZWN1dG9yIjoiVFJVU1RFRF9HSVRIVUJfQ09OTkVDVE9SIiwiaGVhZEJyYW5jaCI6ImNnMjAtcXVhbGlmaWNhdGlvbi9oZWFkIiwiaGVhZFNoYSI6ImM0NzY2NmE1Y2Q2OTVkZDI2NzczYmVmNTI3MTI5YzM1NjY2MTUzYWEiLCJsaXZlUHJlZmxpZ2h0U2hhMjU2IjoiNWNiNDY0NDc1MWMzMjgzMGMyNzBlZTZlYTg1Y2FjNjJkMTNmNjU2ZDg4Njc3NTMxYjU2Zjc2NTM5NDIwNGQ1YyIsIm1lcmdlQXV0aG9yaXphdGlvbiI6IkdSQU5URURfT05DRSIsIm1lcmdlTWV0aG9kIjoic3F1YXNoIiwib3BlcmF0aW9uIjoiTUVSR0VfUFVMTF9SRVFVRVNUX09OQ0UiLCJwcm90b2NvbElkIjoiQ0cyMC1DT05UUk9MTEVELU1FUkdFLUVYRUNVVElPTiIsInByb3ZpZGVyIjoiR0lUSFVCIiwicHJvdmlkZXJDb21wYXJlQW5kU3dhcCI6IkVYUEVDVEVEX0hFQURfU0hBIiwicHJvdmlkZXJTaW5nbGVVc2VCb3VuZGFyeSI6IlBSX09QRU5fVU5NRVJHRURfVE9fTUVSR0VEX1RSQU5TSVRJT04iLCJwdWxsUmVxdWVzdE51bWJlciI6NDMsInJlcG9zaXRvcnkiOiJodnJpdHVhbC9lbmdpbmVlcmluZy1nb3Zlcm5hbmNlIiwicmVwb3NpdG9yeUFkbWluaXN0cmF0aW9uIjpmYWxzZSwicmVxdWVzdElkIjoiYWI4ZWMxZGYxYzFjNGJjMGYwZGY2YjU1NzY2ZGM3MjE5ZjUwOTJiOWQwYWJkMzU4OGZmNDY5MjIzMWEyYmM3NCIsInNjaGVtYVZlcnNpb24iOjEsInNvdXJjZUF1dGhvcml6YXRpb25JZCI6IjNlZjMyYjkwMmE0ODIzMTY0YWU2ZDlkYTA2Nzc0ZTE0YjNjNjI5Y2RkOGYwYzEzYzUyMzljMzQ2MGE3MmJkYmEiLCJzb3VyY2VBdXRob3JpemF0aW9uU2hhMjU2IjoiNDk0NGI1MGRhNDU3NDNhZDlkYTYzZjY2OTlmZDE4ZGFlMzdhNjBiMDU2MGFjMjE4N2FjOTRlM2U1ODk0MGMyZiIsInNvdXJjZUNvbnN1bXB0aW9uU3RhdGUiOiJOT1RfQ09OU1VNRUQiLCJzdGF0dXMiOiJNRVJHRV9FWEVDVVRJT05fUkVRVUVTVF9SRUFEWSIsInZlcmlmaWNhdGlvbkNsYXNzZXMiOlsiRklYVFVSRV9NRVJHRV9FWEVDVVRJT05fQ0hFQ0siXX0=
+  CG20_RECEIPT_B64: eyJleGVjdXRvciI6IlRSVVNURURfR0lUSFVCX0NPTk5FQ1RPUiIsImV4cGVjdGVkSGVhZFNoYSI6ImM0NzY2NmE1Y2Q2OTVkZDI2NzczYmVmNTI3MTI5YzM1NjY2MTUzYWEiLCJtZXJnZU1ldGhvZCI6InNxdWFzaCIsIm1lcmdlU2hhIjoiMDc5YTE0ZWNmYjQwNTc0YzI1YjE4MjExODQyOGMzM2I4MmRhNzA4MiIsIm1lcmdlZCI6dHJ1ZSwicHJvdmlkZXJNZXNzYWdlIjoiUHVsbCBSZXF1ZXN0IHN1Y2Nlc3NmdWxseSBtZXJnZWQiLCJwdWxsUmVxdWVzdE51bWJlciI6NDMsInJlY2VpcHRJZCI6ImZmMTUyYzYwOGJmMWNlMzA4OWYxNDE3MzgwODhmNTJhMzU3YTkwYTg4OTU0YjQzYmI1MGYwYjZiMjg2OGFjYzEiLCJyZXBvc2l0b3J5IjoiaHZyaXR1YWwvZW5naW5lZXJpbmctZ292ZXJuYW5jZSIsInJlcXVlc3RJZCI6ImFiOGVjMWRmMWMxYzRiYzBmMGRmNmI1NTc2NmRjNzIxOWY1MDkyYjlkMGFiZDM1ODhmZjQ2OTIyMzFhMmJjNzQiLCJzY2hlbWFWZXJzaW9uIjoxLCJzb3VyY2VBdXRob3JpemF0aW9uSWQiOiIzZWYzMmI5MDJhNDgyMzE2NGFlNmQ5ZGEwNjc3NGUxNGIzYzYyOWNkZDhmMGMxM2M1MjM5YzM0NjBhNzJiZGJhIn0=
+
+jobs:
+  qualify:
+    name: qualify-post-merge-consumption
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify post-merge execution and one-time consumption
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, copy, importlib.util, json, os, sys, tempfile
+          from pathlib import Path
+          sys.path.insert(0,str(Path('prevention/cg20').resolve()))
+          def loadmod(name,path):
+              spec=importlib.util.spec_from_file_location(name,path)
+              mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod); return mod
+          p20m=loadmod('p20m','prevention/cg20/prepare_merge.py')
+          v20=loadmod('v20','prevention/cg20/verify_merge.py')
+          protocol=json.load(open('prevention/cg20/protocol.json'))
+          auth=json.loads(base64.b64decode(os.environ['CG20_AUTHORIZATION_B64']))
+          request=json.loads(base64.b64decode(os.environ['CG20_REQUEST_B64']))
+          receipt=json.loads(base64.b64decode(os.environ['CG20_RECEIPT_B64']))
+          token=os.environ['GITHUB_TOKEN']
+
+          out=v20.verify(protocol,auth,request,receipt,token)
+          assert out['status']=='MERGE_EXECUTION_ATTESTED'
+          assert out['decision']=='CONTROLLED_MERGE_EXECUTION_VERIFIED'
+          assert out['authorizationConsumption']=='CONSUMED_BY_SUCCESSFUL_MERGE'
+          assert out['authorizationUseCount']==1 and out['consumptionState']=='CONSUMED'
+          assert out['mergeSha']=='079a14ecfb40574c25b182118428c33b82da7082'
+          assert out['postMergeBaseSha']==out['mergeSha']
+          assert out['mergeParentSha']=='916b33608d6cc0dc2eb48549e82b072b114473a2'
+          assert out['mergeTreeSha']==out['headTreeSha']
+          print('CG20_EXECUTION_ATTESTATION_ID='+out['executionAttestationId'])
+          print('CG20_MERGE_SHA='+out['mergeSha'])
+          print('CG20_MERGE_TREE='+out['mergeTreeSha'])
+          print('CG20_AUTHORIZATION_CONSUMPTION='+out['authorizationConsumption'])
+          print('CG20_POST_MERGE_VERIFY=PASS')
+
+          try:
+              p20m.prepare(protocol,auth,token)
+          except p20m.MergeExecutionPreparationError as exc:
+              assert exc.reason=='PULL_REQUEST_ALREADY_MERGED',(exc.reason,exc.detail)
+          else:
+              raise AssertionError('same authorization unexpectedly prepared after successful merge')
+          print('CG20_REPLAY_FAIL_CLOSED=PASS')
+
+          bad=copy.deepcopy(receipt); bad['requestId']='0'*64
+          bad['receiptId']=v20.canonical_digest(v20.receipt_core(bad))
+          try: v20.verify(protocol,auth,request,bad,token)
+          except v20.MergeExecutionVerificationError as exc: assert exc.reason=='RECEIPT_REQUEST_BINDING_MISMATCH'
+          else: raise AssertionError('wrong request receipt accepted')
+
+          bad=copy.deepcopy(receipt); bad['mergeSha']='0'*40
+          bad['receiptId']=v20.canonical_digest(v20.receipt_core(bad))
+          try: v20.verify(protocol,auth,request,bad,token)
+          except v20.MergeExecutionVerificationError as exc: assert exc.reason=='PROVIDER_MERGE_SHA_MISMATCH',(exc.reason,exc.detail)
+          else: raise AssertionError('wrong provider merge sha accepted')
+          print('CG20_POST_MERGE_NEGATIVE_MATRIX=PASS')
+
+          reader=v20.GitHubReader(token)
+          main=reader.get('/repos/hvritual/engineering-governance/git/ref/heads/main')
+          assert (main.get('object') or {}).get('sha')=='916b33608d6cc0dc2eb48549e82b072b114473a2',main
+          print('CG20_MAIN_UNCHANGED=PASS')
+          print('CG20_CONSUMER_MUTATION=NONE')
+          PY
+
+      - name: Stable asset syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool prevention/cg20/protocol.json >/dev/null
+          python3 -m json.tool prevention/cg20/cases.json >/dev/null
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          for p in ['prevention/cg20/prepare_merge.py','prevention/cg20/verify_merge.py']:
+              ast.parse(Path(p).read_text(),filename=p)
+          PY
+          git diff --exit-code
+          echo 'CG20_STABLE_ASSETS=PASS'
