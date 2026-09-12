@@ -1,0 +1,151 @@
+name: CG-24 Biz plan catalog controlled plan qualification
+
+on:
+  push:
+    branches:
+      - cg24/biz-plan-catalog-controlled-plan
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-controlled-plan:
+    runs-on: ubuntu-24.04
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout exact Biz consumer baseline
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: hvritual/biz
+          ref: bd4a155b6fc27b3a0c2b2ee03a40bdb1ba59e2c9
+          path: _consumer/biz
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify exact CG-23 authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:corpus/cg23/biz-plan-catalog/case.json)" = "2bc4cfb7494b45e245de736843ba0019212ab848"
+          test "$(git rev-parse HEAD:corpus/cg23/biz-plan-catalog/qualify.py)" = "dc13907bb0eee6109091468783379827f9e16b0a"
+          test "$(git rev-parse HEAD:corpus/cg23/biz-plan-catalog/README.md)" = "bf3f1c1bc8a550db840aff3c8794b21199784608"
+          python3 - <<'PY'
+          import json
+          case=json.load(open('corpus/cg23/biz-plan-catalog/case.json'))
+          assert case['status']=='QUALIFIED'
+          assert case['decisionBoundary']['nextDisposition']=='CONTROLLED_PLAN_REQUIRED'
+          print('CG24_CG23_SOURCE_AUTHORITIES=PASS')
+          PY
+
+      - name: Read live Biz issue
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' \
+            https://api.github.com/repos/hvritual/biz/issues/62 > /tmp/biz-issue-62.json
+          python3 - <<'PY'
+          import json
+          issue=json.load(open('/tmp/biz-issue-62.json'))
+          assert issue['number']==62
+          assert issue['state']=='open'
+          print('CG24_BIZ_ISSUE_62_OPEN=PASS')
+          PY
+
+      - name: Qualify bounded controlled plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 delivery/cg24/verify_plan.py \
+            --protocol delivery/cg24/protocol.json \
+            --plan delivery/cg24/plan.json \
+            --cg23-case corpus/cg23/biz-plan-catalog/case.json \
+            --biz-root _consumer/biz \
+            --issue-json /tmp/biz-issue-62.json | tee /tmp/cg24-receipt.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('/tmp/cg24-receipt.json'))
+          assert r['status']=='CONTROLLED_PLAN_QUALIFIED'
+          assert r['decision']=='PLAN_READY_FOR_CONTROLLED_IMPLEMENTATION'
+          assert r['planId']=='2d8687fec7e7181b839447e0cad33a291927865d4422d3838d5c032eb3f6aeaa'
+          assert r['operationId']=='commercial.plan.catalog'
+          assert r['httpBinding']=='GET /v1/platform/plans'
+          assert r['executionAuthorized'] is False
+          assert r['consumerMutation'] is False
+          assert r['frameworkModificationAuthorized'] is False
+          assert r['nextDisposition']=='CONTROLLED_IMPLEMENTATION_AUTHORIZATION_REQUIRED'
+          print('CG24_POSITIVE=PASS')
+          PY
+
+      - name: Fail-closed matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import copy, importlib.util, json
+          from pathlib import Path
+          p=Path('delivery/cg24/verify_plan.py')
+          spec=importlib.util.spec_from_file_location('cg24v',p)
+          v=importlib.util.module_from_spec(spec); spec.loader.exec_module(v)
+          protocol=json.load(open('delivery/cg24/protocol.json'))
+          plan=json.load(open('delivery/cg24/plan.json'))
+          case=json.load(open('corpus/cg23/biz-plan-catalog/case.json'))
+          issue=json.load(open('/tmp/biz-issue-62.json'))
+          root=Path('_consumer/biz')
+
+          def replan(x):
+              x['planId']=v.digest(v.plan_core(x))
+          def expect(pr,pl,iss,reason):
+              try: v.verify(pr,pl,case,root,iss)
+              except v.PlanVerificationError as exc: assert exc.reason==reason,(reason,exc.reason)
+              else: raise AssertionError('negative accepted: '+reason)
+
+          badp=copy.deepcopy(protocol); badp['consumer']['baseSha']='0'*40
+          expect(badp,plan,issue,'CONSUMER_BASE_SHA_MISMATCH')
+
+          badi=copy.deepcopy(issue); badi['state']='closed'
+          expect(protocol,plan,badi,'SOURCE_ISSUE_NOT_OPEN')
+
+          bad=copy.deepcopy(plan); bad['projection']['newAuthoritativeStore']=True; replan(bad)
+          expect(protocol,bad,issue,'SECOND_CATALOG_SOT_FORBIDDEN')
+
+          bad=copy.deepcopy(plan); bad['generatedPolicy']['handEdit']=True; replan(bad)
+          expect(protocol,bad,issue,'GENERATED_HAND_EDIT_FORBIDDEN')
+
+          bad=copy.deepcopy(plan); bad['authority']['authorizesPatch']=True; replan(bad)
+          expect(protocol,bad,issue,'PLAN_AUTHORITY_ESCALATION')
+
+          bad=copy.deepcopy(plan); bad['authority']['modifiesFramework']=True; replan(bad)
+          expect(protocol,bad,issue,'PLAN_AUTHORITY_ESCALATION')
+
+          bad=copy.deepcopy(plan); bad['verificationClasses'].remove('CG24_PAGINATION_DETERMINISM'); replan(bad)
+          expect(protocol,bad,issue,'VERIFICATION_CLASS_SET_MISMATCH')
+
+          bad=copy.deepcopy(plan); bad['surface']['permissions']=['platform.plan.manage']; replan(bad)
+          expect(protocol,bad,issue,'CATALOG_PERMISSION_MISMATCH')
+
+          print('CG24_NEGATIVE_MATRIX=PASS')
+          PY
+
+      - name: Stable asset syntax and no consumer mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool delivery/cg24/protocol.json >/dev/null
+          python3 -m json.tool delivery/cg24/plan.json >/dev/null
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          ast.parse(Path('delivery/cg24/verify_plan.py').read_text(), filename='delivery/cg24/verify_plan.py')
+          PY
+          test "$(git -C _consumer/biz rev-parse HEAD)" = "bd4a155b6fc27b3a0c2b2ee03a40bdb1ba59e2c9"
+          test -z "$(git -C _consumer/biz status --porcelain)"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          echo 'CG24_CONSUMER_MUTATION=NONE'
+          echo 'CG24_GOVERNANCE_TRACKED_MUTATION=NONE'
