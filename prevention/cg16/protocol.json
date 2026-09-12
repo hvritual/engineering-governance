@@ -8,14 +8,16 @@
     {"path": "prevention/cg15/publish_branch.py", "blob": "0b935fc0e748e5fbac75a0aac0ca4f2c6dd4d897"},
     {"path": "prevention/cg15/verify_publication.py", "blob": "9aa3b0783c793ebe9d0409ce253533135347acd3"}
   ],
-  "principle": "Only a CG-15-attested remote branch may create one exact open non-draft pull request to the attested base, and PR creation grants no merge authority.",
+  "principle": "Only a CG-15-attested remote branch may produce one exact pull-request creation request; a trusted external GitHub executor performs that single write, and CG-16 then re-reads and attests the resulting PR identity without granting merge authority.",
   "pullRequest": {
     "requiredSourceProtocol": "CG15-CONTROLLED-REMOTE-BRANCH-PUBLICATION",
     "requiredSourceStatus": "REMOTE_BRANCH_PUBLICATION_ATTESTED",
     "requiredSourceDecision": "CONTROLLED_REMOTE_BRANCH_PUBLICATION_VERIFIED",
     "provider": "GITHUB",
     "baseBranch": "main",
-    "pullRequestAuthority": "SINGLE_OPEN_PR_CREATE_ONLY",
+    "requestAuthority": "SINGLE_OPEN_PR_CREATE_REQUEST_ONLY",
+    "externalExecutor": "TRUSTED_GITHUB_CONNECTOR",
+    "requestBuilderSideEffectFree": true,
     "requireGitHubRepositorySlug": true,
     "requireSameRepository": true,
     "requireExactRemoteBase": true,
@@ -35,7 +37,9 @@
     "mergeAuthorization": "NOT_GRANTED"
   },
   "authorityCeiling": {
-    "createsOneOpenPullRequest": true,
+    "buildsOnePullRequestCreateRequest": true,
+    "executesProviderWriteInsideGovernanceCode": false,
+    "externalTrustedExecutorRequired": true,
     "updatesExistingPullRequest": false,
     "submitsReview": false,
     "enablesAutoMerge": false,
@@ -51,11 +55,19 @@
     "requireCurrentRealSubjectsRejectedWithoutCg15Attestation": true,
     "requireQualificationOnlyRealGithubPullRequest": true,
     "fixtureIsNotConsumerEvidence": true,
+    "requireTrustedExternalExecutor": true,
     "requireQualificationPullRequestCleanup": true,
     "requireQualificationBranchCleanup": true,
     "requireExactPrIdentityReadback": true,
     "requireNegativeMatrix": true,
     "requireNoConsumerMutation": true,
-    "requireExactCg15SourceBlobs": true
+    "requireExactCg15SourceBlobs": true,
+    "discovery": {
+      "head": "ce3770d3691720a275f5999f9becfae9b533a864",
+      "run": 34661195304,
+      "job": 103463875842,
+      "result": "PROVIDER_WRITE_BLOCKED",
+      "finding": "GitHub Actions GITHUB_TOKEN had contents:write and pull-requests:write but POST /pulls returned HTTP 403. The qualification branch cleanup succeeded. CG-16 therefore separates side-effect-free request construction from the trusted external GitHub executor instead of weakening repository settings or embedding a broader credential."
+    }
   }
 }
