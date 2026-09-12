@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG19-CONTROLLED-MERGE-AUTHORIZATION",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "sourceAuthorities": [
     {"path": "prevention/cg18/protocol.json", "blob": "ea4a1099d54a6bafe1490b7d7fd52b4843f578c7"},
     {"path": "prevention/cg18/cases.json", "blob": "2969352b6d7e91dc258e178e070ae8574329b25c"},
@@ -61,6 +61,20 @@
     "temporaryPullRequestCloseUnmergedRequired": true,
     "explicitQualificationHumanDecisionRequired": true,
     "negativeMatrixRequired": true,
-    "consumerMutation": false
+    "consumerMutation": false,
+    "primary": {
+      "head": "083e5d13cc1611f50cadb23d700ea01eed1e04bf",
+      "run": 34682373411,
+      "job": 103523240180,
+      "result": "SUCCESS",
+      "qualificationPullRequest": 40,
+      "authorizationId": "7aea922dc42276bfcfac4f676108b86776fc36b1cdeff16f4213b7843ee2a423",
+      "verificationId": "38b724a57492d42bbb088be4f16c48937d8d4ef471bcc4149af98a610830aa25",
+      "authorizer": "CG19_QUALIFICATION_HUMAN",
+      "mergeMethod": "squash",
+      "controlledAuthorization": "PASS",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
+    }
   }
 }
