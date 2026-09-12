@@ -136,13 +136,12 @@ def live_preflight(protocol, source, token, api_url="https://api.github.com"):
     for _ in range(6):
         pr = client.get(f"/repos/{repository}/pulls/{number}")
         require(isinstance(pr, dict) and pr.get("number") == number, "PULL_REQUEST_RESPONSE_INVALID")
+        if pr.get("merged") is True:
+            raise MergeExecutionPreparationError("PULL_REQUEST_ALREADY_MERGED")
         if pr.get("mergeable") is not None:
             break
         time.sleep(1)
     require(pr.get("mergeable") is not None, "PULL_REQUEST_MERGEABILITY_UNKNOWN")
-
-    if pr.get("merged") is True:
-        raise MergeExecutionPreparationError("PULL_REQUEST_ALREADY_MERGED")
     require(pr.get("state") == "open", "PULL_REQUEST_NOT_OPEN")
     require(pr.get("draft") is False, "DRAFT_PULL_REQUEST_FORBIDDEN")
     if protocol["executionPolicy"].get("requireMergeableTrue"):
