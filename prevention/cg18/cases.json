@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG18-PULL-REQUEST-QUALIFICATION-DECISION",
+  "realCurrentStateRefusals": [
+    {"caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER", "sourceProviderDiffAttestation": null, "expectedReason": "CG17_PROVIDER_DIFF_ATTESTATION_REQUIRED"},
+    {"caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT", "sourceProviderDiffAttestation": null, "expectedReason": "CG17_PROVIDER_DIFF_ATTESTATION_REQUIRED"},
+    {"caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL", "sourceProviderDiffAttestation": null, "expectedReason": "CG17_PROVIDER_DIFF_ATTESTATION_REQUIRED"}
+  ],
+  "qualificationFixture": {
+    "qualificationOnly": true,
+    "consumerEvidence": false,
+    "repository": "hvritual/engineering-governance",
+    "pullRequestNumber": 37,
+    "baseBranch": "main",
+    "baseSha": "29cfd59e6c45c17baca4159c9ce97bdfb0baa7b9",
+    "headBranch": "cg18-qualification/merge-review",
+    "headSha": "90b8c3badd8e2d27e61bb48ef80e5fa172d55664",
+    "changedPaths": ["prevention/cg18-qualification-fixture.txt"],
+    "minimumApprovals": 0
+  }
+}
