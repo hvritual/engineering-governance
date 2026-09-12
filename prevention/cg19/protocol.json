@@ -75,6 +75,28 @@
       "controlledAuthorization": "PASS",
       "negativeMatrix": "PASS",
       "consumerMutation": false
+    },
+    "qualifiedReplay": {
+      "head": "70dfd87125303368bfb9309d1600afb3edfbc465",
+      "run": 34682410750,
+      "job": 103523340668,
+      "protocolStatus": "QUALIFIED",
+      "authorizationId": "7aea922dc42276bfcfac4f676108b86776fc36b1cdeff16f4213b7843ee2a423",
+      "verificationId": "38b724a57492d42bbb088be4f16c48937d8d4ef471bcc4149af98a610830aa25",
+      "controlledAuthorization": "PASS",
+      "negativeMatrix": "PASS",
+      "result": "QUALIFICATION_PASS_CLEANUP_HARNESS_AUTH_FAILURE",
+      "finding": "All authorization and fail-closed checks passed. The workflow conclusion failed only after qualification because the temporary branch deletion used unauthenticated git push after checkout credentials were deliberately removed. Cleanup was moved to an isolated least-privilege GitHub API job instead of broadening stable authorization code."
+    },
+    "cleanup": {
+      "head": "33e34eb52bb34b949d366af72998a8e54dcbf7c5",
+      "run": 34682471177,
+      "job": 103523508091,
+      "result": "SUCCESS",
+      "qualificationBranchCleanup": "PASS",
+      "mainUnchanged": "PASS",
+      "qualificationPullRequestClosed": true,
+      "qualificationPullRequestMerged": false
     }
   }
 }
