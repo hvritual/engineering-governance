@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG22-TERMINAL-PROOF-OF-CHANGE",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "sourceAuthorities": [
     {"path": "delivery/cg21/protocol.json", "blob": "bf980728ab63b62e270acd1544cd4d83121707c5"},
     {"path": "delivery/cg21/cases.json", "blob": "1bbf845a1506abd81d7e522c7b3ed049941190d0"},
@@ -65,6 +65,21 @@
     "requiresCg21CompletionVerification": true,
     "negativeMatrixRequired": true,
     "consumerMutation": false,
-    "mainMutation": false
+    "mainMutation": false,
+    "primary": {
+      "head": "ffefed58084d840b96416ac67641e3b5fbf6f989",
+      "run": 34692925413,
+      "job": 103551283575,
+      "result": "SUCCESS",
+      "completionAttestationId": "680d420eac830359d6e2b038e04d7d63c58ab684634fdf8f1e0c5a995715c267",
+      "completionVerificationId": "18709dbf5f463ba0b78ce58c33eccd59cbbd2d29df38b6ab90e77d22ccf364ec",
+      "proofId": "07e46bf85541257427357252d969975db0018e4d02609e394111a739c0e81037",
+      "proofVerificationId": "de31867061de731e12f924c79cd347baebfbade8ca3cf60cbb14ed4441be60d6",
+      "terminalState": "TERMINAL_COMPLETE_NO_ACTION",
+      "realCurrentStateRefusal": "PASS",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false,
+      "mainMutation": false
+    }
   }
 }
