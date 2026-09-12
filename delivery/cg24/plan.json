@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG24-REAL-CONSUMER-CONTROLLED-PLAN",
+  "sourceCase": "CG23-BIZ-PLAN-CATALOG-DISCOVERABILITY",
+  "consumer": {
+    "repository": "hvritual/biz",
+    "baseSha": "bd4a155b6fc27b3a0c2b2ee03a40bdb1ba59e2c9",
+    "baseTree": "bb1908d9235845f6694fdae9277bb7f81726cfad",
+    "sourceIssue": 62
+  },
+  "decision": "PLAN_READY_FOR_CONTROLLED_IMPLEMENTATION",
+  "executionAuthorized": false,
+  "surface": {
+    "operationId": "commercial.plan.catalog",
+    "useCase": "list_plan_catalog",
+    "httpMethod": "GET",
+    "httpPath": "/v1/platform/plans",
+    "tenantRequired": false,
+    "authentication": ["api-key", "web-session"],
+    "permissions": ["platform.plan.read"],
+    "transaction": "read_only",
+    "idempotency": "none"
+  },
+  "pagination": {
+    "cursorField": "after_plan_code",
+    "ordering": ["plan_code ASC"],
+    "defaultPageSize": 20,
+    "maximumPageSize": 100,
+    "nextCursor": "last returned plan_code when an additional row exists",
+    "requirements": ["stable order", "no duplicate plan_code", "no skipped plan_code across adjacent pages"]
+  },
+  "projection": {
+    "sourceOfTruth": "existing plan aggregate facts",
+    "authoritativeTables": ["biz_commercial_plans", "biz_commercial_plan_versions"],
+    "identityTable": "biz_commercial_plans",
+    "detailTable": "biz_commercial_plan_versions",
+    "selection": "one catalog entry per plan_code using the authoritative plan head/latest version relation",
+    "newAuthoritativeStore": false,
+    "browserCatalog": false,
+    "subscriptionInference": false,
+    "preservePublishedVersionImmutability": true
+  },
+  "handwrittenPaths": [
+    "contracts/proto/commercial/v1/plan.proto",
+    "internal/commercial/ports/plan.go",
+    "internal/commercial/infrastructure/persistence/plan.go",
+    "internal/commercial/application/planmanagement/internal/usecase/dto.go",
+    "internal/commercial/application/planmanagement/internal/usecase/service.go",
+    "internal/commercial/application/planmanagement/internal/usecase/catalog_test.go",
+    "internal/commercial/infrastructure/persistence/plan_catalog_test.go"
+  ],
+  "generatedOwnership": [
+    "contracts/gen/commercial/v1/**",
+    "contracts/generated/**",
+    "internal/commercial/application/zz_yunka_*",
+    "internal/commercial/application/planmanagement/zz_yunka_*"
+  ],
+  "generatedPolicy": {
+    "handEdit": false,
+    "canonicalGenerationRequired": true,
+    "secondGenerationZeroTrackedDrift": true,
+    "actualGeneratedDiffMustBeReconciledBeforeAuthorization": true
+  },
+  "verificationClasses": [
+    "CG24_SOURCE_EVIDENCE_FRESHNESS",
+    "CG24_CONTRACT_CATALOG_SURFACE",
+    "CG24_GENERATION_DETERMINISM",
+    "CG24_YUNKA_CHECK_READ_ONLY",
+    "CG24_GENERATED_OPERATION_IDENTITY",
+    "CG24_USECASE_CATALOG_BEHAVIOR",
+    "CG24_MYSQL84_AUTHORITATIVE_CATALOG_QUERY",
+    "CG24_PLATFORM_WEB_SESSION_AUTHORIZATION",
+    "CG24_PLATFORM_PERMISSION_DENIAL",
+    "CG24_TENANT_SESSION_DENIAL",
+    "CG24_API_KEY_REGRESSION",
+    "CG24_PAGINATION_DETERMINISM",
+    "CG24_NO_SECOND_CATALOG_SOT",
+    "CG24_EXISTING_PLAN_VERSION_REGRESSION",
+    "CG24_PUBLISHED_VERSION_IMMUTABILITY_REGRESSION",
+    "CG24_CANONICAL_EXECUTOR_RUNTIME"
+  ],
+  "commands": [
+    "yunka generate",
+    "yunka generate",
+    "yunka check",
+    "go test ./internal/commercial/...",
+    "run focused MySQL 8.4 plan catalog qualification",
+    "run platform REST/gRPC authorization and runtime qualification"
+  ],
+  "forbidden": [
+    "hand-edit generated artifacts",
+    "new plan catalog authority table",
+    "browser-local plan catalog",
+    "infer plan catalog from tenant subscriptions",
+    "browser-held or synthesized platform API key",
+    "change Yunka framework without separately qualified generic framework pressure",
+    "weaken existing plan lifecycle or published-version immutability",
+    "direct main update"
+  ],
+  "authority": {
+    "planningOnly": true,
+    "createsConsumerBranch": false,
+    "modifiesConsumer": false,
+    "authorizesPatch": false,
+    "authorizesCommit": false,
+    "authorizesPush": false,
+    "authorizesPullRequest": false,
+    "authorizesMerge": false,
+    "modifiesFramework": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "planId": "2d8687fec7e7181b839447e0cad33a291927865d4422d3838d5c032eb3f6aeaa"
+}
