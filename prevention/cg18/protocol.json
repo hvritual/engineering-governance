@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG18-PULL-REQUEST-QUALIFICATION-DECISION",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "sourceAuthorities": [
     {"path": "prevention/cg17/protocol.json", "blob": "265ef99a51bfc52af09c98ffa7e70543d6d7081e"},
     {"path": "prevention/cg17/cases.json", "blob": "b8f744fe9cf1b7b389fcf3828c6de7df02219364"},
@@ -60,6 +60,21 @@
     "temporaryBranchCleanupRequired": true,
     "temporaryPullRequestCloseUnmergedRequired": true,
     "negativeMatrixRequired": true,
-    "consumerMutation": false
+    "consumerMutation": false,
+    "primary": {
+      "head": "8d4d31589ad6140c16f541073c4beed3b62dbcf8",
+      "run": 34681123199,
+      "job": 103519834380,
+      "result": "SUCCESS",
+      "qualificationPullRequest": 37,
+      "qualificationAttestationId": "e20636642c9a5781d1ae8516def3e2309948eb0b1f2411ef6efcc72cac7039e8",
+      "approvalCount": 0,
+      "unresolvedReviewThreads": 0,
+      "checkRunCount": 0,
+      "commitStatusCount": 0,
+      "decision": "PR_QUALIFIED_FOR_HUMAN_MERGE_REVIEW",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
+    }
   }
 }
