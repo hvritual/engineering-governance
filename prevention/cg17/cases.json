@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG17-PROVIDER-DIFF-READBACK",
+  "realCurrentStateRefusals": [
+    {"caseId": "CG03-IOT-SQLITE-STARTUP-LOCK-ORDER", "sourcePullRequestAttestation": null, "expectedReason": "CG16_PULL_REQUEST_ATTESTATION_REQUIRED"},
+    {"caseId": "CG08-BIZ-RUNTIME-GATE-SOT-DRIFT", "sourcePullRequestAttestation": null, "expectedReason": "CG16_PULL_REQUEST_ATTESTATION_REQUIRED"},
+    {"caseId": "CG10-INCOMPLETE-EVIDENCE-CONTROL", "sourcePullRequestAttestation": null, "expectedReason": "CG16_PULL_REQUEST_ATTESTATION_REQUIRED"}
+  ],
+  "qualificationFixture": {
+    "qualificationOnly": true,
+    "consumerEvidence": false,
+    "repository": "hvritual/engineering-governance",
+    "baseBranch": "main",
+    "baseSha": "88533aefcb0d5baa121df967d55fd4273410505a",
+    "headBranch": "cg17-qualification/provider-diff",
+    "headSha": "413efcd7f2a19d549e97a24f7a342e9533e90ff0",
+    "changedPaths": ["prevention/cg17-qualification-fixture.txt"]
+  }
+}
