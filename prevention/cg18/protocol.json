@@ -75,6 +75,25 @@
       "decision": "PR_QUALIFIED_FOR_HUMAN_MERGE_REVIEW",
       "negativeMatrix": "PASS",
       "consumerMutation": false
+    },
+    "finalReplay": {
+      "head": "441ded07396a33595153a1ef442d9d66c0f7f817",
+      "run": 34681156015,
+      "job": 103519922014,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "qualificationPullRequest": 37,
+      "qualificationAttestationId": "e20636642c9a5781d1ae8516def3e2309948eb0b1f2411ef6efcc72cac7039e8",
+      "approvalCount": 0,
+      "unresolvedReviewThreads": 0,
+      "checkRunCount": 0,
+      "commitStatusCount": 0,
+      "decision": "PR_QUALIFIED_FOR_HUMAN_MERGE_REVIEW",
+      "negativeMatrix": "PASS",
+      "qualificationBranchCleanup": "PASS",
+      "qualificationPullRequestClosed": true,
+      "qualificationPullRequestMerged": false,
+      "consumerMutation": false
     }
   }
 }
