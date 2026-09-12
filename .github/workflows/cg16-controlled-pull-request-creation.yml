@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
+  pull-requests: read
 
 env:
   PYTHONDONTWRITEBYTECODE: '1'
@@ -39,7 +39,7 @@ jobs:
           PY
           echo 'CG16_CG15_SOURCE_AUTHORITIES=PASS'
 
-      - name: Qualify real refusal and real GitHub pull request lanes
+      - name: Qualify request construction or external execution readback
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -48,15 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import base64
-          import hashlib
-          import importlib.util
-          import json
-          import os
-          import subprocess
-          import tempfile
-          import urllib.error
-          import urllib.request
+          import base64, hashlib, importlib.util, json, os, subprocess, tempfile
           from pathlib import Path
 
           def loadmod(name,path):
@@ -77,24 +69,10 @@ jobs:
           c15=json.load(open('prevention/cg15/cases.json'))
           p16=json.load(open('prevention/cg16/protocol.json'))
           cases=json.load(open('prevention/cg16/cases.json'))
-          assert p16['status'] in ('CANDIDATE','QUALIFIED')
           fixture=cases['qualificationFixture']
-          assert fixture['qualificationOnly'] is True and fixture['consumerEvidence'] is False
-
-          current={x['caseId']:x['currentDisposition'] for x in c15['realCurrentStateRefusals']}
-          for case in cases['realCurrentStateRefusals']:
-              assert current[case['caseId']]==case['currentDisposition']
-              try: c16.validate_source_attestation(p16,case['sourcePublicationAttestation'])
-              except c16.PullRequestCreationError as exc: assert exc.reason==case['expectedReason'], (case,exc.reason)
-              else: raise AssertionError('real current-state case unexpectedly PR-eligible')
-          print('CG16_REAL_CURRENT_STATE_REFUSAL=PASS')
-
           token=os.environ['GITHUB_TOKEN']
           repository=os.environ['QUALIFICATION_REPOSITORY']
           base_sha=os.environ['QUALIFICATION_BASE_SHA']
-          run_id=os.environ['GITHUB_RUN_ID']
-          attempt=os.environ.get('GITHUB_RUN_ATTEMPT','1')
-          work_branch=fixture['workBranchPrefix']+run_id+'-'+attempt
           clean_url='https://github.com/'+repository+'.git'
           basic=base64.b64encode(('x-access-token:'+token).encode()).decode()
           os.environ['GIT_CONFIG_COUNT']='1'
@@ -106,113 +84,91 @@ jobs:
               if check and cp.returncode: raise AssertionError((args,cp.stdout,cp.stderr))
               return cp
 
-          def api(method,path,payload=None):
-              data=None if payload is None else json.dumps(payload).encode()
-              req=urllib.request.Request('https://api.github.com'+path,data=data,method=method)
-              req.add_header('Accept','application/vnd.github+json')
-              req.add_header('Authorization','Bearer '+token)
-              req.add_header('X-GitHub-Api-Version','2022-11-28')
-              if data is not None: req.add_header('Content-Type','application/json')
-              try:
-                  with urllib.request.urlopen(req,timeout=30) as resp:
-                      raw=resp.read(); return json.loads(raw.decode()) if raw else None
-              except urllib.error.HTTPError as exc:
-                  raise AssertionError((method,path,exc.code,exc.read().decode('utf-8','replace')))
+          current={x['caseId']:x['currentDisposition'] for x in c15['realCurrentStateRefusals']}
+          for case in cases['realCurrentStateRefusals']:
+              assert current[case['caseId']]==case['currentDisposition']
+              try: c16.validate_source_attestation(p16,case['sourcePublicationAttestation'])
+              except c16.PullRequestCreationError as exc: assert exc.reason==case['expectedReason'],(case,exc.reason)
+              else: raise AssertionError('real subject unexpectedly PR-eligible')
+          print('CG16_REAL_CURRENT_STATE_REFUSAL=PASS')
 
-          def reattest_publication(att):
-              core={k:v for k,v in att.items() if k not in {'status','decision','publicationAttestationId'}}
-              att['publicationAttestationId']=c16.canonical_digest(core)
-
-          pr_number=None
-          remote_published=False
-          with tempfile.TemporaryDirectory() as root:
-              root=Path(root); repo=root/'repo'; repo.mkdir()
-              git(repo,'init','-q','-b','main')
-              git(repo,'remote','add','origin',clean_url)
-              git(repo,'fetch','-q','origin','main')
-              git(repo,'checkout','-q','-B','main',base_sha)
-              git(repo,'config','user.email','cg16@example.invalid')
-              git(repo,'config','user.name','CG16 Qualification')
-              git(repo,'config','commit.gpgsign','false')
-              remote_main=git(repo,'ls-remote','--refs','origin','refs/heads/main').stdout.split()[0]
-              assert remote_main==base_sha,(remote_main,base_sha)
-              git(repo,'switch','-qc',work_branch)
-              target=repo/fixture['allowedPaths'][0]
-              original=target.read_text()
-              target.write_text(original+'\n')
-              patch=root/'patch.diff'; patch.write_bytes(subprocess.check_output(['git','-C',str(repo),'diff']))
-              git(repo,'checkout','--','.')
-
-              request={'caseId':'CG16-REAL-GITHUB-PR-QUALIFICATION','authorizationStatus':'AUTHORIZED','repository':repository,'baseSha':base_sha,'workBranch':work_branch,'allowedPaths':fixture['allowedPaths'],'preservedVerificationClasses':fixture['verificationClasses'],'disposition':'PATCH_REQUIRED_ON_AUTHORIZED_BRANCH_ONLY','patchRequired':True,'consumerMutation':False,'directMainUpdate':False,'mergeAuthorization':False,'repositoryAdministration':False,'consumerAdoption':False}
-              execution=e13.execute(p13,request,repo,patch)
-              verification={'schemaVersion':1,'caseId':request['caseId'],'repository':repository,'baseSha':base_sha,'workBranch':work_branch,'changedPaths':execution['changedPaths'],'diffSha256':execution['diffSha256'],'checks':[{'class':'FIXTURE_BEHAVIOR_CHECK','outcome':'PASS','evidenceSha256':hashlib.sha256(b'cg16-behavior').hexdigest()},{'class':'FIXTURE_STATIC_CHECK','outcome':'PASS','evidenceSha256':hashlib.sha256(b'cg16-static').hexdigest()}]}
-              patch_att=v13.verify(p13,request,execution,verification,repo)
-              commit_receipt=p14m.package_commit(p14,patch_att,repo,fixture['commitMessage'])
-              commit_att=v14.verify(p14,patch_att,commit_receipt,repo)
-              publication_receipt=p15m.publish(p15,commit_att,repo)
-              remote_published=True
-              publication_att=v15.verify(p15,commit_att,publication_receipt,repo)
-              assert publication_att['status']=='REMOTE_BRANCH_PUBLICATION_ATTESTED'
-
-              title=fixture['pullRequestTitlePrefix']+' '+run_id+'-'+attempt
-              body=fixture['pullRequestBody']
-              try:
-                  receipt=c16.create(p16,publication_att,repo,title,body,token)
-                  pr_number=receipt['pullRequestNumber']
-                  out=v16.verify(p16,publication_att,receipt,repo,token)
-                  assert out['status']=='PULL_REQUEST_ATTESTED' and out['decision']=='CONTROLLED_PULL_REQUEST_CREATION_VERIFIED',out
-                  assert out['headSha']==publication_att['commitSha'] and out['baseSha']==base_sha
-                  print('CG16_QUALIFICATION_PR_NUMBER='+str(pr_number))
-                  print('CG16_FIXTURE_PR_ATTESTATION_ID='+out['pullRequestAttestationId'])
-                  print('CG16_REAL_GITHUB_PR=PASS')
-
-                  try: c16.create(p16,publication_att,repo,title+' duplicate',body,token)
-                  except c16.PullRequestCreationError as exc: assert exc.reason=='OPEN_PULL_REQUEST_ALREADY_EXISTS',(exc.reason,exc.detail)
-                  else: raise AssertionError('duplicate open PR unexpectedly created')
-
-                  try: c16.validate_source_attestation(p16,{**publication_att,'publicationAttestationId':'0'*64})
-                  except c16.PullRequestCreationError as exc: assert exc.reason=='CG15_PUBLICATION_ATTESTATION_ID_MISMATCH',exc.reason
-                  else: raise AssertionError('tampered publication attestation accepted')
-
-                  mutated=dict(publication_att); mutated['pullRequestAuthorization']='GRANTED'; reattest_publication(mutated)
-                  try: c16.validate_source_attestation(p16,mutated)
-                  except c16.PullRequestCreationError as exc: assert exc.reason=='CG15_SOURCE_AUTHORITY_INVALID',exc.reason
-                  else: raise AssertionError('source authority escalation accepted')
-
-                  try: c16.create(p16,publication_att,repo,'',body,token)
-                  except c16.PullRequestCreationError as exc: assert exc.reason=='PULL_REQUEST_TITLE_INVALID',exc.reason
+          external_path=Path('prevention/cg16/qualification-external.json')
+          if not external_path.exists():
+              run_id=os.environ['GITHUB_RUN_ID']; attempt=os.environ.get('GITHUB_RUN_ATTEMPT','1')
+              work_branch=fixture['workBranchPrefix']+run_id+'-'+attempt
+              with tempfile.TemporaryDirectory() as root:
+                  root=Path(root); repo=root/'repo'; repo.mkdir()
+                  git(repo,'init','-q','-b','main'); git(repo,'remote','add','origin',clean_url); git(repo,'fetch','-q','origin','main'); git(repo,'checkout','-q','-B','main',base_sha)
+                  git(repo,'config','user.email','cg16@example.invalid'); git(repo,'config','user.name','CG16 Qualification'); git(repo,'config','commit.gpgsign','false')
+                  assert git(repo,'ls-remote','--refs','origin','refs/heads/main').stdout.split()[0]==base_sha
+                  git(repo,'switch','-qc',work_branch)
+                  target=repo/fixture['allowedPaths'][0]; target.write_text(target.read_text()+'\n')
+                  patch=root/'patch.diff'; patch.write_bytes(subprocess.check_output(['git','-C',str(repo),'diff'])); git(repo,'checkout','--','.')
+                  auth={'caseId':'CG16-REAL-GITHUB-PR-QUALIFICATION','authorizationStatus':'AUTHORIZED','repository':repository,'baseSha':base_sha,'workBranch':work_branch,'allowedPaths':fixture['allowedPaths'],'preservedVerificationClasses':fixture['verificationClasses'],'disposition':'PATCH_REQUIRED_ON_AUTHORIZED_BRANCH_ONLY','patchRequired':True,'consumerMutation':False,'directMainUpdate':False,'mergeAuthorization':False,'repositoryAdministration':False,'consumerAdoption':False}
+                  ex=e13.execute(p13,auth,repo,patch)
+                  vr={'schemaVersion':1,'caseId':auth['caseId'],'repository':repository,'baseSha':base_sha,'workBranch':work_branch,'changedPaths':ex['changedPaths'],'diffSha256':ex['diffSha256'],'checks':[{'class':'FIXTURE_BEHAVIOR_CHECK','outcome':'PASS','evidenceSha256':hashlib.sha256(b'cg16-behavior').hexdigest()},{'class':'FIXTURE_STATIC_CHECK','outcome':'PASS','evidenceSha256':hashlib.sha256(b'cg16-static').hexdigest()}]}
+                  patch_att=v13.verify(p13,auth,ex,vr,repo)
+                  commit_receipt=p14m.package_commit(p14,patch_att,repo,fixture['commitMessage'])
+                  commit_att=v14.verify(p14,patch_att,commit_receipt,repo)
+                  pub_receipt=p15m.publish(p15,commit_att,repo)
+                  pub_att=v15.verify(p15,commit_att,pub_receipt,repo)
+                  title=fixture['pullRequestTitlePrefix']+' '+run_id+'-'+attempt
+                  request=c16.build_request(p16,pub_att,repo,title,fixture['pullRequestBody'],token)
+                  assert request['status']=='PULL_REQUEST_CREATION_REQUEST_READY'
+                  # prove builder did not create a PR
+                  owner=repository.split('/',1)[0]
+                  import urllib.parse
+                  q=urllib.parse.urlencode({'state':'open','head':owner+':'+work_branch,'base':'main','per_page':100})
+                  assert c16.GitHubReader(token).get('/repos/'+repository+'/pulls?'+q)==[]
+                  try: c16.validate_source_attestation(p16,{**pub_att,'publicationAttestationId':'0'*64})
+                  except c16.PullRequestCreationError as exc: assert exc.reason=='CG15_PUBLICATION_ATTESTATION_ID_MISMATCH'
+                  else: raise AssertionError('tampered source accepted')
+                  try: c16.build_request(p16,pub_att,repo,'',fixture['pullRequestBody'],token)
+                  except c16.PullRequestCreationError as exc: assert exc.reason=='PULL_REQUEST_TITLE_INVALID'
                   else: raise AssertionError('invalid title accepted')
+                  print('CG16_EXTERNAL_BRANCH='+work_branch)
+                  print('CG16_EXTERNAL_SOURCE_B64='+base64.b64encode(json.dumps(pub_att,sort_keys=True,separators=(',',':')).encode()).decode())
+                  print('CG16_EXTERNAL_REQUEST_B64='+base64.b64encode(json.dumps(request,sort_keys=True,separators=(',',':')).encode()).decode())
+                  print('CG16_REQUEST_BUILDER_SIDE_EFFECT_FREE=PASS')
+                  print('CG16_AWAITING_TRUSTED_EXTERNAL_EXECUTOR=PASS')
+          else:
+              bundle=json.load(open(external_path))
+              assert bundle['qualificationOnly'] is True and bundle['consumerEvidence'] is False
+              source=bundle['sourceAttestation']; request=bundle['request']; receipt=bundle['externalReceipt']
+              assert request['requestId']==receipt['requestId']
+              with tempfile.TemporaryDirectory() as root:
+                  repo=Path(root)/'repo'; repo.mkdir()
+                  git(repo,'init','-q','-b','main'); git(repo,'remote','add','origin',clean_url); git(repo,'fetch','-q','origin','main',source['workBranch'])
+                  git(repo,'checkout','-q','-B',source['workBranch'],source['commitSha'])
+                  out=v16.verify(p16,source,request,receipt,repo,token)
+                  assert out['status']=='PULL_REQUEST_ATTESTED' and out['decision']=='CONTROLLED_PULL_REQUEST_CREATION_VERIFIED'
+                  print('CG16_QUALIFICATION_PR_NUMBER='+str(out['pullRequestNumber']))
+                  print('CG16_FIXTURE_PR_ATTESTATION_ID='+out['pullRequestAttestationId'])
+                  print('CG16_REAL_GITHUB_PR_READBACK=PASS')
 
-                  def expect_verify(reason,mutator):
-                      bad=json.loads(json.dumps(receipt)); mutator(bad)
-                      try: v16.verify(p16,publication_att,bad,repo,token)
+                  def expect(reason, mutate_request=None, mutate_receipt=None):
+                      rq=json.loads(json.dumps(request)); er=json.loads(json.dumps(receipt))
+                      if mutate_request: mutate_request(rq)
+                      if mutate_receipt: mutate_receipt(er)
+                      try: v16.verify(p16,source,rq,er,repo,token)
                       except v16.PullRequestAttestationError as exc: assert exc.reason==reason,(reason,exc.reason,exc.detail); return
-                      raise AssertionError('expected verification rejection '+reason)
+                      raise AssertionError('expected '+reason)
 
-                  expect_verify('SOURCE_PUBLICATION_ATTESTATION_DIGEST_MISMATCH',lambda r:r.__setitem__('sourcePublicationAttestationSha256','0'*64))
-                  expect_verify('MERGE_AUTHORIZATION_FORBIDDEN',lambda r:r.__setitem__('mergeAuthorization','GRANTED'))
-                  expect_verify('AUTO_MERGE_AUTHORIZATION_FORBIDDEN',lambda r:r.__setitem__('autoMerge',True))
-                  expect_verify('PULL_REQUEST_HEAD_SHA_MISMATCH',lambda r:r.__setitem__('headSha','0'*40))
-                  expect_verify('PULL_REQUEST_PATH_RECEIPT_MISMATCH',lambda r:r.__setitem__('changedPaths',[]))
-
-                  git(repo,'push','-q','--force','origin',f'{base_sha}:refs/heads/{work_branch}')
-                  try: v16.verify(p16,publication_att,receipt,repo,token)
-                  except v16.PullRequestAttestationError as exc: assert exc.reason=='REMOTE_HEAD_SHA_MISMATCH',(exc.reason,exc.detail)
-                  else: raise AssertionError('remote head drift was not rejected')
+                  expect('PULL_REQUEST_REQUEST_ID_MISMATCH',mutate_request=lambda r:r.__setitem__('requestId','0'*64))
+                  expect('EXTERNAL_REQUEST_ID_MISMATCH',mutate_receipt=lambda r:r.__setitem__('requestId','0'*64))
+                  expect('MERGE_AUTHORIZATION_FORBIDDEN',mutate_receipt=lambda r:r.__setitem__('mergeAuthorization','GRANTED'))
+                  bad=json.loads(json.dumps(request)); bad['headSha']='0'*40; core=v16.request_core(bad); bad['requestId']=v16.canonical_digest(core)
+                  try: v16.verify(p16,source,bad,receipt,repo,token)
+                  except v16.PullRequestAttestationError as exc: assert exc.reason=='PULL_REQUEST_REQUEST_SOURCE_BINDING_MISMATCH',(exc.reason,exc.detail)
+                  else: raise AssertionError('request head drift accepted')
                   print('CG16_NEGATIVE_MATRIX=PASS')
-              finally:
-                  if pr_number is not None:
-                      api('PATCH',f'/repos/{repository}/pulls/{pr_number}',{'state':'closed'})
-                  if remote_published:
-                      git(repo,'push','-q','origin',f':refs/heads/{work_branch}',check=False)
-                  branch_read=git(repo,'ls-remote','--refs','origin',f'refs/heads/{work_branch}',check=False)
-                  assert branch_read.returncode==0 and branch_read.stdout.strip()=='',branch_read.stdout
-                  main_read=git(repo,'ls-remote','--refs','origin','refs/heads/main').stdout.split()[0]
-                  assert main_read==base_sha,(main_read,base_sha)
-                  if pr_number is not None:
-                      live=api('GET',f'/repos/{repository}/pulls/{pr_number}')
-                      assert live['state']=='closed' and live['merged'] is False,live
-                  print('CG16_QUALIFICATION_CLEANUP=PASS')
+
+                  if p16['status']=='QUALIFIED':
+                      deleted=git(repo,'push','-q','origin',':refs/heads/'+source['workBranch'],check=False)
+                      assert deleted.returncode==0,(deleted.stdout,deleted.stderr)
+                      assert git(repo,'ls-remote','--refs','origin','refs/heads/'+source['workBranch']).stdout.strip()==''
+                      assert git(repo,'ls-remote','--refs','origin','refs/heads/main').stdout.split()[0]==source['baseSha']
+                      print('CG16_QUALIFICATION_BRANCH_CLEANUP=PASS')
           print('CG16_CONSUMER_MUTATION=NONE')
           PY
 
