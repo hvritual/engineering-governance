@@ -1,0 +1,3 @@
+qualificationOnly=true
+consumerEvidence=false
+cg18 pull request qualification decision
