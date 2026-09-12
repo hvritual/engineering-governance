@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "caseId": "CG23-BIZ-PLAN-CATALOG-DISCOVERABILITY",
+  "status": "QUALIFIED",
+  "classification": "REAL_CONSUMER_MISSING_AUTHORITATIVE_DISCOVERY_SURFACE",
+  "origin": {
+    "repository": "hvritual/biz",
+    "issue": 62,
+    "issueStateRequired": "open"
+  },
+  "consumerBaseline": {
+    "branch": "main",
+    "commit": "bd4a155b6fc27b3a0c2b2ee03a40bdb1ba59e2c9",
+    "tree": "bb1908d9235845f6694fdae9277bb7f81726cfad"
+  },
+  "authoritativeFiles": {
+    "planContract": {
+      "path": "contracts/proto/commercial/v1/plan.proto",
+      "gitBlobSha": "16fe2514ad293310a9d3ef5b14fe861be2eb03e4"
+    },
+    "operationPlans": {
+      "path": "contracts/generated/operation-plans.json",
+      "gitBlobSha": "27738cc17acc981b3f71c76d86da727cef380543"
+    }
+  },
+  "existingSurface": {
+    "operationId": "commercial.plan.list",
+    "useCase": "list_plan_versions",
+    "httpMethod": "GET",
+    "httpPath": "/v1/platform/plans/{plan_code}/versions",
+    "requiresKnownPlanCode": true,
+    "authentication": ["api-key", "web-session"],
+    "permissions": ["platform.plan.read"]
+  },
+  "missingSurface": {
+    "capability": "platform plan catalog discovery",
+    "requiredHttpMethod": "GET",
+    "requiredHttpPath": "/v1/platform/plans",
+    "requiredTenantlessPlatformRead": true,
+    "requiredAuthoritativeSource": "current plan/version facts",
+    "forbiddenWorkarounds": [
+      "browser-local plan catalog",
+      "tenant-subscription inference as plan authority",
+      "browser-held or synthesized platform API key"
+    ]
+  },
+  "qualifiedInvariant": "When a platform UI must discover backend-owned business identities, discovery must be exposed by an authenticated and authorized authoritative backend read surface; the browser must not manufacture a second catalog source of truth.",
+  "decisionBoundary": {
+    "consumerProblemMustBeCurrent": true,
+    "frameworkDefectClaimed": false,
+    "consumerPatchAuthorized": false,
+    "consumerBranchCreationAuthorized": false,
+    "consumerPullRequestAuthorized": false,
+    "nextDisposition": "CONTROLLED_PLAN_REQUIRED"
+  },
+  "qualification": {
+    "required": true,
+    "head": "44a30e70129eb04980880ccc49a5094728eb2e96",
+    "run": 34697528734,
+    "job": 103563467263,
+    "result": "SUCCESS",
+    "issueOpen": "PASS",
+    "exactConsumerBase": "PASS",
+    "exactAuthoritativeBlobs": "PASS",
+    "existingVersionListSurface": "PASS",
+    "missingPlanCatalogSurface": "PROVEN",
+    "negativeMatrix": "PASS",
+    "consumerMutation": false,
+    "governanceMainMutationDuringQualification": false
+  }
+}
