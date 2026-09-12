@@ -1,0 +1,204 @@
+name: CG-17 provider diff readback qualification
+
+on:
+  push:
+    branches:
+      - cg17/provider-diff-readback
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  qualify:
+    name: qualify-provider-diff-readback
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact CG-16 source authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:prevention/cg16/protocol.json)" = "38a3703293f98a3e3b0042a776015b6dc33a46e1"
+          test "$(git rev-parse HEAD:prevention/cg16/cases.json)" = "9eebb31c66d47fd02994387160355b58607ce357"
+          test "$(git rev-parse HEAD:prevention/cg16/create_pull_request.py)" = "5c4d398051647cd9478ed258b938b200b0e73abf"
+          test "$(git rev-parse HEAD:prevention/cg16/verify_pull_request.py)" = "6917886473ee498fcb1138529c556cd50dca65f6"
+          python3 - <<'PY'
+          import json
+          assert json.load(open('prevention/cg16/protocol.json'))['status']=='QUALIFIED'
+          PY
+          echo 'CG17_CG16_SOURCE_AUTHORITIES=PASS'
+
+      - name: Qualify provider diff identity reconciliation
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          QUALIFICATION_REPOSITORY: hvritual/engineering-governance
+          QUALIFICATION_PR: '34'
+          QUALIFICATION_BASE_SHA: 88533aefcb0d5baa121df967d55fd4273410505a
+          QUALIFICATION_HEAD_SHA: 413efcd7f2a19d549e97a24f7a342e9533e90ff0
+          QUALIFICATION_HEAD_BRANCH: cg17-qualification/provider-diff
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, hashlib, importlib.util, json, os, subprocess, sys, tempfile
+          from pathlib import Path
+
+          sys.path.insert(0,str(Path('prevention/cg17').resolve()))
+          def loadmod(name,path):
+              spec=importlib.util.spec_from_file_location(name,path)
+              mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod); return mod
+
+          v16=loadmod('v16','prevention/cg16/verify_pull_request.py')
+          v17=loadmod('v17','prevention/cg17/verify_provider_diff.py')
+          d17=loadmod('d17','prevention/cg17/diff_identity.py')
+          p16=json.load(open('prevention/cg16/protocol.json'))
+          p17=json.load(open('prevention/cg17/protocol.json'))
+          c17=json.load(open('prevention/cg17/cases.json'))
+          assert p17['status'] in ('CANDIDATE','QUALIFIED')
+
+          for case in c17['realCurrentStateRefusals']:
+              try: v17.validate_source(p17,case['sourcePullRequestAttestation'])
+              except v17.ProviderDiffAttestationError as exc: assert exc.reason==case['expectedReason'],(case,exc.reason)
+              else: raise AssertionError('real current-state case unexpectedly provider-diff eligible')
+          print('CG17_REAL_CURRENT_STATE_REFUSAL=PASS')
+
+          token=os.environ['GITHUB_TOKEN']
+          repository=os.environ['QUALIFICATION_REPOSITORY']
+          pr_number=int(os.environ['QUALIFICATION_PR'])
+          base_sha=os.environ['QUALIFICATION_BASE_SHA']
+          head_sha=os.environ['QUALIFICATION_HEAD_SHA']
+          head_branch=os.environ['QUALIFICATION_HEAD_BRANCH']
+          clean_url='https://github.com/'+repository+'.git'
+          basic=base64.b64encode(('x-access-token:'+token).encode()).decode()
+          os.environ['GIT_CONFIG_COUNT']='1'
+          os.environ['GIT_CONFIG_KEY_0']='http.https://github.com/.extraheader'
+          os.environ['GIT_CONFIG_VALUE_0']='AUTHORIZATION: basic '+basic
+
+          def git(repo,*args,check=True):
+              cp=subprocess.run(['git','-C',str(repo),*args],capture_output=True,text=True)
+              if check and cp.returncode: raise AssertionError((args,cp.stdout,cp.stderr))
+              return cp
+
+          def digest(value):
+              return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+
+          with tempfile.TemporaryDirectory() as root:
+              repo=Path(root)/'repo'
+              subprocess.run(['git','clone','-q','--no-hardlinks','.',str(repo)],check=True)
+              git(repo,'remote','set-url','origin',clean_url)
+              git(repo,'fetch','-q','origin','main',head_branch)
+              git(repo,'checkout','-q','-B',head_branch,head_sha)
+              assert git(repo,'status','--porcelain','--untracked-files=all').stdout==''
+              assert git(repo,'ls-remote','--refs','origin','refs/heads/main').stdout.split()[0]==base_sha
+              assert git(repo,'ls-remote','--refs','origin','refs/heads/'+head_branch).stdout.split()[0]==head_sha
+
+              paths=sorted(x for x in git(repo,'diff','--name-only','-z',base_sha,head_sha,'--').stdout.split('\0') if x)
+              assert paths==c17['qualificationFixture']['changedPaths'],paths
+              diff_bytes=subprocess.check_output(['git','-C',str(repo),'diff','--binary','--full-index','--no-ext-diff',base_sha,head_sha,'--'])
+              diff_sha=hashlib.sha256(diff_bytes).hexdigest()
+              tree_sha=git(repo,'rev-parse',head_sha+'^{tree}').stdout.strip()
+              fixture_sha=lambda s: hashlib.sha256(s.encode()).hexdigest()
+              source_core={
+                  'schemaVersion':1,'protocolId':'CG15-CONTROLLED-REMOTE-BRANCH-PUBLICATION','caseId':'CG17-GITHUB-PROVIDER-DIFF-QUALIFICATION',
+                  'repository':repository,'remoteName':'origin','baseBranch':'main','baseSha':base_sha,'workBranch':head_branch,
+                  'remoteBranchSha':head_sha,'commitSha':head_sha,'treeSha':tree_sha,'changedPaths':paths,'diffSha256':diff_sha,
+                  'verificationClasses':['FIXTURE_PROVIDER_DIFF_CHECK'],'sourceLocalCommitAttestationId':fixture_sha('cg17-local-attestation'),
+                  'sourceLocalCommitAttestationSha256':fixture_sha('cg17-local-attestation-sha'),'publicationReceiptSha256':fixture_sha('cg17-publication-receipt'),
+                  'publicationAuthority':'SINGLE_REMOTE_BRANCH_CREATE_ONLY','pullRequestAuthorization':'NOT_GRANTED','mergeAuthorization':'NOT_GRANTED',
+                  'directMainUpdate':False,'repositoryAdministration':False,'consumerAdoption':False
+              }
+              source={**source_core,'status':'REMOTE_BRANCH_PUBLICATION_ATTESTED','decision':'CONTROLLED_REMOTE_BRANCH_PUBLICATION_VERIFIED','publicationAttestationId':digest(source_core)}
+
+              request_core={
+                  'schemaVersion':1,'protocolId':'CG16-CONTROLLED-PULL-REQUEST-CREATION','caseId':source['caseId'],'provider':'GITHUB','externalExecutor':'TRUSTED_GITHUB_CONNECTOR',
+                  'operation':'CREATE_PULL_REQUEST','repository':repository,'sourcePublicationAttestationId':source['publicationAttestationId'],
+                  'sourcePublicationAttestationSha256':digest(source),'baseBranch':'main','baseSha':base_sha,'headBranch':head_branch,'headSha':head_sha,
+                  'changedPaths':paths,'diffSha256':diff_sha,'verificationClasses':['FIXTURE_PROVIDER_DIFF_CHECK'],'title':'CG-17 qualification fixture',
+                  'body':'qualificationOnly=true\nconsumerEvidence=false\nCG-17 provider diff readback qualification only.','draft':False,'maintainerCanModify':False,
+                  'requestAuthority':'SINGLE_OPEN_PR_CREATE_REQUEST_ONLY','pullRequestUpdateAuthorization':'NOT_GRANTED','reviewSubmissionAuthorization':'NOT_GRANTED',
+                  'autoMergeAuthorization':'NOT_GRANTED','mergeAuthorization':'NOT_GRANTED','directMainUpdate':False,'repositoryAdministration':False,'consumerAdoption':False
+              }
+              request={**request_core,'status':'PULL_REQUEST_CREATION_REQUEST_READY','decision':'CONTROLLED_PULL_REQUEST_REQUEST_VERIFIED','requestId':digest(request_core)}
+              receipt={'schemaVersion':1,'executor':'TRUSTED_GITHUB_CONNECTOR','requestId':request['requestId'],'repository':repository,'baseBranch':'main','headBranch':head_branch,
+                       'pullRequestNumber':pr_number,'pullRequestUrl':'https://github.com/'+repository+'/pull/'+str(pr_number),'mergeAuthorization':'NOT_GRANTED'}
+              cg16=v16.verify(p16,source,request,receipt,repo,token)
+              assert cg16['status']=='PULL_REQUEST_ATTESTED'
+              out=v17.verify(p17,cg16,repo,token)
+              assert out['status']=='PROVIDER_DIFF_ATTESTED' and out['decision']=='PROVIDER_DIFF_RECONCILIATION_VERIFIED'
+              assert out['providerAppliedTreeSha']==out['headTreeSha']
+              assert out['localDiffSha256']==out['upstreamDiffSha256']==diff_sha
+              print('CG17_PROVIDER_DIFF_ATTESTATION_ID='+out['providerDiffAttestationId'])
+              print('CG17_PROVIDER_DIFF_SHA256='+out['providerDiffSha256'])
+              print('CG17_LOCAL_DIFF_SHA256='+out['localDiffSha256'])
+              print('CG17_SEMANTIC_TREE='+out['headTreeSha'])
+              print('CG17_PROVIDER_DIFF_RECONCILIATION=PASS')
+
+              def reattest(att):
+                  core={k:v for k,v in att.items() if k not in {'status','decision','pullRequestAttestationId'}}
+                  att['pullRequestAttestationId']=digest(core)
+
+              bad=json.loads(json.dumps(cg16)); bad['pullRequestAttestationId']='0'*64
+              try: v17.validate_source(p17,bad)
+              except v17.ProviderDiffAttestationError as exc: assert exc.reason=='CG16_PULL_REQUEST_ATTESTATION_ID_MISMATCH'
+              else: raise AssertionError('tampered CG16 attestation accepted')
+
+              bad=json.loads(json.dumps(cg16)); bad['diffSha256']='0'*64; reattest(bad)
+              try: v17.verify(p17,bad,repo,token)
+              except v17.ProviderDiffAttestationError as exc: assert exc.reason=='UPSTREAM_DIFF_DIGEST_MISMATCH',(exc.reason,exc.detail)
+              else: raise AssertionError('self-consistent wrong upstream diff accepted')
+
+              bad=json.loads(json.dumps(cg16)); bad['mergeAuthorization']='GRANTED'; reattest(bad)
+              try: v17.validate_source(p17,bad)
+              except v17.ProviderDiffAttestationError as exc: assert exc.reason=='DOWNSTREAM_AUTHORITY_ESCALATION'
+              else: raise AssertionError('merge authority escalation accepted')
+
+              reader=v17.GitHubReader(token)
+              provider=reader.diff(repository,pr_number)
+              tampered=provider.replace(b'cg17 provider diff readback qualification',b'cg17 provider diff readback qualification tampered')
+              assert tampered!=provider
+              original=v17.GitHubReader.diff
+              v17.GitHubReader.diff=lambda self,r,n: tampered
+              try:
+                  try: v17.verify(p17,cg16,repo,token)
+                  except v17.ProviderDiffAttestationError as exc: assert exc.reason=='PROVIDER_LOCAL_DIFF_SEMANTIC_MISMATCH',(exc.reason,exc.detail)
+                  else: raise AssertionError('tampered provider diff accepted')
+              finally:
+                  v17.GitHubReader.diff=original
+              print('CG17_NEGATIVE_MATRIX=PASS')
+
+              if p17['status']=='QUALIFIED':
+                  deleted=git(repo,'push','-q','origin',':refs/heads/'+head_branch,check=False)
+                  assert deleted.returncode==0,(deleted.stdout,deleted.stderr)
+                  assert git(repo,'ls-remote','--refs','origin','refs/heads/'+head_branch).stdout.strip()==''
+                  assert git(repo,'ls-remote','--refs','origin','refs/heads/main').stdout.split()[0]==base_sha
+                  print('CG17_QUALIFICATION_BRANCH_CLEANUP=PASS')
+
+          print('CG17_CONSUMER_MUTATION=NONE')
+          PY
+
+      - name: Stable asset syntax and governance cleanliness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool prevention/cg17/protocol.json >/dev/null
+          python3 -m json.tool prevention/cg17/cases.json >/dev/null
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          for p in ['prevention/cg17/diff_identity.py','prevention/cg17/verify_provider_diff.py']:
+              ast.parse(Path(p).read_text(),filename=p)
+          PY
+          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=no)"
+          echo 'CG17_STABLE_ASSETS=PASS'
