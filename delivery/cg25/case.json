@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG25-REAL-CONSUMER-AUTHORIZATION-READINESS",
+  "sourcePlan": {
+    "protocolId": "CG24-REAL-CONSUMER-CONTROLLED-PLAN",
+    "planId": "2d8687fec7e7181b839447e0cad33a291927865d4422d3838d5c032eb3f6aeaa",
+    "consumerBaseSha": "bd4a155b6fc27b3a0c2b2ee03a40bdb1ba59e2c9",
+    "consumerBaseTree": "bb1908d9235845f6694fdae9277bb7f81726cfad",
+    "operationId": "commercial.plan.catalog",
+    "useCase": "list_plan_catalog"
+  },
+  "liveConsumer": {
+    "repository": "hvritual/biz",
+    "sha": "1f6443f51b767e95124b2256474fb288ff6a5726",
+    "tree": "a98817ce0075ede4a13715307ad3ebf9830f8bf1",
+    "sourceIssue": 62,
+    "sourceIssueState": "open",
+    "operationId": "commercial.plan.discover",
+    "useCase": "list_plans",
+    "httpBinding": "GET /v1/platform/plans"
+  },
+  "observations": {
+    "consumerBaseMoved": true,
+    "targetImplementationPresent": true,
+    "operationIdentityDiverged": true,
+    "issueOpenDoesNotAuthorizeExecution": true,
+    "semanticEquivalenceDecided": false
+  },
+  "decision": "AUTHORIZATION_NOT_GRANTED",
+  "disposition": "LIVE_RECONCILIATION_REQUIRED",
+  "reasons": [
+    "CONSUMER_BASE_MOVED",
+    "TARGET_IMPLEMENTATION_ALREADY_PRESENT",
+    "PLANNED_OPERATION_IDENTITY_DIVERGED"
+  ],
+  "historicalEvidence": {
+    "run": 34709795289,
+    "workflow": "CE-13 plan catalog qualification",
+    "headSha": "c420628fce2e3dad982ad7ee3139f2afa16102af",
+    "conclusion": "success",
+    "role": "CORROBORATIVE_IMPLEMENTATION_QUALIFICATION_ONLY",
+    "semanticEquivalenceClaimed": false
+  },
+  "authority": {
+    "authorizationGranted": false,
+    "createsConsumerBranch": false,
+    "modifiesConsumer": false,
+    "authorizesPatch": false,
+    "authorizesCommit": false,
+    "authorizesPush": false,
+    "authorizesPullRequest": false,
+    "authorizesMerge": false,
+    "modifiesFramework": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "readinessId": "7127b2117db8b5bd33b9de0a9fec80f5747ef3233fb7ded0b1fd6574eda89a87"
+}

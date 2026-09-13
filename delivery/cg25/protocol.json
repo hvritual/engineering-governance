@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "id": "CG25-REAL-CONSUMER-AUTHORIZATION-READINESS",
+  "status": "QUALIFIED",
+  "source": {
+    "protocolId": "CG24-REAL-CONSUMER-CONTROLLED-PLAN",
+    "planId": "2d8687fec7e7181b839447e0cad33a291927865d4422d3838d5c032eb3f6aeaa",
+    "authorities": [
+      {"path": "delivery/cg24/protocol.json", "blob": "f23c6c7bfd3e14670a98f3ad0a4d857a68517497"},
+      {"path": "delivery/cg24/plan.json", "blob": "264fa4d131bce33a4c42f58a13f42cb75a95b09b"},
+      {"path": "delivery/cg24/verify_plan.py", "blob": "e28b0cdc4c4c6ece54df675f01becf4c8d71dad4"}
+    ],
+    "plannedConsumerBase": {
+      "repository": "hvritual/biz",
+      "sha": "bd4a155b6fc27b3a0c2b2ee03a40bdb1ba59e2c9",
+      "tree": "bb1908d9235845f6694fdae9277bb7f81726cfad"
+    },
+    "plannedSurface": {
+      "operationId": "commercial.plan.catalog",
+      "useCase": "list_plan_catalog",
+      "httpMethod": "GET",
+      "httpPath": "/v1/platform/plans"
+    }
+  },
+  "liveConsumer": {
+    "repository": "hvritual/biz",
+    "branch": "main",
+    "sha": "1f6443f51b767e95124b2256474fb288ff6a5726",
+    "tree": "a98817ce0075ede4a13715307ad3ebf9830f8bf1",
+    "sourceIssue": 62,
+    "requiredIssueState": "open",
+    "authorities": [
+      {"path": "contracts/proto/commercial/v1/plan.proto", "blob": "4b6fcc8650abf8958602229ba63eba7723624b10"},
+      {"path": "internal/commercial/ports/plan.go", "blob": "6fa955c9895f983b1a21bd9e8919b09157f9eeeb"},
+      {"path": "internal/commercial/infrastructure/persistence/plan_catalog.go", "blob": "35a7456230740203e31af798ace192b23faf3fda"},
+      {"path": "internal/commercial/application/planmanagement/internal/usecase/catalog.go", "blob": "caf05d434b1c32421d3da6c228e5dc9c8aca9a0a"},
+      {"path": "contracts/generated/operation-plans.json", "blob": "560a05b0b848d3edd72cf7c71da28b00218e26e4"},
+      {"path": ".github/workflows/ce13-plan-catalog-qualification.yml", "blob": "a35b816f0253bc6e70c3573fd5ece325f0e751f7"}
+    ],
+    "observedSurface": {
+      "operationId": "commercial.plan.discover",
+      "useCase": "list_plans",
+      "httpMethod": "GET",
+      "httpPath": "/v1/platform/plans",
+      "authentication": ["api-key", "web-session"],
+      "permissions": ["platform.plan.read"],
+      "tenantRequired": false,
+      "transaction": "read_only",
+      "idempotency": "none"
+    }
+  },
+  "requiredDecision": "AUTHORIZATION_NOT_GRANTED",
+  "requiredDisposition": "LIVE_RECONCILIATION_REQUIRED",
+  "requiredReasons": [
+    "CONSUMER_BASE_MOVED",
+    "TARGET_IMPLEMENTATION_ALREADY_PRESENT",
+    "PLANNED_OPERATION_IDENTITY_DIVERGED"
+  ],
+  "principle": "A qualified implementation plan may be authorized only against its exact live target. Consumer base movement or prior materialization of the target capability requires live reconciliation before any execution authority may be granted.",
+  "historicalEvidence": {
+    "run": 34709795289,
+    "workflow": "CE-13 plan catalog qualification",
+    "headSha": "c420628fce2e3dad982ad7ee3139f2afa16102af",
+    "status": "completed",
+    "conclusion": "success",
+    "role": "CORROBORATIVE_IMPLEMENTATION_QUALIFICATION_ONLY",
+    "semanticEquivalenceClaimed": false
+  },
+  "authorityCeiling": {
+    "authorizationGranted": false,
+    "createsConsumerBranch": false,
+    "modifiesConsumer": false,
+    "authorizesPatch": false,
+    "authorizesCommit": false,
+    "authorizesPush": false,
+    "authorizesPullRequest": false,
+    "authorizesMerge": false,
+    "modifiesFramework": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "consumerMutation": false,
+    "governanceMainMutationDuringQualification": false,
+    "negativeMatrixRequired": true,
+    "primary": {
+      "head": "dd8c628127b42d9c19a8a2b5725c236c36de5b52",
+      "run": 34730104609,
+      "job": 103651196936,
+      "result": "SUCCESS",
+      "sourcePlan": "PASS",
+      "liveConsumerReadback": "PASS",
+      "sourceIssueOpen": "PASS",
+      "implementationPresence": "PASS",
+      "identityDivergence": "PASS",
+      "historicalQualificationCorroboration": "PASS",
+      "negativeMatrix": "PASS",
+      "decision": "AUTHORIZATION_NOT_GRANTED",
+      "disposition": "LIVE_RECONCILIATION_REQUIRED",
+      "consumerMutation": false
+    },
+    "finalReplay": {
+      "head": "2c9f4c031e3c66ecb1f05b3242dd061634f5bd41",
+      "run": 34730139856,
+      "job": 103651292102,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "decision": "AUTHORIZATION_NOT_GRANTED",
+      "disposition": "LIVE_RECONCILIATION_REQUIRED",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
+    }
+  }
+}
