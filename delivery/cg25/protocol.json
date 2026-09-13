@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG25-REAL-CONSUMER-AUTHORIZATION-READINESS",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "source": {
     "protocolId": "CG24-REAL-CONSUMER-CONTROLLED-PLAN",
     "planId": "2d8687fec7e7181b839447e0cad33a291927865d4422d3838d5c032eb3f6aeaa",
@@ -83,6 +83,22 @@
   "qualification": {
     "consumerMutation": false,
     "governanceMainMutationDuringQualification": false,
-    "negativeMatrixRequired": true
+    "negativeMatrixRequired": true,
+    "primary": {
+      "head": "dd8c628127b42d9c19a8a2b5725c236c36de5b52",
+      "run": 34730104609,
+      "job": 103651196936,
+      "result": "SUCCESS",
+      "sourcePlan": "PASS",
+      "liveConsumerReadback": "PASS",
+      "sourceIssueOpen": "PASS",
+      "implementationPresence": "PASS",
+      "identityDivergence": "PASS",
+      "historicalQualificationCorroboration": "PASS",
+      "negativeMatrix": "PASS",
+      "decision": "AUTHORIZATION_NOT_GRANTED",
+      "disposition": "LIVE_RECONCILIATION_REQUIRED",
+      "consumerMutation": false
+    }
   }
 }
