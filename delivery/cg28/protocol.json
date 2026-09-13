@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "CG28-CONTROLLED-SOURCE-ISSUE-CLOSURE-EXECUTION",
-  "status": "CANDIDATE",
+  "status": "QUALIFIED",
   "source": {
     "cg27": {
       "protocolId": "CG27-BIZ-SOURCE-ISSUE-CLOSURE-READINESS",
@@ -60,6 +60,21 @@
     "sourceIssueMutation": false,
     "consumerSourceMutation": false,
     "governanceMainMutationDuringQualification": false,
-    "negativeMatrixRequired": true
+    "negativeMatrixRequired": true,
+    "preflightId": "5870750860e12e5c633ca37c9fe4c20173e7057a65dff89047078f435389727d",
+    "primary": {
+      "head": "602db6c68957b58f5a7df4473511a5ee71afd01a",
+      "run": 34776871590,
+      "job": 103776479606,
+      "result": "SUCCESS",
+      "protocolStatus": "CANDIDATE",
+      "cg27Binding": "PASS",
+      "liveConsumerReadback": "PASS",
+      "sourceIssueReadback": "OPEN_UNCHANGED",
+      "semanticClosureChangedPaths": 19,
+      "decision": "SOURCE_ISSUE_CLOSURE_EXECUTION_BLOCKED",
+      "negativeMatrix": "PASS",
+      "remoteMutation": "NONE"
+    }
   }
 }
