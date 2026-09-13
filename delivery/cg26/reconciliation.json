@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG26-BIZ-PLAN-CATALOG-SEMANTIC-RECONCILIATION",
+  "source": {
+    "cg24PlanId": "2d8687fec7e7181b839447e0cad33a291927865d4422d3838d5c032eb3f6aeaa",
+    "cg25ReadinessId": "7127b2117db8b5bd33b9de0a9fec80f5747ef3233fb7ded0b1fd6574eda89a87",
+    "cg25Disposition": "LIVE_RECONCILIATION_REQUIRED"
+  },
+  "liveConsumer": {
+    "repository": "hvritual/biz",
+    "sha": "1f6443f51b767e95124b2256474fb288ff6a5726",
+    "tree": "a98817ce0075ede4a13715307ad3ebf9830f8bf1",
+    "historicalQualifiedHead": "c420628fce2e3dad982ad7ee3139f2afa16102af",
+    "historicalRun": 34709795289,
+    "historicalJob": 103596341956
+  },
+  "identity": {
+    "plannedOperationId": "commercial.plan.catalog",
+    "plannedUseCase": "list_plan_catalog",
+    "liveOperationId": "commercial.plan.discover",
+    "liveUseCase": "list_plans",
+    "identityDiverged": true,
+    "identityOnlyPatchRequired": false
+  },
+  "semanticRequirements": {
+    "httpBinding": "GET /v1/platform/plans",
+    "authentication": ["api-key", "web-session"],
+    "permission": "platform.plan.read",
+    "tenantRequired": false,
+    "transaction": "read_only",
+    "idempotency": "none",
+    "paginationKey": "plan_code",
+    "defaultPageSize": 20,
+    "maximumPageSize": 100,
+    "authoritativeTables": ["biz_commercial_plans", "biz_commercial_plan_versions"],
+    "newAuthoritativeStore": false,
+    "browserCatalog": false,
+    "subscriptionInference": false,
+    "generatedHandEdit": false,
+    "frameworkModification": false
+  },
+  "verificationDisposition": {
+    "requiredClassCount": 16,
+    "allRequiredClassesSatisfied": true,
+    "historicalQualificationProjectedToLive": true,
+    "semanticClosureChangedSinceQualifiedHead": false,
+    "consumerMutationRequired": false
+  },
+  "decision": "NO_CHANGE_REQUIRED",
+  "patchRequired": false,
+  "reason": "LIVE_IMPLEMENTATION_SATISFIES_SEMANTIC_AND_VERIFICATION_CONTRACT",
+  "authority": {
+    "authorizationGranted": false,
+    "createsConsumerBranch": false,
+    "modifiesConsumer": false,
+    "authorizesPatch": false,
+    "authorizesCommit": false,
+    "authorizesPush": false,
+    "authorizesPullRequest": false,
+    "authorizesMerge": false,
+    "modifiesFramework": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "verificationResults": [
+    {"class": "CG24_SOURCE_EVIDENCE_FRESHNESS", "status": "PASS", "evidence": ["exact-live-sha-tree", "historical-head-ancestor", "semantic-closure-unchanged"]},
+    {"class": "CG24_CONTRACT_CATALOG_SURFACE", "status": "PASS", "evidence": ["live-proto", "generated-operation-plan"]},
+    {"class": "CG24_GENERATION_DETERMINISM", "status": "PASS", "evidence": ["historical-step:Verify deterministic contract generation"]},
+    {"class": "CG24_YUNKA_CHECK_READ_ONLY", "status": "PASS", "evidence": ["historical-step:Verify deterministic contract generation", "make-check-before-generate"]},
+    {"class": "CG24_GENERATED_OPERATION_IDENTITY", "status": "PASS", "evidence": ["generated-operation:commercial.plan.discover", "identity-divergence-semantic-acceptance"]},
+    {"class": "CG24_USECASE_CATALOG_BEHAVIOR", "status": "PASS", "evidence": ["live-usecase-catalog.go", "historical-step:Qualify plan authority and regressions"]},
+    {"class": "CG24_MYSQL84_AUTHORITATIVE_CATALOG_QUERY", "status": "PASS", "evidence": ["mysql:8.4", "TestCE13PlanCatalogMySQLDeterministicPaginationAndAuthority"]},
+    {"class": "CG24_PLATFORM_WEB_SESSION_AUTHORIZATION", "status": "PASS", "evidence": ["TestCE13PlanCatalogTrustedPlatformDiscovery", "web-session-cookie-request"]},
+    {"class": "CG24_PLATFORM_PERMISSION_DENIAL", "status": "PASS", "evidence": ["integration-denied-platform", "browser-denied-platform-403"]},
+    {"class": "CG24_TENANT_SESSION_DENIAL", "status": "PASS", "evidence": ["integration-tenant-denial", "browser-tenant-session-403"]},
+    {"class": "CG24_API_KEY_REGRESSION", "status": "PASS", "evidence": ["browser-api-key-200"]},
+    {"class": "CG24_PAGINATION_DETERMINISM", "status": "PASS", "evidence": ["integration-page-cursor-sequence", "browser-next-cursor-growth"]},
+    {"class": "CG24_NO_SECOND_CATALOG_SOT", "status": "PASS", "evidence": ["biz_commercial_plans", "biz_commercial_plan_versions", "no-subscription-inference"]},
+    {"class": "CG24_EXISTING_PLAN_VERSION_REGRESSION", "status": "PASS", "evidence": ["historical-TestCE07MySQL"]},
+    {"class": "CG24_PUBLISHED_VERSION_IMMUTABILITY_REGRESSION", "status": "PASS", "evidence": ["published-v1-remains-published"]},
+    {"class": "CG24_CANONICAL_EXECUTOR_RUNTIME", "status": "PASS", "evidence": ["historical-bff-idp-browser-runtime-chain"]}
+  ],
+  "reconciliationId": "bb8deb18c55868384363af5f12aadae55a07516651f54ed2ae44e1bc1db24c9e"
+}
