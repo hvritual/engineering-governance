@@ -21,7 +21,8 @@
   },
   "semanticClosure": {
     "driftDetected": true,
-    "representativeChangedPaths": [
+    "changedPathCount": 19,
+    "changedPaths": [
       "contracts/commercial/generated/catalog.json",
       "contracts/commercial/generated/catalog.ts",
       "contracts/commercial/operation-capabilities.v1.json",
@@ -31,8 +32,15 @@
       "contracts/generated/openapi.json",
       "contracts/generated/operation-plans.json",
       "internal/access/application/tenant_member_lifecycle.go",
+      "internal/access/application/zz_yunka_tenant_member_lifecycle_application_port_gen.go",
+      "internal/access/domain/model.go",
       "internal/access/infrastructure/persistence/member.go",
+      "internal/access/infrastructure/persistence/migrations/0003_ec_ri_02_member_profile.sql",
       "internal/access/infrastructure/persistence/store.go",
+      "internal/access/policy/zz_yunka_tenant_member_lifecycle_operation_plan_gen.go",
+      "internal/access/policy/zz_yunka_tenant_member_lifecycle_operation_policy_gen.go",
+      "internal/access/transport/rest/zz_yunka_tenant_member_lifecycle_operation_executor_gen.go",
+      "internal/access/transport/rpc/zz_yunka_tenant_member_lifecycle_operation_executor_gen.go",
       "internal/bizruntime/member_entitlements.go"
     ],
     "note": "The post-CG27 compare intersects prefixes that CG26/CG27 treated as semantic-closure authority. The changes may be unrelated to plan catalog behavior, but freshness cannot be inferred after authority-path drift; requalification is required."
@@ -44,5 +52,6 @@
     "sourceIssueCommented": false,
     "sourceIssueClosed": false,
     "consumerSourceModified": false
-  }
+  },
+  "preflightId": "2b152b9b0084992aa9a91f3e9cd173567e6fab583cd950a472271188544b63b5"
 }
