@@ -1,0 +1,226 @@
+name: CG-27 Biz source-issue closure readiness qualification
+
+on:
+  push:
+    branches: [cg27/biz-source-issue-closure-readiness]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  qualify-source-issue-closure-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GOVERNANCE_BASE: b8848939b585c260c1479cfeb4dc8b39905bb860
+      BIZ_CG26_SHA: 1f6443f51b767e95124b2256474fb288ff6a5726
+      BIZ_SHA: 3556bda199e3590046a862252d5b108927b2c53b
+      BIZ_TREE: 5a1eed85b8786091eaa007c4256b6c38caf1f5d4
+
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          path: governance
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify governance task ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C governance rev-parse HEAD)" = "${GITHUB_SHA}"
+          git -C governance merge-base --is-ancestor "$GOVERNANCE_BASE" HEAD
+          test "$(git -C governance rev-parse "$GOVERNANCE_BASE^{tree}")" = "79ec44f0c9e1f7c6d04d6a9715c7d278e3e689e5"
+
+      - name: Checkout exact current Biz consumer
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: hvritual/biz
+          ref: ${{ env.BIZ_SHA }}
+          path: biz
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Read current Biz main and source issue
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          auth="Authorization: Bearer ${GH_TOKEN}"
+          accept="Accept: application/vnd.github+json"
+          curl --fail --silent --show-error -H "$auth" -H "$accept" \
+            "${GITHUB_API_URL}/repos/hvritual/biz/branches/main" > /tmp/biz-main.json
+          curl --fail --silent --show-error -H "$auth" -H "$accept" \
+            "${GITHUB_API_URL}/repos/hvritual/biz/issues/62" > /tmp/issue.json
+          python3 - <<'PY'
+          import json
+          main=json.load(open('/tmp/biz-main.json'))
+          issue=json.load(open('/tmp/issue.json'))
+          assert main['commit']['sha'] == '3556bda199e3590046a862252d5b108927b2c53b', main['commit']['sha']
+          assert issue['number'] == 62
+          assert issue['state'] == 'open'
+          PY
+
+      - name: Qualify source-issue closure readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/delivery/cg27/verify_closure.py \
+            --protocol governance/delivery/cg27/protocol.json \
+            --closure governance/delivery/cg27/closure.json \
+            --cg26-protocol governance/delivery/cg26/protocol.json \
+            --cg26-reconciliation governance/delivery/cg26/reconciliation.json \
+            --governance-root governance \
+            --biz-root biz \
+            --issue-json /tmp/issue.json | tee /tmp/cg27-result.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('/tmp/cg27-result.json'))
+          assert r['status'] == 'SOURCE_ISSUE_CLOSURE_READINESS_QUALIFIED', r
+          assert r['decision'] == 'SOURCE_ISSUE_CLOSURE_READY', r
+          assert r['nextDisposition'] == 'CONTROLLED_SOURCE_ISSUE_CLOSURE_REQUIRED', r
+          assert r['acceptanceCount'] == 5, r
+          assert r['verificationClassCount'] == 16, r
+          assert r['commitsAheadOfCg26'] == 2, r
+          assert r['semanticClosureChangedPaths'] == [], r
+          assert r['sourceIssueMutation'] is False, r
+          assert r['consumerMutation'] is False, r
+          assert r['sourceIssueClosureAuthorized'] is False, r
+          PY
+
+      - name: Fail-closed negative matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          verify=(python3 governance/delivery/cg27/verify_closure.py \
+            --protocol governance/delivery/cg27/protocol.json \
+            --closure governance/delivery/cg27/closure.json \
+            --cg26-protocol governance/delivery/cg26/protocol.json \
+            --cg26-reconciliation governance/delivery/cg26/reconciliation.json \
+            --governance-root governance \
+            --biz-root biz)
+
+          expect_reject() {
+            expected="$1"; shift
+            set +e
+            "$@" > /tmp/reject.json 2>&1
+            rc=$?
+            set -e
+            test "$rc" -eq 2 || { cat /tmp/reject.json; exit 1; }
+            python3 - "$expected" <<'PY'
+          import json,sys
+          expected=sys.argv[1]
+          r=json.load(open('/tmp/reject.json'))
+          assert r['status'] == 'REJECTED', r
+          assert r['reason'] == expected, (expected, r)
+          PY
+          }
+
+          python3 - <<'PY'
+          import json
+          issue=json.load(open('/tmp/issue.json'))
+          issue['state']='closed'
+          json.dump(issue, open('/tmp/issue-closed.json','w'))
+          issue=json.load(open('/tmp/issue.json'))
+          issue['body']=issue['body'].replace('Authorized platform web session can page through plan codes.','')
+          json.dump(issue, open('/tmp/issue-missing-acceptance.json','w'))
+          PY
+          expect_reject SOURCE_ISSUE_NOT_OPEN "${verify[@]}" --issue-json /tmp/issue-closed.json
+          expect_reject SOURCE_ISSUE_ACCEPTANCE_TEXT_MISSING "${verify[@]}" --issue-json /tmp/issue-missing-acceptance.json
+
+          python3 - <<'PY'
+          import copy,hashlib,json
+          def dig(v):
+              return hashlib.sha256(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+          receipt=json.load(open('governance/delivery/cg27/closure.json'))
+          receipt['authority']['sourceIssueClosureAuthorized']=True
+          core={k:v for k,v in receipt.items() if k!='closureId'}
+          receipt['closureId']=dig(core)
+          json.dump(receipt,open('/tmp/closure-authority.json','w'))
+          cg26=json.load(open('governance/delivery/cg26/reconciliation.json'))
+          cg26['verificationResults'][0]['status']='FAIL'
+          json.dump(cg26,open('/tmp/cg26-failed-class.json','w'))
+          PY
+          expect_reject CLOSURE_AUTHORITY_ESCALATION python3 governance/delivery/cg27/verify_closure.py \
+            --protocol governance/delivery/cg27/protocol.json \
+            --closure /tmp/closure-authority.json \
+            --cg26-protocol governance/delivery/cg26/protocol.json \
+            --cg26-reconciliation governance/delivery/cg26/reconciliation.json \
+            --governance-root governance --biz-root biz --issue-json /tmp/issue.json
+          expect_reject VERIFICATION_CLASS_NOT_PASS python3 governance/delivery/cg27/verify_closure.py \
+            --protocol governance/delivery/cg27/protocol.json \
+            --closure governance/delivery/cg27/closure.json \
+            --cg26-protocol governance/delivery/cg26/protocol.json \
+            --cg26-reconciliation /tmp/cg26-failed-class.json \
+            --governance-root governance --biz-root biz --issue-json /tmp/issue.json
+
+          # Prove that a post-CG26 change inside the semantic closure invalidates closure readiness.
+          git -C biz config user.name cg27-qualification
+          git -C biz config user.email cg27@example.invalid
+          printf '\n// cg27 negative semantic-drift fixture\n' >> biz/contracts/proto/commercial/v1/plan.proto
+          git -C biz add contracts/proto/commercial/v1/plan.proto
+          git -C biz commit -m 'cg27 negative semantic closure drift' >/dev/null
+          NEG_SHA="$(git -C biz rev-parse HEAD)"
+          NEG_TREE="$(git -C biz rev-parse HEAD^{tree})"
+          export NEG_SHA NEG_TREE
+          python3 - <<'PY'
+          import hashlib,json,os
+          def dig(v):
+              return hashlib.sha256(json.dumps(v,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+          protocol=json.load(open('governance/delivery/cg27/protocol.json'))
+          protocol['currentConsumer']['sha']=os.environ['NEG_SHA']
+          protocol['currentConsumer']['tree']=os.environ['NEG_TREE']
+          protocol['currentConsumer']['expectedCommitsAheadOfCg26']=3
+          json.dump(protocol,open('/tmp/protocol-semantic-drift.json','w'))
+          receipt=json.load(open('governance/delivery/cg27/closure.json'))
+          receipt['currentConsumer']['sha']=os.environ['NEG_SHA']
+          receipt['currentConsumer']['tree']=os.environ['NEG_TREE']
+          receipt['currentConsumer']['commitsAhead']=3
+          core={k:v for k,v in receipt.items() if k!='closureId'}
+          receipt['closureId']=dig(core)
+          json.dump(receipt,open('/tmp/closure-semantic-drift.json','w'))
+          PY
+          expect_reject SEMANTIC_CLOSURE_DRIFT python3 governance/delivery/cg27/verify_closure.py \
+            --protocol /tmp/protocol-semantic-drift.json \
+            --closure /tmp/closure-semantic-drift.json \
+            --cg26-protocol governance/delivery/cg26/protocol.json \
+            --cg26-reconciliation governance/delivery/cg26/reconciliation.json \
+            --governance-root governance --biz-root biz --issue-json /tmp/issue.json
+          git -C biz reset --hard "$BIZ_SHA" >/dev/null
+          test "$(git -C biz rev-parse HEAD)" = "$BIZ_SHA"
+          test -z "$(git -C biz status --porcelain)"
+
+      - name: Stable asset syntax and zero remote mutation
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 -m json.tool governance/delivery/cg27/protocol.json >/dev/null
+          python3 -m json.tool governance/delivery/cg27/closure.json >/dev/null
+          python3 -m py_compile governance/delivery/cg27/verify_closure.py
+          rm -rf governance/delivery/cg27/__pycache__
+          test -z "$(git -C governance status --porcelain)"
+          test "$(git -C biz rev-parse HEAD)" = "$BIZ_SHA"
+          test "$(git -C biz rev-parse HEAD^{tree})" = "$BIZ_TREE"
+          test -z "$(git -C biz status --porcelain)"
+          auth="Authorization: Bearer ${GH_TOKEN}"
+          accept="Accept: application/vnd.github+json"
+          curl --fail --silent --show-error -H "$auth" -H "$accept" \
+            "${GITHUB_API_URL}/repos/hvritual/biz/branches/main" > /tmp/biz-main-final.json
+          curl --fail --silent --show-error -H "$auth" -H "$accept" \
+            "${GITHUB_API_URL}/repos/hvritual/biz/issues/62" > /tmp/issue-final.json
+          python3 - <<'PY'
+          import json
+          main=json.load(open('/tmp/biz-main-final.json'))
+          issue=json.load(open('/tmp/issue-final.json'))
+          assert main['commit']['sha'] == '3556bda199e3590046a862252d5b108927b2c53b', main['commit']['sha']
+          assert issue['state'] == 'open', issue['state']
+          assert issue['comments'] == 0, issue['comments']
+          print('CG27_REMOTE_MUTATION=NONE')
+          PY
