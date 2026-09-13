@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG27-BIZ-SOURCE-ISSUE-CLOSURE-READINESS",
+  "source": {
+    "cg26ReconciliationId": "bb8deb18c55868384363af5f12aadae55a07516651f54ed2ae44e1bc1db24c9e",
+    "cg26Decision": "NO_CHANGE_REQUIRED",
+    "cg26Reason": "LIVE_IMPLEMENTATION_SATISFIES_SEMANTIC_AND_VERIFICATION_CONTRACT",
+    "qualifiedConsumerSha": "1f6443f51b767e95124b2256474fb288ff6a5726"
+  },
+  "currentConsumer": {
+    "repository": "hvritual/biz",
+    "sha": "3556bda199e3590046a862252d5b108927b2c53b",
+    "tree": "5a1eed85b8786091eaa007c4256b6c38caf1f5d4",
+    "descendsFromQualifiedConsumer": true,
+    "commitsAhead": 2,
+    "semanticClosureDrift": false
+  },
+  "sourceIssue": {
+    "repository": "hvritual/biz",
+    "number": 62,
+    "title": "CE-13 gap: provide discoverable platform plan catalog endpoint",
+    "requiredState": "open"
+  },
+  "acceptance": [
+    {
+      "id": "ACCEPTANCE_1_PLATFORM_WEB_SESSION_PAGINATION",
+      "status": "PASS",
+      "verificationClasses": ["CG24_PLATFORM_WEB_SESSION_AUTHORIZATION", "CG24_PAGINATION_DETERMINISM", "CG24_CANONICAL_EXECUTOR_RUNTIME"]
+    },
+    {
+      "id": "ACCEPTANCE_2_DENIAL_BOUNDARIES",
+      "status": "PASS",
+      "verificationClasses": ["CG24_PLATFORM_PERMISSION_DENIAL", "CG24_TENANT_SESSION_DENIAL"]
+    },
+    {
+      "id": "ACCEPTANCE_3_AUTHORITATIVE_DETERMINISTIC_RESULTS",
+      "status": "PASS",
+      "verificationClasses": ["CG24_MYSQL84_AUTHORITATIVE_CATALOG_QUERY", "CG24_PAGINATION_DETERMINISM", "CG24_NO_SECOND_CATALOG_SOT"]
+    },
+    {
+      "id": "ACCEPTANCE_4_VERSION_AND_IMMUTABILITY_REGRESSION",
+      "status": "PASS",
+      "verificationClasses": ["CG24_EXISTING_PLAN_VERSION_REGRESSION", "CG24_PUBLISHED_VERSION_IMMUTABILITY_REGRESSION"]
+    },
+    {
+      "id": "ACCEPTANCE_5_GENERATED_CONTRACT_AND_QUALIFICATION",
+      "status": "PASS",
+      "verificationClasses": ["CG24_CONTRACT_CATALOG_SURFACE", "CG24_GENERATION_DETERMINISM", "CG24_YUNKA_CHECK_READ_ONLY", "CG24_GENERATED_OPERATION_IDENTITY"]
+    }
+  ],
+  "decision": "SOURCE_ISSUE_CLOSURE_READY",
+  "reason": "ALL_SOURCE_ISSUE_ACCEPTANCE_CRITERIA_HAVE_CURRENT_QUALIFIED_EVIDENCE",
+  "nextDisposition": "CONTROLLED_SOURCE_ISSUE_CLOSURE_REQUIRED",
+  "authority": {
+    "sourceIssueClosureAuthorized": false,
+    "sourceIssueCommentAuthorized": false,
+    "modifiesConsumer": false,
+    "createsConsumerBranch": false,
+    "authorizesPatch": false,
+    "authorizesCommit": false,
+    "authorizesPush": false,
+    "authorizesPullRequest": false,
+    "authorizesMerge": false,
+    "modifiesFramework": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "closureId": "e1c1a9fc5b0d0580587e6eebecc2105afb0d713bdfcc14eafba6ea28e8d95c87"
+}
