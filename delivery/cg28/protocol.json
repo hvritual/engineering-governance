@@ -75,6 +75,20 @@
       "decision": "SOURCE_ISSUE_CLOSURE_EXECUTION_BLOCKED",
       "negativeMatrix": "PASS",
       "remoteMutation": "NONE"
+    },
+    "finalReplay": {
+      "head": "ba41b5ff317aa882f1404f9959e1c0b0b3d5d075",
+      "run": 34776985745,
+      "job": 103776790808,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "cg27Binding": "PASS",
+      "liveConsumerReadback": "PASS",
+      "sourceIssueReadback": "OPEN_UNCHANGED",
+      "semanticClosureChangedPaths": 19,
+      "decision": "SOURCE_ISSUE_CLOSURE_EXECUTION_BLOCKED",
+      "negativeMatrix": "PASS",
+      "remoteMutation": "NONE"
     }
   }
 }
