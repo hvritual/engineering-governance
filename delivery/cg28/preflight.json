@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "protocolId": "CG28-CONTROLLED-SOURCE-ISSUE-CLOSURE-EXECUTION",
+  "source": {
+    "cg27ClosureId": "e1c1a9fc5b0d0580587e6eebecc2105afb0d713bdfcc14eafba6ea28e8d95c87",
+    "cg27Decision": "SOURCE_ISSUE_CLOSURE_READY",
+    "cg27ConsumerSha": "3556bda199e3590046a862252d5b108927b2c53b"
+  },
+  "target": {
+    "repository": "hvritual/biz",
+    "issueNumber": 62,
+    "title": "CE-13 gap: provide discoverable platform plan catalog endpoint",
+    "observedState": "open",
+    "observedCommentCount": 0
+  },
+  "liveConsumer": {
+    "sha": "0ad50fafe00c65e0d0442e8d8f09769b96971cfd",
+    "tree": "91db8230ebaebad5a1a70df862423daf1b2f8c4e",
+    "descendsFromCg27Consumer": true,
+    "commitsAhead": 123
+  },
+  "semanticClosure": {
+    "driftDetected": true,
+    "changedPathCount": 19,
+    "changedPaths": [
+      "contracts/commercial/generated/catalog.json",
+      "contracts/commercial/generated/catalog.ts",
+      "contracts/commercial/operation-capabilities.v1.json",
+      "contracts/generated/assembly-plan.json",
+      "contracts/generated/client.ts",
+      "contracts/generated/manifest.json",
+      "contracts/generated/openapi.json",
+      "contracts/generated/operation-plans.json",
+      "internal/access/application/tenant_member_lifecycle.go",
+      "internal/access/application/zz_yunka_tenant_member_lifecycle_application_port_gen.go",
+      "internal/access/domain/model.go",
+      "internal/access/infrastructure/persistence/member.go",
+      "internal/access/infrastructure/persistence/migrations/0003_ec_ri_02_member_profile.sql",
+      "internal/access/infrastructure/persistence/store.go",
+      "internal/access/policy/zz_yunka_tenant_member_lifecycle_operation_plan_gen.go",
+      "internal/access/policy/zz_yunka_tenant_member_lifecycle_operation_policy_gen.go",
+      "internal/access/transport/rest/zz_yunka_tenant_member_lifecycle_operation_executor_gen.go",
+      "internal/access/transport/rpc/zz_yunka_tenant_member_lifecycle_operation_executor_gen.go",
+      "internal/bizruntime/member_entitlements.go"
+    ],
+    "note": "The post-CG27 compare intersects prefixes that CG26/CG27 treated as semantic-closure authority. The changes may be unrelated to plan catalog behavior, but freshness cannot be inferred after authority-path drift; requalification is required."
+  },
+  "decision": "SOURCE_ISSUE_CLOSURE_EXECUTION_BLOCKED",
+  "reason": "SEMANTIC_CLOSURE_DRIFT_SINCE_CG27",
+  "nextDisposition": "REQUALIFICATION_REQUIRED_BEFORE_SOURCE_ISSUE_CLOSURE",
+  "execution": {
+    "sourceIssueCommented": false,
+    "sourceIssueClosed": false,
+    "consumerSourceModified": false
+  },
+  "preflightId": "5870750860e12e5c633ca37c9fe4c20173e7057a65dff89047078f435389727d"
+}

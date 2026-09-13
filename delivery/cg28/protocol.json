@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "id": "CG28-CONTROLLED-SOURCE-ISSUE-CLOSURE-EXECUTION",
+  "status": "QUALIFIED",
+  "source": {
+    "cg27": {
+      "protocolId": "CG27-BIZ-SOURCE-ISSUE-CLOSURE-READINESS",
+      "closureId": "e1c1a9fc5b0d0580587e6eebecc2105afb0d713bdfcc14eafba6ea28e8d95c87",
+      "requiredDecision": "SOURCE_ISSUE_CLOSURE_READY",
+      "requiredNextDisposition": "CONTROLLED_SOURCE_ISSUE_CLOSURE_REQUIRED",
+      "authorities": [
+        {"path": "delivery/cg27/protocol.json", "blob": "2eaffabdefc438e1dea2c4e8934d88b66f3fcb75"},
+        {"path": "delivery/cg27/closure.json", "blob": "ab284e33c02b369d66cd5006fdf6079e6cbcd567"},
+        {"path": "delivery/cg27/verify_closure.py", "blob": "19bb720dd40732cee7c98328a4c4cada18d87088"}
+      ],
+      "qualifiedConsumerSha": "3556bda199e3590046a862252d5b108927b2c53b"
+    }
+  },
+  "target": {
+    "repository": "hvritual/biz",
+    "issueNumber": 62,
+    "title": "CE-13 gap: provide discoverable platform plan catalog endpoint",
+    "requiredPreExecutionState": "open"
+  },
+  "liveConsumer": {
+    "repository": "hvritual/biz",
+    "branch": "main",
+    "sha": "0ad50fafe00c65e0d0442e8d8f09769b96971cfd",
+    "tree": "91db8230ebaebad5a1a70df862423daf1b2f8c4e",
+    "commitsAheadOfCg27": 123
+  },
+  "freshnessPolicy": {
+    "semanticClosureDriftAllowed": false,
+    "requireExactSourceIssueIdentity": true,
+    "requireIssueOpenBeforeExecution": true,
+    "requireCg27ClosureReady": true,
+    "requireProviderReadbackAfterMutation": true
+  },
+  "qualifiedPreflightDecision": "SOURCE_ISSUE_CLOSURE_EXECUTION_BLOCKED",
+  "requiredDisposition": "REQUALIFICATION_REQUIRED_BEFORE_SOURCE_ISSUE_CLOSURE",
+  "requiredReason": "SEMANTIC_CLOSURE_DRIFT_SINCE_CG27",
+  "principle": "A closure-ready source issue may be closed only while the exact evidence lineage remains fresh. Any post-readiness change inside the qualified semantic closure invalidates execution authority until the affected evidence is requalified.",
+  "authorityCeiling": {
+    "sourceIssueCommentAuthorized": false,
+    "sourceIssueClosureAuthorized": false,
+    "sourceIssueReopenAuthorized": false,
+    "modifiesConsumerSource": false,
+    "createsConsumerBranch": false,
+    "authorizesPatch": false,
+    "authorizesCommit": false,
+    "authorizesPush": false,
+    "authorizesPullRequest": false,
+    "authorizesMerge": false,
+    "modifiesFramework": false,
+    "repositoryAdministration": false,
+    "consumerAdoption": false,
+    "repositoryBlocking": false
+  },
+  "qualification": {
+    "sourceIssueMutation": false,
+    "consumerSourceMutation": false,
+    "governanceMainMutationDuringQualification": false,
+    "negativeMatrixRequired": true,
+    "preflightId": "5870750860e12e5c633ca37c9fe4c20173e7057a65dff89047078f435389727d",
+    "primary": {
+      "head": "602db6c68957b58f5a7df4473511a5ee71afd01a",
+      "run": 34776871590,
+      "job": 103776479606,
+      "result": "SUCCESS",
+      "protocolStatus": "CANDIDATE",
+      "cg27Binding": "PASS",
+      "liveConsumerReadback": "PASS",
+      "sourceIssueReadback": "OPEN_UNCHANGED",
+      "semanticClosureChangedPaths": 19,
+      "decision": "SOURCE_ISSUE_CLOSURE_EXECUTION_BLOCKED",
+      "negativeMatrix": "PASS",
+      "remoteMutation": "NONE"
+    },
+    "finalReplay": {
+      "head": "ba41b5ff317aa882f1404f9959e1c0b0b3d5d075",
+      "run": 34776985745,
+      "job": 103776790808,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "cg27Binding": "PASS",
+      "liveConsumerReadback": "PASS",
+      "sourceIssueReadback": "OPEN_UNCHANGED",
+      "semanticClosureChangedPaths": 19,
+      "decision": "SOURCE_ISSUE_CLOSURE_EXECUTION_BLOCKED",
+      "negativeMatrix": "PASS",
+      "remoteMutation": "NONE"
+    }
+  }
+}
