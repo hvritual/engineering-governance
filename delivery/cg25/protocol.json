@@ -99,6 +99,17 @@
       "decision": "AUTHORIZATION_NOT_GRANTED",
       "disposition": "LIVE_RECONCILIATION_REQUIRED",
       "consumerMutation": false
+    },
+    "finalReplay": {
+      "head": "2c9f4c031e3c66ecb1f05b3242dd061634f5bd41",
+      "run": 34730139856,
+      "job": 103651292102,
+      "result": "SUCCESS",
+      "protocolStatus": "QUALIFIED",
+      "decision": "AUTHORIZATION_NOT_GRANTED",
+      "disposition": "LIVE_RECONCILIATION_REQUIRED",
+      "negativeMatrix": "PASS",
+      "consumerMutation": false
     }
   }
 }
