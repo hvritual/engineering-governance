@@ -1,0 +1,191 @@
+name: CG-26 Biz semantic reconciliation qualification
+
+on:
+  push:
+    branches: [cg26/biz-semantic-reconciliation]
+    paths:
+      - delivery/cg26/**
+      - .github/workflows/cg26-biz-semantic-reconciliation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-semantic-reconciliation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GOVERNANCE_BASE: 67183e61b30a48636d731a6c73fdc4d82d8c117e
+      BIZ_SHA: 1f6443f51b767e95124b2256474fb288ff6a5726
+      HISTORICAL_HEAD: c420628fce2e3dad982ad7ee3139f2afa16102af
+      HISTORICAL_RUN: "34709795289"
+      HISTORICAL_JOB: "103596341956"
+
+    steps:
+      - name: Checkout exact governance candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: governance
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify governance task ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C governance branch --show-current)" = "cg26/biz-semantic-reconciliation"
+          git -C governance merge-base --is-ancestor "$GOVERNANCE_BASE" HEAD
+          test "$(git -C governance rev-parse "$GOVERNANCE_BASE^{tree}")" = "98d90b6d418676ca6e027605cb85a2553274aa08"
+
+      - name: Checkout exact live Biz consumer
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: hvritual/biz
+          ref: ${{ env.BIZ_SHA }}
+          path: biz
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Read live issue and historical qualification
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          auth="Authorization: Bearer $GH_TOKEN"
+          api="X-GitHub-Api-Version: 2022-11-28"
+          curl -fsSL -H "$auth" -H "$api" https://api.github.com/repos/hvritual/biz/issues/62 -o /tmp/biz-issue-62.json
+          curl -fsSL -H "$auth" -H "$api" "https://api.github.com/repos/hvritual/biz/actions/runs/$HISTORICAL_RUN" -o /tmp/historical-run.json
+          curl -fsSL -H "$auth" -H "$api" "https://api.github.com/repos/hvritual/biz/actions/runs/$HISTORICAL_RUN/jobs?per_page=100" -o /tmp/historical-jobs.json
+          python3 - <<'PY'
+          import json
+          issue=json.load(open('/tmp/biz-issue-62.json'))
+          run=json.load(open('/tmp/historical-run.json'))
+          jobs=json.load(open('/tmp/historical-jobs.json'))['jobs']
+          assert issue['number'] == 62 and issue['state'] == 'open'
+          assert run['id'] == 34709795289 and run['head_sha'] == 'c420628fce2e3dad982ad7ee3139f2afa16102af'
+          assert run['status'] == 'completed' and run['conclusion'] == 'success'
+          job=[j for j in jobs if j['id'] == 103596341956]
+          assert len(job) == 1 and job[0]['name'] == 'qualify' and job[0]['conclusion'] == 'success'
+          PY
+
+      - name: Qualify live semantic reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 governance/delivery/cg26/verify_reconciliation.py \
+            --protocol governance/delivery/cg26/protocol.json \
+            --reconciliation governance/delivery/cg26/reconciliation.json \
+            --cg24-protocol governance/delivery/cg24/protocol.json \
+            --cg24-plan governance/delivery/cg24/plan.json \
+            --cg25-protocol governance/delivery/cg25/protocol.json \
+            --cg25-case governance/delivery/cg25/case.json \
+            --governance-root governance \
+            --biz-root biz \
+            --issue-json /tmp/biz-issue-62.json \
+            --run-json /tmp/historical-run.json \
+            --jobs-json /tmp/historical-jobs.json | tee /tmp/cg26-result.json
+          python3 - <<'PY'
+          import json
+          out=json.load(open('/tmp/cg26-result.json'))
+          assert out['status'] == 'SEMANTIC_RECONCILIATION_QUALIFIED', out
+          assert out['decision'] == 'NO_CHANGE_REQUIRED', out
+          assert out['verificationClassCount'] == 16, out
+          assert out['semanticClosureChangedFileCount'] == 0, out
+          assert out['identityDiverged'] is True, out
+          assert out['identityOnlyPatchRequired'] is False, out
+          assert out['patchRequired'] is False, out
+          assert out['consumerMutation'] is False, out
+          assert out['authorizationGranted'] is False, out
+          assert out['reconciliationId'] == 'bb8deb18c55868384363af5f12aadae55a07516651f54ed2ae44e1bc1db24c9e', out
+          PY
+
+      - name: Fail-closed negative matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cg26-neg
+          python3 - <<'PY'
+          import copy, hashlib, json
+          from pathlib import Path
+
+          p=json.load(open('governance/delivery/cg26/protocol.json'))
+          r=json.load(open('governance/delivery/cg26/reconciliation.json'))
+
+          def digest(value):
+              core={k:v for k,v in value.items() if k!='reconciliationId'}
+              return hashlib.sha256(json.dumps(core,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+          def rec(name, mutate):
+              x=copy.deepcopy(r); mutate(x); x['reconciliationId']=digest(x)
+              Path('/tmp/cg26-neg/'+name+'-reconciliation.json').write_text(json.dumps(x,indent=2))
+              Path('/tmp/cg26-neg/'+name+'-protocol.json').write_text(json.dumps(p,indent=2))
+          def prot(name, mutate):
+              x=copy.deepcopy(p); mutate(x)
+              Path('/tmp/cg26-neg/'+name+'-protocol.json').write_text(json.dumps(x,indent=2))
+              Path('/tmp/cg26-neg/'+name+'-reconciliation.json').write_text(json.dumps(r,indent=2))
+
+          rec('stale-live', lambda x: x['liveConsumer'].__setitem__('sha','0'*40))
+          rec('missing-class', lambda x: x.__setitem__('verificationResults', x['verificationResults'][:-1]))
+          prot('closure-drift', lambda x: x['semanticClosure']['exactPaths'].append('scripts/local-apps.sh'))
+          rec('permission-drift', lambda x: x['semanticRequirements'].__setitem__('permission','platform.plan.manage'))
+          rec('second-sot', lambda x: x['semanticRequirements'].__setitem__('newAuthoritativeStore',True))
+          rec('identity-only-patch', lambda x: x['identity'].__setitem__('identityOnlyPatchRequired',True))
+          for field in ('createsConsumerBranch','authorizesPatch','authorizesCommit','authorizesPush','authorizesPullRequest','authorizesMerge','modifiesFramework','repositoryAdministration'):
+              rec('authority-'+field, lambda x, f=field: x['authority'].__setitem__(f,True))
+          PY
+
+          verify() {
+            python3 governance/delivery/cg26/verify_reconciliation.py \
+              --protocol "$1" --reconciliation "$2" \
+              --cg24-protocol governance/delivery/cg24/protocol.json \
+              --cg24-plan governance/delivery/cg24/plan.json \
+              --cg25-protocol governance/delivery/cg25/protocol.json \
+              --cg25-case governance/delivery/cg25/case.json \
+              --governance-root governance --biz-root biz \
+              --issue-json /tmp/biz-issue-62.json \
+              --run-json /tmp/historical-run.json \
+              --jobs-json /tmp/historical-jobs.json
+          }
+          expect_reject() {
+            name="$1"; expected="$2"
+            set +e
+            verify "/tmp/cg26-neg/${name}-protocol.json" "/tmp/cg26-neg/${name}-reconciliation.json" >"/tmp/cg26-neg/${name}-out.json"
+            rc=$?
+            set -e
+            test "$rc" -eq 2
+            python3 - "$expected" "/tmp/cg26-neg/${name}-out.json" <<'PY'
+          import json,sys
+          expected,path=sys.argv[1:]
+          out=json.load(open(path))
+          assert out['status']=='REJECTED',out
+          assert out['reason']==expected,(expected,out)
+          PY
+          }
+
+          expect_reject stale-live RECONCILIATION_LIVE_SHA_MISMATCH
+          expect_reject missing-class VERIFICATION_CLASS_SET_MISMATCH
+          expect_reject closure-drift SEMANTIC_CLOSURE_CHANGED_SINCE_QUALIFIED_HEAD
+          expect_reject permission-drift RECONCILIATION_PERMISSION_MISMATCH
+          expect_reject second-sot RECONCILIATION_FORBIDDEN_SEMANTIC_ENABLED
+          expect_reject identity-only-patch IDENTITY_ONLY_PATCH_INFERENCE_FORBIDDEN
+          for field in createsConsumerBranch authorizesPatch authorizesCommit authorizesPush authorizesPullRequest authorizesMerge modifiesFramework repositoryAdministration; do
+            expect_reject "authority-${field}" RECONCILIATION_AUTHORITY_ESCALATION
+          done
+          echo CG26_NEGATIVE_MATRIX=PASS
+
+      - name: Stable asset syntax and zero consumer mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import ast,json
+          from pathlib import Path
+          json.loads(Path('governance/delivery/cg26/protocol.json').read_text())
+          json.loads(Path('governance/delivery/cg26/reconciliation.json').read_text())
+          ast.parse(Path('governance/delivery/cg26/verify_reconciliation.py').read_text())
+          PY
+          test -z "$(git -C biz status --porcelain)"
+          test "$(git -C biz rev-parse HEAD)" = "$BIZ_SHA"
+          test "$(git -C governance merge-base "$GOVERNANCE_BASE" HEAD)" = "$GOVERNANCE_BASE"
+          echo CG26_CONSUMER_MUTATION=NONE
